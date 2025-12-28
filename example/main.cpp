@@ -53,20 +53,22 @@ int main(int argc, char **argv) {
                  "hear playback.\n";
   }
 
-  AudioData audioData;
-  audioData.listenerPos = {0.0f, 0.0f, 0.0f};
-  audio.addAudioZone("assets/raw/explosion.wav", {10.0f, 10.0f, 0.0f}, 1.0f, 10.0f, false);
+  // Create a listener and set initial position
+  ListenerID listener = audio.createListener();
+  audio.setListenerPosition(listener, 0.0f, 0.0f, 0.0f);
+  audio.addAudioZone("assets/raw/explosion.wav", {10.0f, 10.0f, 0.0f}, 1.0f,
+                     10.0f, false);
 
-  // Simulate main loop (2 seconds)
-  std::cout << "Running audio update loop for 2 seconds...\n";
+  // Simulate main loop (20 seconds)
+  std::cout << "Running audio update loop for 20 seconds...\n";
   for (int i = 0; i < 1200; ++i) {
-    audio.update(1.0f / 60.0f, audioData);
+    audio.update(1.0f / 60.0f);
     std::this_thread::sleep_for(std::chrono::milliseconds(16));
 
-    if (i >=900) {
-       audioData.listenerPos = {10.0f, 10.0f, 0.0f};
+    // Move listener towards the audio zone at frame 900
+    if (i >= 900) {
+      audio.setListenerPosition(listener, 10.0f, 10.0f, 0.0f);
     }
-
   }
 
   std::cout << "Shutting down...\n";

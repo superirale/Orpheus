@@ -3,6 +3,7 @@
 #include "AudioZone.h"
 #include "Bus.h"
 #include "Event.h"
+#include "Listener.h"
 #include "Parameter.h"
 #include "SoundBank.h"
 #include "Types.h"
@@ -28,16 +29,20 @@ public:
 
   void shutdown() { m_Engine.deinit(); }
 
-  void update(float dt, AudioData &data) {
+  void update(float dt) {
     (void)dt;
-    // Poll parameters, update filters, free finished voices, etc.
-
-    m_Engine.set3dListenerParameters(data.listenerPos.x, data.listenerPos.y,
-                                     data.listenerPos.z, 0, 0, 0, 0, 1, 0);
-    for (auto &zone : m_Zones) {
-      zone->update(data.listenerPos);
+    // Update 3D audio for each listener
+    for (auto &[id, listener] : m_Listeners) {
+      if (!listener.active)
+        continue;
+      m_Engine.set3dListenerParameters(
+          listener.posX, listener.posY, listener.posZ, listener.velX,
+          listener.velY, listener.velZ, listener.forwardX, listener.forwardY,
+          listener.forwardZ, listener.upX, listener.upY, listener.upZ);
+      for (auto &zone : m_Zones) {
+        zone->update({listener.posX, listener.posY, listener.posZ});
+      }
     }
-
     m_Engine.update3dAudio();
   }
 
@@ -68,6 +73,51 @@ public:
                                                      inner, outer, stream));
   }
 
+  // Listener management
+  ListenerID createListener() {
+    ListenerID id = m_NextListenerID++;
+    m_Listeners[id] = Listener{id};
+    return id;
+  }
+
+  void destroyListener(ListenerID id) { m_Listeners.erase(id); }
+
+  void setListenerPosition(ListenerID id, const Vector3 &pos) {
+    if (auto it = m_Listeners.find(id); it != m_Listeners.end()) {
+      it->second.posX = pos.x;
+      it->second.posY = pos.y;
+      it->second.posZ = pos.z;
+    }
+  }
+
+  void setListenerPosition(ListenerID id, float x, float y, float z) {
+    if (auto it = m_Listeners.find(id); it != m_Listeners.end()) {
+      it->second.posX = x;
+      it->second.posY = y;
+      it->second.posZ = z;
+    }
+  }
+
+  void setListenerVelocity(ListenerID id, const Vector3 &vel) {
+    if (auto it = m_Listeners.find(id); it != m_Listeners.end()) {
+      it->second.velX = vel.x;
+      it->second.velY = vel.y;
+      it->second.velZ = vel.z;
+    }
+  }
+
+  void setListenerOrientation(ListenerID id, const Vector3 &forward,
+                              const Vector3 &up) {
+    if (auto it = m_Listeners.find(id); it != m_Listeners.end()) {
+      it->second.forwardX = forward.x;
+      it->second.forwardY = forward.y;
+      it->second.forwardZ = forward.z;
+      it->second.upX = up.x;
+      it->second.upY = up.y;
+      it->second.upZ = up.z;
+    }
+  }
+
   Parameter *getParam(const std::string &name) {
     std::lock_guard<std::mutex> lock(m_ParamMutex);
     return &m_Parameters[name];
@@ -81,6 +131,8 @@ private:
   AudioEvent m_Event;
   std::unordered_map<std::string, std::shared_ptr<Bus>> m_Buses;
   std::vector<std::shared_ptr<AudioZone>> m_Zones;
+  std::unordered_map<ListenerID, Listener> m_Listeners;
+  ListenerID m_NextListenerID = 1;
   std::unordered_map<std::string, Parameter> m_Parameters;
   std::mutex m_ParamMutex;
 };
