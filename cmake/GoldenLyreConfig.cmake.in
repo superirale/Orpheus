@@ -1,0 +1,16 @@
+@PACKAGE_INIT@
+
+include(CMakeFindDependencyMacro)
+
+# Try to find SoLoud dependency
+find_dependency(soloud CONFIG QUIET)
+if(NOT soloud_FOUND)
+    find_package(PkgConfig QUIET)
+    if(PkgConfig_FOUND)
+        pkg_check_modules(SOLOUD QUIET soloud)
+    endif()
+endif()
+
+include("${CMAKE_CURRENT_LIST_DIR}/GoldenLyreTargets.cmake")
+
+check_required_components(GoldenLyre)

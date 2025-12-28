@@ -1,0 +1,333 @@
+cmake_minimum_required(VERSION 3.16)
+project(GoldenLyre 
+    VERSION 1.0.0 
+    DESCRIPTION "Audio management library built on SoLoud"
+    LANGUAGES C CXX
+)
+
+# Set C++ standard
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_CXX_EXTENSIONS OFF)
+
+# Export compile commands for IDE integration
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+
+# Options
+option(GOLDENLYRE_BUILD_EXAMPLES "Build example applications" ON)
+option(GOLDENLYRE_USE_PCH "Use precompiled headers" ON)
+
+# -----------------------------------------------------------------------------
+# Find or Fetch SoLoud dependency
+# -----------------------------------------------------------------------------
+option(GOLDENLYRE_USE_SYSTEM_SOLOUD "Prefer system-installed SoLoud" ON)
+
+set(SOLOUD_FOUND_SYSTEM FALSE)
+
+if(GOLDENLYRE_USE_SYSTEM_SOLOUD)
+    # Try to find SoLoud via CMake config first
+    find_package(soloud CONFIG QUIET)
+
+    if(NOT soloud_FOUND)
+        # Fallback: Try pkg-config
+        find_package(PkgConfig QUIET)
+        if(PkgConfig_FOUND)
+            pkg_check_modules(SOLOUD QUIET soloud)
+        endif()
+        
+        if(NOT SOLOUD_FOUND)
+            # Manual fallback: check common locations
+            find_path(SOLOUD_INCLUDE_DIRS 
+                NAMES soloud.h
+                PATHS 
+                    ${SOLOUD_ROOT}/include
+                    /usr/local/include
+                    /usr/include
+                    /opt/homebrew/include
+            )
+            
+            find_library(SOLOUD_LIBRARIES 
+                NAMES soloud
+                PATHS 
+                    ${SOLOUD_ROOT}/lib
+                    /usr/local/lib
+                    /usr/lib
+                    /opt/homebrew/lib
+            )
+            
+            if(SOLOUD_INCLUDE_DIRS AND SOLOUD_LIBRARIES)
+                set(SOLOUD_FOUND TRUE)
+                set(SOLOUD_FOUND_SYSTEM TRUE)
+            endif()
+        else()
+            set(SOLOUD_FOUND_SYSTEM TRUE)
+        endif()
+    else()
+        set(SOLOUD_FOUND_SYSTEM TRUE)
+    endif()
+endif()
+
+# -----------------------------------------------------------------------------
+# Fetch nlohmann/json for JSON parsing (header-only)
+# -----------------------------------------------------------------------------
+include(FetchContent)
+
+FetchContent_Declare(
+    json
+    GIT_REPOSITORY https://github.com/nlohmann/json.git
+    GIT_TAG        v3.11.3
+    GIT_SHALLOW    TRUE
+)
+FetchContent_GetProperties(json)
+if(NOT json_POPULATED)
+    FetchContent_Populate(json)
+endif()
+set(JSON_INCLUDE_DIR ${json_SOURCE_DIR}/include)
+
+# If not found on system, fetch and build from source
+if(NOT SOLOUD_FOUND_SYSTEM AND NOT soloud_FOUND)
+    message(STATUS "SoLoud not found on system - fetching from GitHub...")
+    
+    FetchContent_Declare(
+        soloud
+        GIT_REPOSITORY https://github.com/jarikomppa/soloud.git
+        GIT_TAG        RELEASE_20200207
+        GIT_SHALLOW    TRUE
+    )
+    
+    # SoLoud build options
+    set(SOLOUD_BACKEND_NULL OFF CACHE BOOL "" FORCE)
+    set(SOLOUD_BACKEND_SDL2 OFF CACHE BOOL "" FORCE)
+    set(SOLOUD_BACKEND_COREAUDIO ON CACHE BOOL "" FORCE)  # macOS default
+    set(SOLOUD_BACKEND_MINIAUDIO ON CACHE BOOL "" FORCE)  # Cross-platform fallback
+    set(SOLOUD_BACKEND_ALSA OFF CACHE BOOL "" FORCE)
+    set(SOLOUD_BACKEND_OPENSLES OFF CACHE BOOL "" FORCE)
+    set(SOLOUD_BACKEND_XAUDIO2 OFF CACHE BOOL "" FORCE)
+    set(SOLOUD_BACKEND_WINMM OFF CACHE BOOL "" FORCE)
+    set(SOLOUD_BACKEND_WASAPI OFF CACHE BOOL "" FORCE)
+    
+    # Check if user is on Windows and adjust backends
+    if(WIN32)
+        set(SOLOUD_BACKEND_COREAUDIO OFF CACHE BOOL "" FORCE)
+        set(SOLOUD_BACKEND_WASAPI ON CACHE BOOL "" FORCE)
+    elseif(UNIX AND NOT APPLE)
+        set(SOLOUD_BACKEND_COREAUDIO OFF CACHE BOOL "" FORCE)
+        set(SOLOUD_BACKEND_ALSA ON CACHE BOOL "" FORCE)
+    endif()
+    
+    FetchContent_GetProperties(soloud)
+    if(NOT soloud_POPULATED)
+        FetchContent_Populate(soloud)
+        
+        # SoLoud doesn't have a proper CMakeLists.txt at root, so we build it manually
+        set(SOLOUD_SRC_DIR ${soloud_SOURCE_DIR}/src)
+        set(SOLOUD_INCLUDE_DIR ${soloud_SOURCE_DIR}/include)
+        
+        # Collect SoLoud source files
+        file(GLOB SOLOUD_CORE_SOURCES "${SOLOUD_SRC_DIR}/core/*.cpp" "${SOLOUD_SRC_DIR}/core/*.c")
+        file(GLOB_RECURSE SOLOUD_AUDIOSOURCE_SOURCES "${SOLOUD_SRC_DIR}/audiosource/*.cpp" "${SOLOUD_SRC_DIR}/audiosource/*.c")
+        file(GLOB SOLOUD_FILTER_SOURCES "${SOLOUD_SRC_DIR}/filter/*.cpp")
+        
+        # Backend sources based on platform
+        set(SOLOUD_BACKEND_SOURCES "")
+        if(APPLE)
+            file(GLOB SOLOUD_BACKEND_SOURCES "${SOLOUD_SRC_DIR}/backend/coreaudio/*.cpp")
+        elseif(WIN32)
+            file(GLOB SOLOUD_BACKEND_SOURCES "${SOLOUD_SRC_DIR}/backend/wasapi/*.cpp")
+        elseif(UNIX)
+            file(GLOB SOLOUD_BACKEND_SOURCES "${SOLOUD_SRC_DIR}/backend/alsa/*.cpp")
+        endif()
+        
+        # Add miniaudio backend as fallback
+        file(GLOB SOLOUD_MINIAUDIO_SOURCES "${SOLOUD_SRC_DIR}/backend/miniaudio/*.cpp")
+        list(APPEND SOLOUD_BACKEND_SOURCES ${SOLOUD_MINIAUDIO_SOURCES})
+        
+        # Create SoLoud library
+        add_library(soloud_fetched STATIC
+            ${SOLOUD_CORE_SOURCES}
+            ${SOLOUD_AUDIOSOURCE_SOURCES}
+            ${SOLOUD_FILTER_SOURCES}
+            ${SOLOUD_BACKEND_SOURCES}
+        )
+        
+        target_include_directories(soloud_fetched 
+            PUBLIC 
+                $<BUILD_INTERFACE:${SOLOUD_INCLUDE_DIR}>
+                $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}/soloud>
+        )
+        
+        # Platform-specific definitions and links
+        if(APPLE)
+            target_compile_definitions(soloud_fetched PRIVATE WITH_COREAUDIO WITH_MINIAUDIO)
+            find_library(COREAUDIO_FRAMEWORK CoreAudio)
+            find_library(AUDIOTOOLBOX_FRAMEWORK AudioToolbox)
+            target_link_libraries(soloud_fetched PUBLIC ${COREAUDIO_FRAMEWORK} ${AUDIOTOOLBOX_FRAMEWORK})
+        elseif(WIN32)
+            target_compile_definitions(soloud_fetched PRIVATE WITH_WASAPI WITH_MINIAUDIO)
+        elseif(UNIX)
+            target_compile_definitions(soloud_fetched PRIVATE WITH_ALSA WITH_MINIAUDIO)
+            find_package(ALSA QUIET)
+            if(ALSA_FOUND)
+                target_link_libraries(soloud_fetched PUBLIC ${ALSA_LIBRARIES})
+                target_include_directories(soloud_fetched PRIVATE ${ALSA_INCLUDE_DIRS})
+            endif()
+        endif()
+        
+        # Suppress warnings in third-party code
+        if(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang|AppleClang")
+            target_compile_options(soloud_fetched PRIVATE -w)
+        elseif(MSVC)
+            target_compile_options(soloud_fetched PRIVATE /w)
+        endif()
+        
+        set(SOLOUD_FETCHED TRUE)
+    endif()
+endif()
+
+# -----------------------------------------------------------------------------
+# GoldenLyre Library
+# -----------------------------------------------------------------------------
+# Collect source files
+set(GOLDENLYRE_SOURCES
+    src/AudioManager.cpp
+)
+
+set(GOLDENLYRE_HEADERS
+    include/AudioManager.h
+    include/Bus.h
+    include/DSPFilters.h
+    include/Event.h
+    include/Parameter.h
+    include/Profiler.h
+    include/VirtualVoiceManager.h
+)
+
+# Create the library
+add_library(goldenlyre ${GOLDENLYRE_SOURCES} ${GOLDENLYRE_HEADERS})
+add_library(GoldenLyre::goldenlyre ALIAS goldenlyre)
+
+# Include directories
+target_include_directories(goldenlyre 
+    PUBLIC 
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+        $<INSTALL_INTERFACE:include>
+    PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}
+)
+
+# Link SoLoud and add JSON include directory
+target_include_directories(goldenlyre PRIVATE ${JSON_INCLUDE_DIR})
+
+if(soloud_FOUND)
+    target_link_libraries(goldenlyre PUBLIC soloud::soloud)
+elseif(SOLOUD_FETCHED)
+    target_link_libraries(goldenlyre PUBLIC soloud_fetched)
+else()
+    target_include_directories(goldenlyre PUBLIC ${SOLOUD_INCLUDE_DIRS})
+    target_link_libraries(goldenlyre PUBLIC ${SOLOUD_LIBRARIES})
+endif()
+
+# Precompiled headers
+if(GOLDENLYRE_USE_PCH AND CMAKE_VERSION VERSION_GREATER_EQUAL "3.16")
+    target_precompile_headers(goldenlyre PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/pch.h)
+endif()
+
+# Compiler warnings
+if(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang|AppleClang")
+    target_compile_options(goldenlyre PRIVATE -Wall -Wextra -Wpedantic)
+elseif(MSVC)
+    target_compile_options(goldenlyre PRIVATE /W4)
+endif()
+
+# -----------------------------------------------------------------------------
+# Example Application
+# -----------------------------------------------------------------------------
+if(GOLDENLYRE_BUILD_EXAMPLES)
+    add_executable(goldenlyre_example example/main.cpp)
+    target_include_directories(goldenlyre_example PRIVATE ${JSON_INCLUDE_DIR})
+    target_link_libraries(goldenlyre_example PRIVATE goldenlyre)
+    
+    # Copy assets for examples
+    add_custom_command(TARGET goldenlyre_example POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy_directory
+            ${CMAKE_CURRENT_SOURCE_DIR}/assets
+            $<TARGET_FILE_DIR:goldenlyre_example>/assets
+        COMMENT "Copying assets to build directory"
+    )
+endif()
+
+# -----------------------------------------------------------------------------
+# Installation
+# -----------------------------------------------------------------------------
+include(GNUInstallDirs)
+
+# Install targets - include soloud_fetched if we built it
+if(SOLOUD_FETCHED)
+    install(TARGETS goldenlyre soloud_fetched
+        EXPORT GoldenLyreTargets
+        LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+        ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
+        RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+    )
+    
+    # Install SoLoud headers too
+    install(DIRECTORY ${SOLOUD_INCLUDE_DIR}/
+        DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/soloud
+    )
+else()
+    install(TARGETS goldenlyre
+        EXPORT GoldenLyreTargets
+        LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+        ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
+        RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+    )
+endif()
+
+install(FILES ${GOLDENLYRE_HEADERS}
+    DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/goldenlyre
+)
+
+install(EXPORT GoldenLyreTargets
+    FILE GoldenLyreTargets.cmake
+    NAMESPACE GoldenLyre::
+    DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/GoldenLyre
+)
+
+# Package configuration
+include(CMakePackageConfigHelpers)
+
+configure_package_config_file(
+    ${CMAKE_CURRENT_SOURCE_DIR}/cmake/GoldenLyreConfig.cmake.in
+    ${CMAKE_CURRENT_BINARY_DIR}/GoldenLyreConfig.cmake
+    INSTALL_DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/GoldenLyre
+)
+
+write_basic_package_version_file(
+    ${CMAKE_CURRENT_BINARY_DIR}/GoldenLyreConfigVersion.cmake
+    VERSION ${PROJECT_VERSION}
+    COMPATIBILITY SameMajorVersion
+)
+
+install(FILES
+    ${CMAKE_CURRENT_BINARY_DIR}/GoldenLyreConfig.cmake
+    ${CMAKE_CURRENT_BINARY_DIR}/GoldenLyreConfigVersion.cmake
+    DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/GoldenLyre
+)
+
+# -----------------------------------------------------------------------------
+# Summary
+# -----------------------------------------------------------------------------
+if(SOLOUD_FETCHED)
+    set(SOLOUD_SOURCE "fetched from GitHub")
+elseif(soloud_FOUND)
+    set(SOLOUD_SOURCE "system (CMake package)")
+else()
+    set(SOLOUD_SOURCE "system")
+endif()
+
+message(STATUS "")
+message(STATUS "GoldenLyre ${PROJECT_VERSION}")
+message(STATUS "  SoLoud:                  ${SOLOUD_SOURCE}")
+message(STATUS "  Build examples:          ${GOLDENLYRE_BUILD_EXAMPLES}")
+message(STATUS "  Use precompiled headers: ${GOLDENLYRE_USE_PCH}")
+message(STATUS "")

@@ -1,0 +1,10 @@
+{
+  "name": "explosion",
+  "sound": "assets/raw/explosion.wav",
+  "bus": "SFX",
+  "volume": [0.8, 1.0],
+  "pitch": [0.9, 1.1],
+  "parameters": {
+    "distance": "attenuation"
+  }
+}

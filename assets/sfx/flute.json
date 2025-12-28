@@ -1,0 +1,10 @@
+{
+  "name": "flute",
+  "sound": "assets/raw/flute.wav",
+  "bus": "SFX",
+  "volume": [0.7, 1.0],
+  "pitch": [0.6, 1.1],
+  "parameters": {
+    "distance": "attenuation"
+  }
+}
