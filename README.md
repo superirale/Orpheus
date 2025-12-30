@@ -6,8 +6,9 @@ A lightweight, FMOD/Wwise-inspired audio engine built on [SoLoud](https://solhsa
 
 - **Event System** — Register and play named audio events from code or JSON
 - **3D Listeners** — Handle-based spatial audio (supports multiple listeners)
-- **Audio Zones** — Event-triggered spatial audio regions with distance falloff
-- **Mix Zones** — Automatic snapshot binding to spatial regions
+- **Audio Zones** — Spatial audio regions with distance-based volume falloff
+- **Zone-Triggered Snapshots** — Bind snapshots to zones for automatic mix changes
+- **Mix Zones** — Priority-based snapshot regions with smooth transitions
 - **Bus Routing** — Organize audio into Master, SFX, Music channels
 - **Snapshots** — Save/restore mix states with configurable fade times
 - **Voice Pool** — Virtual voices & voice stealing (prevents CPU spikes)
@@ -22,25 +23,31 @@ int main() {
   AudioManager audio;
   audio.init();
 
-  // Play a sound
+  // Load and play events
   audio.loadEventsFromFile("assets/events.json");
-  audio.playEvent("explosion");
+  audio.playEvent("background_music");
 
-  // 3D audio
+  // 3D listener
   ListenerID listener = audio.createListener();
-  audio.setListenerPosition(listener, playerX, playerY, playerZ);
+  audio.setListenerPosition(listener, 0, 0, 0);
 
-  // Audio zones (trigger events based on distance)
-  audio.addAudioZone("ambient_forest", {100, 0, 50}, 10.0f, 50.0f);
+  // Basic audio zone (plays sound when listener is near)
+  audio.addAudioZone("forest_ambient", {100, 0, 50}, 10.0f, 50.0f);
 
-  // Snapshots with configurable fade times
+  // Zone-triggered snapshot (NEW!)
+  // Automatically applies "Underwater" mix when entering the waterfall zone
+  audio.createSnapshot("Underwater");
+  audio.setSnapshotBusVolume("Underwater", "Music", 0.3f);
+  audio.addAudioZone("waterfall", {60, 0, 0}, 5.0f, 15.0f, "Underwater");
+
+  // Mix zones for area-based mixing
   audio.createSnapshot("Combat");
-  audio.setSnapshotBusVolume("Combat", "Music", 0.3f);
-  
+  audio.setSnapshotBusVolume("Combat", "Music", 0.2f);
+  audio.addMixZone("arena", "Combat", {100, 0, 0}, 10.0f, 25.0f, 200);
+
   // Game loop
   while (running) {
-    if (inCombat) audio.applySnapshot("Combat", 2.0f);  // 2 second fade
-    else audio.resetBusVolumes(1.0f);                   // 1 second fade
+    audio.setListenerPosition(listener, playerX, playerY, playerZ);
     audio.update(deltaTime);
   }
 
@@ -75,13 +82,33 @@ SoLoud and nlohmann/json are fetched automatically via CMake FetchContent.
 }
 ```
 
+## Audio Zones vs Mix Zones
+
+GoldenLyre provides two spatial audio systems:
+
+| Feature | Audio Zones | Mix Zones |
+|---------|-------------|-----------|
+| **Purpose** | Play ambient sounds | Change mix/atmosphere |
+| **Triggers** | Event playback + optional snapshot | Snapshot only |
+| **Priority** | N/A | Priority-based (higher wins) |
+| **Best for** | Waterfalls, campfires, ambient loops | Caves, combat areas, underwater |
+
+```cpp
+// Audio Zone: plays "waterfall" sound + applies "Underwater" snapshot
+audio.addAudioZone("waterfall", {60, 0, 0}, 5.0f, 15.0f, "Underwater");
+
+// Mix Zone: only applies "Combat" snapshot (no sound playback)
+audio.addMixZone("arena", "Combat", {100, 0, 0}, 10.0f, 25.0f, 200);
+```
+
 ## Project Structure
 
 ```
 GoldenLyre/
 ├── include/           # Headers
 │   ├── AudioManager.h # Main API
-│   ├── Listener.h     # 3D listener
+│   ├── AudioZone.h    # Spatial audio regions
+│   ├── MixZone.h      # Snapshot regions
 │   ├── Bus.h          # Audio routing
 │   ├── Snapshot.h     # Mix snapshots
 │   └── ...
