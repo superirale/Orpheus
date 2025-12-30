@@ -5,6 +5,7 @@
 #include "Event.h"
 #include "Listener.h"
 #include "Parameter.h"
+#include "Snapshot.h"
 #include "SoundBank.h"
 #include "Types.h"
 
@@ -20,9 +21,9 @@ public:
       return false;
     }
     // Create default buses
-    m_Buses.emplace("Master", std::make_shared<Bus>(m_Engine, "Master"));
-    m_Buses.emplace("SFX", std::make_shared<Bus>(m_Engine, "SFX"));
-    m_Buses.emplace("Music", std::make_shared<Bus>(m_Engine, "Music"));
+    createBus("Master");
+    createBus("SFX");
+    createBus("Music");
 
     return true;
   }
@@ -31,6 +32,9 @@ public:
 
   void update(float dt) {
     (void)dt;
+
+    for (auto &[_, bus] : m_Buses)
+      bus->update(dt);
     // Update 3D audio for each listener
     for (auto &[id, listener] : m_Listeners) {
       if (!listener.active)
@@ -123,6 +127,31 @@ public:
     return &m_Parameters[name];
   }
 
+  // ---------------- Bus API ----------------
+  void createBus(const std::string &name) {
+    m_Buses[name] = std::make_shared<Bus>(name);
+  }
+
+  std::shared_ptr<Bus> getBus(const std::string &name) { return m_Buses[name]; }
+
+  // ---------------- Snapshot API ----------------
+  void createSnapshot(const std::string &name) {
+    m_Snapshots[name] = Snapshot();
+  }
+
+  void setSnapshotBusVolume(const std::string &snap, const std::string &bus,
+                            float volume) {
+    m_Snapshots[snap].setBusState(bus, BusState{volume});
+  }
+
+  void applySnapshot(const std::string &name) {
+    const auto &states = m_Snapshots[name].getStates();
+    for (const auto &[busName, state] : states) {
+      if (m_Buses.count(busName))
+        m_Buses[busName]->setTargetVolume(state.volume);
+    }
+  }
+
   SoLoud::Soloud &engine() { return m_Engine; }
 
 private:
@@ -135,4 +164,6 @@ private:
   ListenerID m_NextListenerID = 1;
   std::unordered_map<std::string, Parameter> m_Parameters;
   std::mutex m_ParamMutex;
+
+  std::unordered_map<std::string, Snapshot> m_Snapshots;
 };
