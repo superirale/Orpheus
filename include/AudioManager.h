@@ -151,12 +151,15 @@ public:
   }
 
   // Add audio zone without snapshot binding
+  // NOTE: Uses playEventDirect() because AudioZone needs actual SoLoud handles
+  // to control playback (stop, volume). playEvent() returns VoiceIDs which are
+  // different from audio handles.
   void addAudioZone(const std::string &eventName, const Vector3 &pos,
                     float inner, float outer) {
     m_Zones.emplace_back(std::make_shared<AudioZone>(
         eventName, pos, inner, outer,
-        // PlayEvent callback
-        [this](const std::string &name) { return this->playEvent(name); },
+        // PlayEvent callback - must use Direct to get actual audio handle
+        [this](const std::string &name) { return this->playEventDirect(name); },
         // SetVolume callback
         [this](AudioHandle h, float v) { m_Engine.setVolume(h, v); },
         // Stop callback
@@ -175,8 +178,8 @@ public:
                     float fadeIn = 0.5f, float fadeOut = 0.5f) {
     m_Zones.emplace_back(std::make_shared<AudioZone>(
         eventName, pos, inner, outer,
-        // PlayEvent callback
-        [this](const std::string &name) { return this->playEvent(name); },
+        // PlayEvent callback - must use Direct to get actual audio handle
+        [this](const std::string &name) { return this->playEventDirect(name); },
         // SetVolume callback
         [this](AudioHandle h, float v) { m_Engine.setVolume(h, v); },
         // Stop callback

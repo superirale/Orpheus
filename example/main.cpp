@@ -28,8 +28,7 @@ int main(int argc, char **argv) {
   audio.registerEvent(musicEvent);
   std::cout << "Registered 'music' event\n";
 
-
-   // Register a waterfall ambient event (using flute as watery ambient sound)
+  // Register a waterfall ambient event (using flute as watery ambient sound)
   EventDescriptor waterfallEvent;
   waterfallEvent.name = "waterfall";
   waterfallEvent.path =
@@ -38,6 +37,16 @@ int main(int argc, char **argv) {
   waterfallEvent.volumeMin = 0.6f;
   waterfallEvent.stream = false; // Short file, no need to stream
   audio.registerEvent(waterfallEvent);
+
+  // underwater
+  EventDescriptor underWaterEvent;
+  underWaterEvent.name = "underwater";
+  underWaterEvent.path =
+      "assets/raw/underwater.wav"; // Different sound to avoid interference
+  underWaterEvent.bus = "SFX";
+  underWaterEvent.volumeMin = 0.6f;
+  underWaterEvent.stream = false; // Short file, no need to stream
+  audio.registerEvent(underWaterEvent);
 
   // Create listener at origin
   ListenerID listener = audio.createListener();
@@ -75,8 +84,6 @@ int main(int argc, char **argv) {
   audio.createSnapshot("Underwater");
   audio.setSnapshotBusVolume("Underwater", "Music", 0.3f);
   audio.setSnapshotBusVolume("Underwater", "SFX", 0.5f);
-
- 
 
   // Create AudioZone with snapshot binding in the gap between cave and arena
   // When player enters this zone, "Underwater" snapshot is automatically
