@@ -36,6 +36,8 @@ struct EventDescriptor {
   float pitchMin = 1.0f;
   float pitchMax = 1.0f;
   bool stream = false;       // Use WavStream for long files
+  uint8_t priority = 128;    // 0-255, higher = never stolen by lower
+  float maxDistance = 100.0f; // 3D attenuation distance
 };
 ```
 
@@ -48,8 +50,44 @@ struct EventDescriptor {
   "volume": [0.8, 1.0],
   "pitch": [0.9, 1.1],
   "stream": false,
+  "priority": 200,
+  "maxDistance": 50.0,
   "parameters": { "distance": "attenuation" }
 }
+```
+
+---
+
+## Voice Pool
+
+Virtual voices and voice stealing for CPU management.
+
+| Method | Description |
+|--------|-------------|
+| `void setMaxVoices(uint32_t max)` | Set max simultaneous real voices (default: 32). |
+| `void setStealBehavior(StealBehavior behavior)` | Set stealing: `Oldest`, `Furthest`, `Quietest`, `None`. |
+| `uint32_t getRealVoiceCount()` | Count of currently playing voices. |
+| `uint32_t getVirtualVoiceCount()` | Count of virtualized (silent) voices. |
+| `uint32_t getActiveVoiceCount()` | Total real + virtual voices. |
+
+**How it works:**
+- When max voices reached, lowest-priority/least-audible voice is stolen
+- High-priority sounds (255) are never stolen
+- Virtual voices track playback time but produce no audio
+- Voices automatically promote from virtual to real when closer/louder
+
+**Example:**
+```cpp
+audio.setMaxVoices(32);
+audio.setStealBehavior(StealBehavior::Quietest);
+
+// Spawn 100 sounds - only 32 will play, rest virtualized
+for (int i = 0; i < 100; i++) {
+  audio.playEvent("footstep", randomPosition);
+}
+
+std::cout << "Real: " << audio.getRealVoiceCount()
+          << " Virtual: " << audio.getVirtualVoiceCount();
 ```
 
 ---
@@ -78,18 +116,23 @@ audio.update(dt);  // Process all listeners
 
 ## Audio Zones
 
-Spatial audio regions that play sounds based on listener distance.
+Spatial audio regions that trigger events based on listener distance. Zones use the event system, so sounds are routed through buses and affected by snapshots.
 
 | Method | Description |
 |--------|-------------|
-| `void addAudioZone(const std::string& soundPath, const Vector3& pos, float inner, float outer, bool stream = true)` | Add a zone. |
+| `void addAudioZone(const std::string& eventName, const Vector3& pos, float inner, float outer)` | Add a zone using an event. |
 
+- **eventName**: Name of a registered event (not a file path)
 - **innerRadius**: Full volume distance
 - **outerRadius**: Zero volume distance (sound stops beyond this)
 
 **Example:**
 ```cpp
-audio.addAudioZone("assets/ambient/forest.wav", {100, 0, 50}, 10.0f, 50.0f);
+// Register the event first
+audio.registerEvent(ambientEvent);
+
+// Create zone using event name
+audio.addAudioZone("forest_ambient", {100, 0, 50}, 10.0f, 50.0f);
 ```
 
 ---
@@ -106,9 +149,10 @@ Audio routing channels with volume control.
 **Bus methods:**
 | Method | Description |
 |--------|-------------|
-| `void setVolume(float v)` | Set immediate volume. |
-| `void setTargetVolume(float v)` | Set target for smooth interpolation. |
+| `void setVolume(float v)` | Set immediate volume (no fade). |
+| `void setTargetVolume(float v, float fadeSeconds = 0)` | Set target with configurable fade time. |
 | `float getVolume() const` | Get current volume. |
+| `float getTargetVolume() const` | Get target volume. |
 | `void addFilter(std::shared_ptr<SoLoud::Filter> f)` | Attach a DSP filter. |
 
 **Default buses:** `Master`, `SFX`, `Music`
@@ -117,26 +161,30 @@ Audio routing channels with volume control.
 
 ## Snapshots
 
-Save and restore bus mix states with smooth transitions.
+Save and restore bus mix states with smooth fade transitions.
 
 | Method | Description |
 |--------|-------------|
 | `void createSnapshot(const std::string& name)` | Create a named snapshot. |
 | `void setSnapshotBusVolume(const std::string& snap, const std::string& bus, float volume)` | Set a bus volume in a snapshot. |
-| `void applySnapshot(const std::string& name)` | Apply a snapshot (smooth transition). |
+| `void applySnapshot(const std::string& name, float fadeSeconds = 0.3f)` | Apply a snapshot with fade. |
+| `void resetBusVolumes(float fadeSeconds = 0.3f)` | Reset all buses to 1.0 with fade. |
+| `void resetEventVolume(const std::string& eventName, float fadeSeconds = 0.3f)` | Reset bus to event's `volumeMin` with fade. |
 
 **Example:**
 ```cpp
+// Create snapshots
 audio.createSnapshot("Combat");
 audio.setSnapshotBusVolume("Combat", "Music", 0.3f);
 audio.setSnapshotBusVolume("Combat", "SFX", 1.0f);
 
-audio.createSnapshot("Menu");
-audio.setSnapshotBusVolume("Menu", "Music", 1.0f);
-audio.setSnapshotBusVolume("Menu", "SFX", 0.5f);
+// Enter combat - music fades down over 2 seconds
+audio.applySnapshot("Combat", 2.0f);
 
-// When entering combat:
-audio.applySnapshot("Combat");
+// Exit combat - restore volumes with 1 second fade
+audio.resetBusVolumes(1.0f);
+// OR
+audio.resetEventVolume("music", 0.5f);
 ```
 
 ---

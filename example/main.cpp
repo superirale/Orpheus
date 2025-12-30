@@ -13,65 +13,98 @@ int main(int argc, char **argv) {
 
   std::cout << "GoldenLyre Audio Engine initialized!\n";
 
-  // Method 1: Register event from JSON string
+  // Configure voice pool
+  audio.setMaxVoices(8); // Only 8 simultaneous real voices
+  audio.setStealBehavior(StealBehavior::Quietest);
+  std::cout << "Voice pool: max " << audio.getMaxVoices() << " real voices\n";
+
+  // Register events with different priorities
   const std::string explosionJson = R"({
     "name": "explosion",
     "sound": "assets/raw/explosion.wav",
     "bus": "SFX",
     "volume": [0.8, 1.0],
-    "pitch": [0.9, 1.1],
+    "priority": 200,
+    "maxDistance": 50.0,
     "parameters": {
       "distance": "attenuation"
     }
   })";
 
   if (audio.registerEvent(explosionJson)) {
-    std::cout << "Registered 'explosion' event from JSON\n";
+    std::cout << "Registered 'explosion' event (priority 200)\n";
   }
 
-  // Method 2: Register event using EventDescriptor struct
-  EventDescriptor testEvent;
-  testEvent.name = "flute";
-  testEvent.path = "assets/raw/flute.wav";
-  testEvent.bus = "SFX";
-  testEvent.volumeMin = 0.7f;
-  testEvent.volumeMax = 1.0f;
-  testEvent.pitchMin = 0.6f;
-  testEvent.pitchMax = 1.1f;
-  testEvent.stream = false;
+  // Music event with high priority (never stolen)
+  EventDescriptor musicEvent;
+  musicEvent.name = "music";
+  musicEvent.path = "assets/raw/mellotrix_doodle.wav";
+  musicEvent.bus = "Music";
+  musicEvent.volumeMin = 0.7f;
+  musicEvent.volumeMax = 1.0f;
+  musicEvent.stream = true;
+  musicEvent.priority = 255; // Highest priority - never stolen
 
-  audio.registerEvent(testEvent);
-  std::cout << "Registered 'test_sfx' event from struct\n";
+  audio.registerEvent(musicEvent);
+  std::cout << "Registered 'music' event (priority 255)\n";
 
-  // Play events
-  std::cout << "\nPlaying events...\n";
-  AudioHandle h1 = audio.playEvent("explosion");
-  AudioHandle h2 = audio.playEvent("flute");
-
-  if (h1 == 0 && h2 == 0) {
-    std::cout << "Note: No audio files found. Place .wav files in assets/ to "
-                 "hear playback.\n";
-  }
-
-  // Create a listener and set initial position
+  // Create a listener
   ListenerID listener = audio.createListener();
   audio.setListenerPosition(listener, 0.0f, 0.0f, 0.0f);
-  audio.addAudioZone("assets/raw/explosion.wav", {10.0f, 10.0f, 0.0f}, 1.0f,
-                     10.0f, false);
 
-  // Simulate main loop (20 seconds)
-  std::cout << "Running audio update loop for 20 seconds...\n";
-  for (int i = 0; i < 1200; ++i) {
+  // Play music (uses voice pool)
+  std::cout << "\nPlaying music...\n";
+  VoiceID musicVoice = audio.playEvent("music");
+
+  // Demonstrate voice limiting by spawning many sounds
+  std::cout << "\nSpawning 20 explosions at various positions...\n";
+  for (int i = 0; i < 20; i++) {
+    // Spread explosions in a circle around listener
+    float angle = (float)i * 0.314f;     // ~18 degrees apart
+    float dist = 10.0f + (i % 5) * 5.0f; // 10-30 units away
+    Vector3 pos{cosf(angle) * dist, 0.0f, sinf(angle) * dist};
+    audio.playEvent("explosion", pos);
+  }
+
+  std::cout << "Real voices: " << audio.getRealVoiceCount()
+            << " | Virtual: " << audio.getVirtualVoiceCount()
+            << " | Total: " << audio.getActiveVoiceCount() << "\n";
+
+  // Create snapshot for combat
+  audio.createSnapshot("Combat");
+  audio.setSnapshotBusVolume("Combat", "Music", 0.3f);
+  audio.setSnapshotBusVolume("Combat", "SFX", 1.0f);
+
+  // Simulate main loop (5 seconds)
+  std::cout << "\nRunning audio update loop for 5 seconds...\n";
+  for (int i = 0; i < 3000; ++i) {
     audio.update(1.0f / 60.0f);
     std::this_thread::sleep_for(std::chrono::milliseconds(16));
 
-    // Move listener towards the audio zone at frame 900
-    if (i >= 900) {
-      audio.setListenerPosition(listener, 10.0f, 10.0f, 0.0f);
+    // Log voice counts periodically
+    if (i % 600 == 0) {
+      std::cout << "Frame " << i << " - Real: " << audio.getRealVoiceCount()
+                << " Virtual: " << audio.getVirtualVoiceCount() << "\n";
+    }
+
+    // Move listener toward explosions at frame 120
+    if (i == 1200) {
+      std::cout << "Moving listener toward explosions...\n";
+      audio.setListenerPosition(listener, 15.0f, 0.0f, 0.0f);
+    }
+
+    // Apply combat snapshot at frame 180
+    if (i >= 1800 && i < 2400) {
+      audio.applySnapshot("Combat", 0.5f);
+    }
+
+    // Reset at frame 240
+    if (i == 2400) {
+      audio.resetBusVolumes(0.5f);
     }
   }
 
-  std::cout << "Shutting down...\n";
+  std::cout << "\nShutting down...\n";
   audio.shutdown();
 
   std::cout << "Done!\n";

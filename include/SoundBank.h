@@ -9,6 +9,8 @@ struct EventDescriptor {
   float pitchMin = 1.0f;
   float pitchMax = 1.0f;
   bool stream = false;
+  uint8_t priority = 128;     // 0-255, higher = more important
+  float maxDistance = 100.0f; // 3D attenuation distance
   std::unordered_map<std::string, std::string> parameters;
 };
 
@@ -78,6 +80,12 @@ public:
 
       // Parse stream flag
       ed.stream = j.value("stream", false);
+
+      // Parse priority (0-255, higher = more important)
+      ed.priority = static_cast<uint8_t>(j.value("priority", 128));
+
+      // Parse max distance for 3D attenuation
+      ed.maxDistance = j.value("maxDistance", 100.0f);
 
       // Parse parameters map
       if (j.contains("parameters") && j["parameters"].is_object()) {

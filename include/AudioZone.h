@@ -2,44 +2,41 @@
 #pragma once
 #include "Types.h"
 
+// Callback type for playing events - returns handle
+using PlayEventCallback = std::function<AudioHandle(const std::string &)>;
+using SetVolumeCallback = std::function<void(AudioHandle, float)>;
+using StopCallback = std::function<void(AudioHandle)>;
+using IsValidCallback = std::function<bool(AudioHandle)>;
+
 class AudioZone {
 public:
-  AudioZone(SoLoud::Soloud &engine, const std::string &soundPath,
-            const Vector3 &position, float innerRadius, float outerRadius,
-            bool stream = true)
-      : m_Engine(engine), m_SoundPath(soundPath), m_Position(position),
+  AudioZone(const std::string &eventName, const Vector3 &position,
+            float innerRadius, float outerRadius, PlayEventCallback playEvent,
+            SetVolumeCallback setVolume, StopCallback stop,
+            IsValidCallback isValid)
+      : m_EventName(eventName), m_Position(position),
         m_InnerRadius(innerRadius), m_OuterRadius(outerRadius),
-        m_Stream(stream) {
-    if (m_Stream) {
-      auto wavStream = std::make_shared<SoLoud::WavStream>();
-      wavStream->load(soundPath.c_str());
-      m_Source = wavStream;
-    } else {
-      auto wav = std::make_shared<SoLoud::Wav>();
-      wav->load(soundPath.c_str());
-      m_Source = wav;
-    }
-    m_Source->setLooping(true);
-    mHandle = 0;
-  }
+        m_PlayEvent(playEvent), m_SetVolume(setVolume), m_Stop(stop),
+        m_IsValid(isValid), m_Handle(0) {}
 
   void update(const Vector3 &listenerPos) {
     float dist = distance(listenerPos, m_Position);
     float vol = computeVolume(dist);
 
     if (vol > 0.0f) {
-      // If not playing yet, start
-      if (mHandle == 0 || !m_Engine.isValidVoiceHandle(mHandle)) {
-        mHandle = m_Engine.play(*m_Source, vol);
-        m_Engine.set3dSourceParameters(mHandle, m_Position.x, m_Position.y,
-                                       m_Position.z);
-      } else {
-        m_Engine.setVolume(mHandle, vol);
+      // If not playing yet, start via event system
+      if (m_Handle == 0 || !m_IsValid(m_Handle)) {
+        m_Handle = m_PlayEvent(m_EventName);
+      }
+      if (m_Handle != 0) {
+        m_SetVolume(m_Handle, vol);
       }
     } else {
       // Stop when too far
-      if (mHandle && m_Engine.isValidVoiceHandle(mHandle))
-        m_Engine.stop(mHandle);
+      if (m_Handle != 0 && m_IsValid(m_Handle)) {
+        m_Stop(m_Handle);
+        m_Handle = 0;
+      }
     }
   }
 
@@ -59,12 +56,13 @@ private:
     return 1.0f - ((dist - m_InnerRadius) / (m_OuterRadius - m_InnerRadius));
   }
 
-  SoLoud::Soloud &m_Engine;
-  std::shared_ptr<SoLoud::AudioSource> m_Source;
-  std::string m_SoundPath;
+  std::string m_EventName;
   Vector3 m_Position;
   float m_InnerRadius;
   float m_OuterRadius;
-  bool m_Stream;
-  SoLoud::handle mHandle;
+  PlayEventCallback m_PlayEvent;
+  SetVolumeCallback m_SetVolume;
+  StopCallback m_Stop;
+  IsValidCallback m_IsValid;
+  AudioHandle m_Handle;
 };

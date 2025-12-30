@@ -8,6 +8,7 @@
 #include "Snapshot.h"
 #include "SoundBank.h"
 #include "Types.h"
+#include "VoicePool.h"
 
 class AudioManager {
 public:
@@ -31,26 +32,100 @@ public:
   void shutdown() { m_Engine.deinit(); }
 
   void update(float dt) {
-    (void)dt;
-
     for (auto &[_, bus] : m_Buses)
       bus->update(dt);
-    // Update 3D audio for each listener
+
+    // Get first listener position for voice pool and zones
+    Vector3 listenerPos{0, 0, 0};
     for (auto &[id, listener] : m_Listeners) {
       if (!listener.active)
         continue;
+      listenerPos = {listener.posX, listener.posY, listener.posZ};
       m_Engine.set3dListenerParameters(
           listener.posX, listener.posY, listener.posZ, listener.velX,
           listener.velY, listener.velZ, listener.forwardX, listener.forwardY,
           listener.forwardZ, listener.upX, listener.upY, listener.upZ);
       for (auto &zone : m_Zones) {
-        zone->update({listener.posX, listener.posY, listener.posZ});
+        zone->update(listenerPos);
       }
     }
+
+    // Update voice pool (virtualization/promotion)
+    m_VoicePool.update(dt, listenerPos);
+
+    // Process voice state changes
+    for (auto &voice : m_VoicePool.getVoices()) {
+      if (voice.isStopped())
+        continue;
+
+      // Handle voices that need to start playing
+      if (voice.isReal() && voice.handle == 0) {
+        voice.handle = m_Event.play(voice.eventName);
+        if (voice.handle != 0) {
+          EventDescriptor ed;
+          if (m_Bank.findEvent(voice.eventName, ed)) {
+            const std::string &busName = ed.bus.empty() ? "Master" : ed.bus;
+            if (m_Buses.count(busName)) {
+              m_Buses[busName]->addHandle(m_Engine, voice.handle);
+            }
+          }
+        }
+      }
+      // Handle voices that became virtual
+      else if (voice.isVirtual() && voice.handle != 0) {
+        m_Engine.stop(voice.handle);
+        voice.handle = 0;
+      }
+    }
+
     m_Engine.update3dAudio();
   }
 
-  AudioHandle playEvent(const std::string &name) { return m_Event.play(name); }
+  // Play event with optional 3D position (uses voice pool)
+  VoiceID playEvent(const std::string &name, Vector3 position = {0, 0, 0}) {
+    EventDescriptor ed;
+    if (!m_Bank.findEvent(name, ed)) {
+      std::cerr << "Event not found: " << name << "\n";
+      return 0;
+    }
+
+    // Allocate voice in pool
+    Voice *voice =
+        m_VoicePool.allocateVoice(name, ed.priority, position, ed.maxDistance);
+    if (!voice)
+      return 0;
+
+    voice->volume = ed.volumeMin;
+
+    // Try to make it real (may steal another voice)
+    if (m_VoicePool.makeReal(voice)) {
+      voice->handle = m_Event.play(name);
+      if (voice->handle != 0) {
+        const std::string &busName = ed.bus.empty() ? "Master" : ed.bus;
+        if (m_Buses.count(busName)) {
+          m_Buses[busName]->addHandle(m_Engine, voice->handle);
+        }
+      }
+    }
+
+    return voice->id;
+  }
+
+  // Legacy: play event without voice pool (returns AudioHandle)
+  AudioHandle playEventDirect(const std::string &name) {
+    EventDescriptor ed;
+    if (!m_Bank.findEvent(name, ed)) {
+      return m_Event.play(name);
+    }
+    AudioHandle h = m_Event.play(name);
+    if (h != 0) {
+      const std::string &busName = ed.bus.empty() ? "Master" : ed.bus;
+      if (m_Buses.count(busName)) {
+        m_Buses[busName]->addHandle(m_Engine, h);
+      }
+    }
+    return h;
+  }
 
   void registerEvent(const EventDescriptor &ed) { m_Bank.registerEvent(ed); }
 
@@ -71,10 +146,18 @@ public:
     m_Parameters[name].Set(value);
   }
 
-  void addAudioZone(const std::string &soundPath, const Vector3 &pos,
-                    float inner, float outer, bool stream = true) {
-    m_Zones.emplace_back(std::make_shared<AudioZone>(m_Engine, soundPath, pos,
-                                                     inner, outer, stream));
+  void addAudioZone(const std::string &eventName, const Vector3 &pos,
+                    float inner, float outer) {
+    m_Zones.emplace_back(std::make_shared<AudioZone>(
+        eventName, pos, inner, outer,
+        // PlayEvent callback
+        [this](const std::string &name) { return this->playEvent(name); },
+        // SetVolume callback
+        [this](AudioHandle h, float v) { m_Engine.setVolume(h, v); },
+        // Stop callback
+        [this](AudioHandle h) { m_Engine.stop(h); },
+        // IsValid callback
+        [this](AudioHandle h) { return m_Engine.isValidVoiceHandle(h); }));
   }
 
   // Listener management
@@ -144,12 +227,50 @@ public:
     m_Snapshots[snap].setBusState(bus, BusState{volume});
   }
 
-  void applySnapshot(const std::string &name) {
+  void applySnapshot(const std::string &name, float fadeSeconds = 0.3f) {
     const auto &states = m_Snapshots[name].getStates();
     for (const auto &[busName, state] : states) {
       if (m_Buses.count(busName))
-        m_Buses[busName]->setTargetVolume(state.volume);
+        m_Buses[busName]->setTargetVolume(state.volume, fadeSeconds);
     }
+  }
+
+  // Reset all bus volumes to 1.0
+  void resetBusVolumes(float fadeSeconds = 0.3f) {
+    for (auto &[name, bus] : m_Buses) {
+      bus->setTargetVolume(1.0f, fadeSeconds);
+    }
+  }
+
+  // Reset a specific event's bus to its EventDescriptor.volumeMin
+  void resetEventVolume(const std::string &eventName,
+                        float fadeSeconds = 0.3f) {
+    EventDescriptor ed;
+    if (m_Bank.findEvent(eventName, ed)) {
+      const std::string &busName = ed.bus.empty() ? "Master" : ed.bus;
+      if (m_Buses.count(busName)) {
+        m_Buses[busName]->setTargetVolume(ed.volumeMin, fadeSeconds);
+      }
+    }
+  }
+
+  // ---------------- Voice Pool API ----------------
+  void setMaxVoices(uint32_t maxReal) { m_VoicePool.setMaxVoices(maxReal); }
+  uint32_t getMaxVoices() const { return m_VoicePool.getMaxVoices(); }
+
+  void setStealBehavior(StealBehavior behavior) {
+    m_VoicePool.setStealBehavior(behavior);
+  }
+  StealBehavior getStealBehavior() const {
+    return m_VoicePool.getStealBehavior();
+  }
+
+  uint32_t getActiveVoiceCount() const {
+    return m_VoicePool.getActiveVoiceCount();
+  }
+  uint32_t getRealVoiceCount() const { return m_VoicePool.getRealVoiceCount(); }
+  uint32_t getVirtualVoiceCount() const {
+    return m_VoicePool.getVirtualVoiceCount();
   }
 
   SoLoud::Soloud &engine() { return m_Engine; }
@@ -158,6 +279,7 @@ private:
   SoLoud::Soloud m_Engine;
   SoundBank m_Bank;
   AudioEvent m_Event;
+  VoicePool m_VoicePool;
   std::unordered_map<std::string, std::shared_ptr<Bus>> m_Buses;
   std::vector<std::shared_ptr<AudioZone>> m_Zones;
   std::unordered_map<ListenerID, Listener> m_Listeners;

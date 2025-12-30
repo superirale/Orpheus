@@ -6,9 +6,10 @@ A lightweight, FMOD/Wwise-inspired audio engine built on [SoLoud](https://solhsa
 
 - **Event System** — Register and play named audio events from code or JSON
 - **3D Listeners** — Handle-based spatial audio (supports multiple listeners)
-- **Audio Zones** — Distance-based ambient audio regions
+- **Audio Zones** — Event-triggered spatial audio regions with distance falloff
 - **Bus Routing** — Organize audio into Master, SFX, Music channels
-- **Snapshots** — Save/restore mix states with smooth transitions
+- **Snapshots** — Save/restore mix states with configurable fade times
+- **Voice Pool** — Virtual voices & voice stealing (prevents CPU spikes)
 - **Parameters** — Global values that can drive audio behavior
 
 ## Quick Start
@@ -28,8 +29,17 @@ int main() {
   ListenerID listener = audio.createListener();
   audio.setListenerPosition(listener, playerX, playerY, playerZ);
 
+  // Audio zones (trigger events based on distance)
+  audio.addAudioZone("ambient_forest", {100, 0, 50}, 10.0f, 50.0f);
+
+  // Snapshots with configurable fade times
+  audio.createSnapshot("Combat");
+  audio.setSnapshotBusVolume("Combat", "Music", 0.3f);
+  
   // Game loop
   while (running) {
+    if (inCombat) audio.applySnapshot("Combat", 2.0f);  // 2 second fade
+    else audio.resetBusVolumes(1.0f);                   // 1 second fade
     audio.update(deltaTime);
   }
 
