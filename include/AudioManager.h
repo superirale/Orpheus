@@ -150,6 +150,7 @@ public:
     m_Parameters[name].Set(value);
   }
 
+  // Add audio zone without snapshot binding
   void addAudioZone(const std::string &eventName, const Vector3 &pos,
                     float inner, float outer) {
     m_Zones.emplace_back(std::make_shared<AudioZone>(
@@ -162,6 +163,36 @@ public:
         [this](AudioHandle h) { m_Engine.stop(h); },
         // IsValid callback
         [this](AudioHandle h) { return m_Engine.isValidVoiceHandle(h); }));
+  }
+
+  // Add audio zone with snapshot binding
+  // When the listener enters the zone, the bound snapshot is applied.
+  // When the listener exits, bus volumes reset to default.
+  // Example: audio.addAudioZone("waterfall", {100, 0, 0}, 10.0f, 20.0f,
+  // "Underwater");
+  void addAudioZone(const std::string &eventName, const Vector3 &pos,
+                    float inner, float outer, const std::string &snapshotName,
+                    float fadeIn = 0.5f, float fadeOut = 0.5f) {
+    m_Zones.emplace_back(std::make_shared<AudioZone>(
+        eventName, pos, inner, outer,
+        // PlayEvent callback
+        [this](const std::string &name) { return this->playEvent(name); },
+        // SetVolume callback
+        [this](AudioHandle h, float v) { m_Engine.setVolume(h, v); },
+        // Stop callback
+        [this](AudioHandle h) { m_Engine.stop(h); },
+        // IsValid callback
+        [this](AudioHandle h) { return m_Engine.isValidVoiceHandle(h); },
+        // Snapshot name
+        snapshotName,
+        // ApplySnapshot callback
+        [this](const std::string &snap, float fade) {
+          this->applySnapshot(snap, fade);
+        },
+        // RevertSnapshot callback
+        [this](float fade) { this->resetBusVolumes(fade); },
+        // Fade times
+        fadeIn, fadeOut));
   }
 
   // Listener management

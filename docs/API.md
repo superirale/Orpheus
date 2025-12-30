@@ -158,13 +158,17 @@ Spatial audio regions that trigger events based on listener distance. Zones use 
 
 | Method | Description |
 |--------|-------------|
-| `void addAudioZone(const std::string& eventName, const Vector3& pos, float inner, float outer)` | Add a zone using an event. |
+| `void addAudioZone(eventName, pos, inner, outer)` | Add a zone using an event. |
+| `void addAudioZone(eventName, pos, inner, outer, snapshotName, fadeIn, fadeOut)` | Add a zone with snapshot binding. |
 
 - **eventName**: Name of a registered event (not a file path)
 - **innerRadius**: Full volume distance
 - **outerRadius**: Zero volume distance (sound stops beyond this)
+- **snapshotName**: Snapshot to apply when listener enters zone (optional)
+- **fadeIn**: Fade time (seconds) when entering zone (default: 0.5)
+- **fadeOut**: Fade time (seconds) when exiting zone (default: 0.5)
 
-**Example:**
+**Basic Example:**
 ```cpp
 // Register the event first
 audio.registerEvent(ambientEvent);
@@ -172,6 +176,31 @@ audio.registerEvent(ambientEvent);
 // Create zone using event name
 audio.addAudioZone("forest_ambient", {100, 0, 50}, 10.0f, 50.0f);
 ```
+
+### Zone-Triggered Snapshots
+
+You can bind snapshots directly to AudioZones. This applies the snapshot when the listener enters the zone and reverts it when they exit.
+
+```cpp
+// Create an underwater snapshot
+audio.createSnapshot("Underwater");
+audio.setSnapshotBusVolume("Underwater", "Music", 0.4f);
+audio.setSnapshotBusVolume("Underwater", "SFX", 0.6f);
+
+// Register the waterfall ambient event
+audio.registerEvent(waterfallEvent);
+
+// Zone that triggers "Underwater" snapshot when listener is near
+audio.addAudioZone("waterfall", {100, 0, 0}, 10.0f, 20.0f, "Underwater");
+
+// With custom fade times (1s fade in, 2s fade out)
+audio.addAudioZone("cave_drip", {50, 0, 0}, 5.0f, 15.0f, "Cave", 1.0f, 2.0f);
+```
+
+**How it works:**
+- When the listener enters the zone (distance < outerRadius), the bound snapshot is applied
+- When the listener exits the zone (distance > outerRadius), bus volumes reset to default
+- The event audio plays with volume attenuation based on distance (independent of snapshot)
 
 ---
 
