@@ -4,6 +4,7 @@
 #include "Bus.h"
 #include "Event.h"
 #include "Listener.h"
+#include "MixZone.h"
 #include "Parameter.h"
 #include "Snapshot.h"
 #include "SoundBank.h"
@@ -77,6 +78,9 @@ public:
         voice.handle = 0;
       }
     }
+
+    // Update mix zones and apply highest priority active snapshot
+    updateMixZones(listenerPos);
 
     m_Engine.update3dAudio();
   }
@@ -273,6 +277,27 @@ public:
     return m_VoicePool.getVirtualVoiceCount();
   }
 
+  // ---------------- Mix Zone API ----------------
+  void addMixZone(const std::string &name, const std::string &snapshotName,
+                  const Vector3 &pos, float inner, float outer,
+                  uint8_t priority = 128, float fadeIn = 0.5f,
+                  float fadeOut = 0.5f) {
+    m_MixZones.emplace_back(std::make_shared<MixZone>(
+        name, snapshotName, pos, inner, outer, priority, fadeIn, fadeOut));
+  }
+
+  void removeMixZone(const std::string &name) {
+    m_MixZones.erase(
+        std::remove_if(m_MixZones.begin(), m_MixZones.end(),
+                       [&name](const auto &z) { return z->getName() == name; }),
+        m_MixZones.end());
+  }
+
+  void setZoneEnterCallback(ZoneEnterCallback cb) { m_ZoneEnterCallback = cb; }
+  void setZoneExitCallback(ZoneExitCallback cb) { m_ZoneExitCallback = cb; }
+
+  const std::string &getActiveMixZone() const { return m_ActiveMixZone; }
+
   SoLoud::Soloud &engine() { return m_Engine; }
 
 private:
@@ -288,4 +313,56 @@ private:
   std::mutex m_ParamMutex;
 
   std::unordered_map<std::string, Snapshot> m_Snapshots;
+
+  // Mix zones for snapshot binding
+  std::vector<std::shared_ptr<MixZone>> m_MixZones;
+  std::string m_ActiveMixZone; // Currently active zone name
+  ZoneEnterCallback m_ZoneEnterCallback;
+  ZoneExitCallback m_ZoneExitCallback;
+
+  void updateMixZones(const Vector3 &listenerPos) {
+    // Update all mix zones
+    for (auto &zone : m_MixZones) {
+      zone->update(listenerPos);
+    }
+
+    // Find highest priority active zone
+    MixZone *bestZone = nullptr;
+    for (auto &zone : m_MixZones) {
+      if (!zone->isActive())
+        continue;
+      if (!bestZone || zone->getPriority() > bestZone->getPriority() ||
+          (zone->getPriority() == bestZone->getPriority() &&
+           zone->getBlendFactor() > bestZone->getBlendFactor())) {
+        bestZone = zone.get();
+      }
+    }
+
+    // Handle zone transitions
+    std::string newActiveZone = bestZone ? bestZone->getName() : "";
+    if (newActiveZone != m_ActiveMixZone) {
+      // Exit previous zone
+      if (!m_ActiveMixZone.empty()) {
+        if (m_ZoneExitCallback) {
+          m_ZoneExitCallback(m_ActiveMixZone);
+        }
+        // If exiting to no zone, reset volumes
+        if (newActiveZone.empty()) {
+          resetBusVolumes(0.5f);
+        }
+      }
+      // Enter new zone
+      if (!newActiveZone.empty() && m_ZoneEnterCallback) {
+        m_ZoneEnterCallback(newActiveZone);
+      }
+      m_ActiveMixZone = newActiveZone;
+    }
+
+    // Apply snapshot with blend factor
+    if (bestZone) {
+      float blend = bestZone->getBlendFactor();
+      applySnapshot(bestZone->getSnapshotName(),
+                    blend * bestZone->getFadeInTime());
+    }
+  }
 };

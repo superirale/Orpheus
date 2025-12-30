@@ -14,93 +14,81 @@ int main(int argc, char **argv) {
   std::cout << "GoldenLyre Audio Engine initialized!\n";
 
   // Configure voice pool
-  audio.setMaxVoices(8); // Only 8 simultaneous real voices
+  audio.setMaxVoices(8);
   audio.setStealBehavior(StealBehavior::Quietest);
-  std::cout << "Voice pool: max " << audio.getMaxVoices() << " real voices\n";
 
-  // Register events with different priorities
-  const std::string explosionJson = R"({
-    "name": "explosion",
-    "sound": "assets/raw/explosion.wav",
-    "bus": "SFX",
-    "volume": [0.8, 1.0],
-    "priority": 200,
-    "maxDistance": 50.0,
-    "parameters": {
-      "distance": "attenuation"
-    }
-  })";
-
-  if (audio.registerEvent(explosionJson)) {
-    std::cout << "Registered 'explosion' event (priority 200)\n";
-  }
-
-  // Music event with high priority (never stolen)
+  // Register music event
   EventDescriptor musicEvent;
   musicEvent.name = "music";
   musicEvent.path = "assets/raw/mellotrix_doodle.wav";
   musicEvent.bus = "Music";
   musicEvent.volumeMin = 0.7f;
-  musicEvent.volumeMax = 1.0f;
   musicEvent.stream = true;
-  musicEvent.priority = 255; // Highest priority - never stolen
-
+  musicEvent.priority = 255;
   audio.registerEvent(musicEvent);
-  std::cout << "Registered 'music' event (priority 255)\n";
+  std::cout << "Registered 'music' event\n";
 
-  // Create a listener
+  // Create listener at origin
   ListenerID listener = audio.createListener();
   audio.setListenerPosition(listener, 0.0f, 0.0f, 0.0f);
 
-  // Play music (uses voice pool)
-  std::cout << "\nPlaying music...\n";
-  VoiceID musicVoice = audio.playEvent("music");
+  // Play background music
+  audio.playEvent("music");
+  std::cout << "Playing music...\n";
 
-  // Demonstrate voice limiting by spawning many sounds
-  std::cout << "\nSpawning 20 explosions at various positions...\n";
-  for (int i = 0; i < 20; i++) {
-    // Spread explosions in a circle around listener
-    float angle = (float)i * 0.314f;     // ~18 degrees apart
-    float dist = 10.0f + (i % 5) * 5.0f; // 10-30 units away
-    Vector3 pos{cosf(angle) * dist, 0.0f, sinf(angle) * dist};
-    audio.playEvent("explosion", pos);
-  }
+  // ============ CREATE SNAPSHOTS ============
+  // Cave snapshot - quieter music
+  audio.createSnapshot("Cave");
+  audio.setSnapshotBusVolume("Cave", "Music", 0.4f);
 
-  std::cout << "Real voices: " << audio.getRealVoiceCount()
-            << " | Virtual: " << audio.getVirtualVoiceCount()
-            << " | Total: " << audio.getActiveVoiceCount() << "\n";
-
-  // Create snapshot for combat
+  // Combat snapshot - louder SFX, quieter music
   audio.createSnapshot("Combat");
-  audio.setSnapshotBusVolume("Combat", "Music", 0.3f);
-  audio.setSnapshotBusVolume("Combat", "SFX", 1.0f);
+  audio.setSnapshotBusVolume("Combat", "Music", 0.2f);
+  audio.setSnapshotBusVolume("Combat", "SFX", 1.2f);
 
-  // Simulate main loop (5 seconds)
-  std::cout << "\nRunning audio update loop for 5 seconds...\n";
-  for (int i = 0; i < 3000; ++i) {
+  // ============ CREATE MIX ZONES ============
+  // Cave zone at position (30, 0, 0) - active from 15-45 units
+  audio.addMixZone("cave", "Cave", {30.0f, 0.0f, 0.0f}, 5.0f, 15.0f, 100);
+
+  // Combat zone at position (80, 0, 0) - active from 55-105 units
+  // Gap between 45-55 where music resets to normal
+  audio.addMixZone("arena", "Combat", {80.0f, 0.0f, 0.0f}, 10.0f, 25.0f, 200);
+
+  std::cout << "\nMix Zones created:\n";
+  std::cout << "  - Cave at (30, 0, 0), range 15-45\n";
+  std::cout << "  - Arena at (80, 0, 0), range 55-105\n";
+  std::cout << "  - Gap at 45-55 where music resets\n";
+
+  // Set up zone enter/exit callbacks
+  audio.setZoneEnterCallback([](const std::string &zone) {
+    std::cout << ">>> ENTERED zone: " << zone << "\n";
+  });
+  audio.setZoneExitCallback([](const std::string &zone) {
+    std::cout << "<<< EXITED zone: " << zone << "\n";
+  });
+
+  // ============ SIMULATE PLAYER MOVEMENT ============
+  std::cout << "\nSimulating player walking through zones...\n";
+
+  float playerX = 0.0f;
+  for (int i = 0; i < 500; ++i) {
+    // Move player to the right over time
+    if (i < 400) {
+      playerX = (float)i * 0.2f; // 0 to 80 units
+    } else {
+      playerX = 80.0f - (float)(i - 400) * 0.2f; // Back to 60
+    }
+
+    audio.setListenerPosition(listener, playerX, 0.0f, 0.0f);
     audio.update(1.0f / 60.0f);
     std::this_thread::sleep_for(std::chrono::milliseconds(16));
 
-    // Log voice counts periodically
-    if (i % 600 == 0) {
-      std::cout << "Frame " << i << " - Real: " << audio.getRealVoiceCount()
-                << " Virtual: " << audio.getVirtualVoiceCount() << "\n";
-    }
-
-    // Move listener toward explosions at frame 120
-    if (i == 1200) {
-      std::cout << "Moving listener toward explosions...\n";
-      audio.setListenerPosition(listener, 15.0f, 0.0f, 0.0f);
-    }
-
-    // Apply combat snapshot at frame 180
-    if (i >= 1800 && i < 2400) {
-      audio.applySnapshot("Combat", 0.5f);
-    }
-
-    // Reset at frame 240
-    if (i == 2400) {
-      audio.resetBusVolumes(0.5f);
+    // Print position and active zone periodically
+    if (i % 50 == 0) {
+      std::cout << "Position: (" << playerX << ", 0, 0) - Zone: "
+                << (audio.getActiveMixZone().empty() ? "[none]"
+                                                     : audio.getActiveMixZone())
+                << "\n";
     }
   }
 

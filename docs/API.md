@@ -92,6 +92,44 @@ std::cout << "Real: " << audio.getRealVoiceCount()
 
 ---
 
+## Mix Zones
+
+Spatial regions that automatically apply snapshots when the listener enters.
+
+| Method | Description |
+|--------|-------------|
+| `void addMixZone(name, snapshotName, pos, inner, outer, priority, fadeIn, fadeOut)` | Add a mix zone. |
+| `void removeMixZone(const std::string& name)` | Remove a mix zone. |
+| `void setZoneEnterCallback(fn)` | Set callback for zone entry. |
+| `void setZoneExitCallback(fn)` | Set callback for zone exit. |
+| `const std::string& getActiveMixZone()` | Get currently active zone name. |
+
+**Parameters:**
+- `inner`: Inner radius (full snapshot intensity)
+- `outer`: Outer radius (snapshot fades out)
+- `priority`: Higher priority zones override lower (0-255)
+
+**Example:**
+```cpp
+// Create snapshots
+audio.createSnapshot("Cave");
+audio.setSnapshotBusVolume("Cave", "Music", 0.4f);
+
+audio.createSnapshot("Combat");
+audio.setSnapshotBusVolume("Combat", "Music", 0.2f);
+
+// Create zones with priority
+audio.addMixZone("cave", "Cave", {30, 0, 0}, 5.0f, 15.0f, 100);
+audio.addMixZone("arena", "Combat", {60, 0, 0}, 10.0f, 25.0f, 200);
+
+// Optional: track zone events
+audio.setZoneEnterCallback([](const std::string& zone) {
+  std::cout << "Entered: " << zone << "\n";
+});
+```
+
+---
+
 ## Listeners
 
 Handle-based 3D listener management (FMOD/Wwise style).

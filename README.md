@@ -7,6 +7,7 @@ A lightweight, FMOD/Wwise-inspired audio engine built on [SoLoud](https://solhsa
 - **Event System** — Register and play named audio events from code or JSON
 - **3D Listeners** — Handle-based spatial audio (supports multiple listeners)
 - **Audio Zones** — Event-triggered spatial audio regions with distance falloff
+- **Mix Zones** — Automatic snapshot binding to spatial regions
 - **Bus Routing** — Organize audio into Master, SFX, Music channels
 - **Snapshots** — Save/restore mix states with configurable fade times
 - **Voice Pool** — Virtual voices & voice stealing (prevents CPU spikes)
