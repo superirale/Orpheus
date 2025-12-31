@@ -1,4 +1,5 @@
 #include "../include/AudioManager.h"
+#include "../include/Log.h"
 
 namespace Orpheus {
 
@@ -7,8 +8,10 @@ AudioManager::AudioManager() : m_Engine(), m_Event(m_Engine, m_Bank) {}
 AudioManager::~AudioManager() { Shutdown(); }
 
 Status AudioManager::Init() {
+  ORPHEUS_DEBUG("Initializing SoLoud engine");
   SoLoud::result r = m_Engine.init();
   if (r != SoLoud::SO_NO_ERROR) {
+    ORPHEUS_ERROR("SoLoud init failed with code: " << r);
     return Error(ErrorCode::EngineInitFailed,
                  "SoLoud init failed with code: " + std::to_string(r));
   }

@@ -6,6 +6,7 @@
 #include "include/DSPFilters.h"
 #include "include/Error.h"
 #include "include/Event.h"
+#include "include/Log.h"
 #include "include/OcclusionMaterial.h"
 #include "include/OcclusionProcessor.h"
 #include "include/OcclusionQuery.h"

@@ -1,4 +1,5 @@
 #include "../include/Event.h"
+#include "../include/Log.h"
 
 namespace Orpheus {
 
@@ -12,7 +13,7 @@ AudioHandle AudioEvent::Play(const std::string &eventName,
                              const std::string &busName) {
   auto eventResult = m_Bank.FindEvent(eventName);
   if (eventResult.IsError()) {
-    std::cerr << "Event not found: " << eventName << "\n";
+    ORPHEUS_WARN("Event not found: " << eventName);
     return 0;
   }
   const auto &ed = eventResult.Value();
@@ -52,6 +53,7 @@ SoLoud::BiquadResonantFilter &AudioEvent::GetOcclusionFilter() {
 void AudioEvent::RouteHandleToBus(AudioHandle h, const std::string &busName) {
   (void)h;
   (void)busName;
+  
 }
 
 } // namespace Orpheus
