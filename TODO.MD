@@ -1,12 +1,29 @@
 # TODO
 
-- [ ] Zone Shapes	Replace simple spheres with boxes or polygons for more precise triggers.
-- [ ] Crossfading	When multiple zones overlap, normalize total volume or prioritize one zone.
-- [ ] Reverb / DSP Filters	Add SoLoud filters to simulate room reverb per zone.
-- [ ] Occlusion	Apply lowpass filters when obstacles block line of sight.
-- [ ] Dynamic Zones	Move or scale zones during gameplay (e.g., vehicle interiors).
+## Completed ✅
+- [x] Reverb / DSP Filters - Add SoLoud filters to simulate room reverb per zone
+- [x] Occlusion/Obstruction - Apply lowpass filters when obstacles block line of sight
+- [x] Per-sound DSP chains - BiquadResonantFilter attached to audio sources
 
-- [ ] Occlusion/obstruction (line-of-sight checks)
-- [ ] Per-sound DSP chains
-- [ ] Convolution reverb (impulse response based)
-- [ ] Ray-traced acoustics
+## High Priority 🔥
+- [ ] Sidechaining/Ducking - Music ducks when dialogue plays
+- [ ] Distance Curves - Custom rolloff (linear, logarithmic, custom)
+- [ ] Doppler Effect - Velocity-based pitch shift for moving 3D sounds
+- [ ] Randomization - Random pitch/volume variation, playlist shuffle
+- [ ] Markers/Cues - Trigger callbacks at specific audio positions
+
+## Medium Priority
+- [ ] Interactive Music - Stingers, transitions, beat-synced segments
+- [ ] RTPC Curves - Parameter-to-effect automation curves
+- [ ] Profiler - Voice count, CPU usage, memory stats
+- [ ] Zone Shapes - Replace simple spheres with boxes or polygons
+- [ ] Crossfading - Normalize volume when multiple zones overlap
+- [ ] Dynamic Zones - Move or scale zones during gameplay
+- [ ] Compressor/Limiter - Dynamic range control on buses
+
+## Low Priority
+- [ ] Convolution Reverb - Impulse response based (realistic spaces)
+- [ ] HDR Audio - Loudness normalization
+- [ ] Surround/LFE - 5.1/7.1 speaker layouts
+- [ ] Ray-traced Acoustics - Advanced propagation simulation
+- [ ] Audio Codec - Vorbis/Opus compression support
