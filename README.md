@@ -15,19 +15,31 @@ A lightweight, FMOD/Wwise-inspired audio engine built on [SoLoud](https://solhsa
 - **Snapshots** — Save/restore mix states with configurable fade times
 - **Voice Pool** — Virtual voices & voice stealing (prevents CPU spikes)
 - **Parameters** — Global values that can drive audio behavior
+- **Error Handling** — `Result<T>` pattern for explicit error propagation
+- **Logging** — Configurable log levels (Debug/Info/Warn/Error) with callbacks
 
 ## Quick Start
 
 ```cpp
 #include "Orpheus.h"
+using namespace Orpheus;
 
 int main() {
   AudioManager audio;
-  audio.Init();
+  
+  // Initialize with error handling
+  auto initResult = audio.Init();
+  if (initResult.IsError()) {
+    std::cerr << initResult.GetError().What() << "\n";
+    return -1;
+  }
 
   // Load and play events
   audio.LoadEventsFromFile("assets/events.json");
-  audio.PlayEvent("background_music");
+  auto voiceResult = audio.PlayEvent("background_music");
+  if (voiceResult.IsError()) {
+    ORPHEUS_WARN("Failed to play: " << voiceResult.GetError().What());
+  }
 
   // 3D listener
   ListenerID listener = audio.CreateListener();
@@ -64,13 +76,16 @@ mkdir build && cd build
 cmake ..
 cmake --build . -j8
 ./orpheus_example
+
+# Run tests
+./orpheus_tests
 ```
 
 **Requirements:**
 - CMake 3.14+
 - C++17 compiler
 
-SoLoud and nlohmann/json are fetched automatically via CMake FetchContent.
+SoLoud, nlohmann/json, and Catch2 are fetched automatically via CMake FetchContent.
 
 ## Event JSON Format
 
@@ -109,11 +124,14 @@ audio.AddMixZone("arena", "Combat", {100, 0, 0}, 10.0f, 25.0f, 200);
 Orpheus/
 ├── include/           # Headers
 │   ├── AudioManager.h # Main API
+│   ├── Error.h        # Result<T> error handling
+│   ├── Log.h          # Logging system
 │   ├── AudioZone.h    # Spatial audio regions
 │   ├── MixZone.h      # Snapshot regions
 │   ├── Bus.h          # Audio routing
 │   ├── Snapshot.h     # Mix snapshots
 │   └── ...
+├── tests/             # Unit tests (Catch2)
 ├── example/           # Example usage
 ├── assets/            # Audio files
 └── docs/              # Documentation

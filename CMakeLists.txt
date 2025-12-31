@@ -15,6 +15,7 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 # Options
 option(ORPHEUS_BUILD_EXAMPLES "Build example applications" ON)
+option(ORPHEUS_BUILD_TESTS "Build unit tests" ON)
 option(ORPHEUS_USE_PCH "Use precompiled headers" ON)
 
 # -----------------------------------------------------------------------------
@@ -324,6 +325,35 @@ install(FILES
 )
 
 # -----------------------------------------------------------------------------
+# Unit Tests (Catch2)
+# -----------------------------------------------------------------------------
+if(ORPHEUS_BUILD_TESTS)
+    include(FetchContent)
+    FetchContent_Declare(
+        Catch2
+        GIT_REPOSITORY https://github.com/catchorg/Catch2.git
+        GIT_TAG v3.5.0
+        GIT_SHALLOW TRUE
+    )
+    FetchContent_MakeAvailable(Catch2)
+
+    # Test sources
+    file(GLOB ORPHEUS_TEST_SOURCES "tests/*.cpp")
+
+    add_executable(orpheus_tests ${ORPHEUS_TEST_SOURCES})
+    target_link_libraries(orpheus_tests PRIVATE orpheus Catch2::Catch2WithMain)
+    target_include_directories(orpheus_tests PRIVATE 
+        ${CMAKE_CURRENT_SOURCE_DIR}
+        ${JSON_INCLUDE_DIR}
+    )
+
+    # Enable CTest
+    include(CTest)
+    include(Catch)
+    catch_discover_tests(orpheus_tests)
+endif()
+
+# -----------------------------------------------------------------------------
 # Summary
 # -----------------------------------------------------------------------------
 if(SOLOUD_FETCHED)
@@ -338,5 +368,6 @@ message(STATUS "")
 message(STATUS "Orpheus ${PROJECT_VERSION}")
 message(STATUS "  SoLoud:                  ${SOLOUD_SOURCE}")
 message(STATUS "  Build examples:          ${ORPHEUS_BUILD_EXAMPLES}")
+message(STATUS "  Build tests:             ${ORPHEUS_BUILD_TESTS}")
 message(STATUS "  Use precompiled headers: ${ORPHEUS_USE_PCH}")
 message(STATUS "")

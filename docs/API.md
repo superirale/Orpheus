@@ -12,7 +12,7 @@ The main entry point for all audio operations.
 
 | Method | Description |
 |--------|-------------|
-| `bool Init()` | Initialize the audio engine. Returns `true` on success. |
+| `Status Init()` | Initialize the audio engine. Returns `Ok()` on success, `Error` on failure. |
 | `void Shutdown()` | Deinitialize the audio engine. |
 | `void Update(float dt)` | Call every frame to update 3D audio, buses, and zones. |
 
@@ -21,9 +21,9 @@ The main entry point for all audio operations.
 | Method | Description |
 |--------|-------------|
 | `void RegisterEvent(const EventDescriptor& ed)` | Register an event using a struct. |
-| `bool RegisterEvent(const std::string& jsonString)` | Register an event from a JSON string. |
-| `bool LoadEventsFromFile(const std::string& jsonPath)` | Load multiple events from a JSON file. |
-| `VoiceID PlayEvent(const std::string& name)` | Play a registered event. Returns a voice ID. |
+| `Status RegisterEvent(const std::string& jsonString)` | Register an event from a JSON string. |
+| `Status LoadEventsFromFile(const std::string& jsonPath)` | Load multiple events from a JSON file. |
+| `Result<VoiceID> PlayEvent(const std::string& name)` | Play a registered event. Returns a voice ID on success. |
 
 **EventDescriptor struct:**
 ```cpp
@@ -211,7 +211,7 @@ Audio routing channels with volume control.
 | Method | Description |
 |--------|--------------|
 | `void CreateBus(const std::string& name)` | Create a new bus. |
-| `std::shared_ptr<Bus> GetBus(const std::string& name)` | Get a bus by name. |
+| `Result<std::shared_ptr<Bus>> GetBus(const std::string& name)` | Get a bus by name. Returns `Error` if not found. |
 
 **Bus methods:**
 | Method | Description |
@@ -234,7 +234,7 @@ Save and restore bus mix states with smooth fade transitions.
 |--------|--------------|
 | `void CreateSnapshot(const std::string& name)` | Create a named snapshot. |
 | `void SetSnapshotBusVolume(const std::string& snap, const std::string& bus, float volume)` | Set a bus volume in a snapshot. |
-| `void ApplySnapshot(const std::string& name, float fadeSeconds = 0.3f)` | Apply a snapshot with fade. |
+| `Status ApplySnapshot(const std::string& name, float fadeSeconds = 0.3f)` | Apply a snapshot with fade. Returns `Error` if not found. |
 | `void ResetBusVolumes(float fadeSeconds = 0.3f)` | Reset all buses to 1.0 with fade. |
 | `void ResetEventVolume(const std::string& eventName, float fadeSeconds = 0.3f)` | Reset bus to event's `volumeMin` with fade. |
 
@@ -264,9 +264,9 @@ Reverb buses provide environment-based spatial coloration without duplicating ef
 
 | Method | Description |
 |--------|--------------|
-| `bool CreateReverbBus(name, roomSize, damp, wet, width)` | Create a reverb bus with custom parameters. |
-| `bool CreateReverbBus(name, ReverbPreset)` | Create a reverb bus from a preset. |
-| `shared_ptr<ReverbBus> GetReverbBus(name)` | Get a reverb bus by name. |
+| `Status CreateReverbBus(name, roomSize, damp, wet, width)` | Create a reverb bus with custom parameters. |
+| `Status CreateReverbBus(name, ReverbPreset)` | Create a reverb bus from a preset. |
+| `Result<shared_ptr<ReverbBus>> GetReverbBus(name)` | Get a reverb bus by name. Returns `Error` if not found. |
 | `void SetReverbParams(name, wet, roomSize, damp, fadeTime)` | Adjust reverb parameters with fade. |
 | `void AddReverbZone(name, reverbBusName, pos, inner, outer, priority)` | Add a spatial reverb influence zone. |
 | `void RemoveReverbZone(name)` | Remove a reverb zone. |
@@ -429,7 +429,8 @@ struct Vector3 {
 ## Quick Start
 
 ```cpp
-#include "GoldenLyre.h"
+#include "Orpheus.h"
+using namespace Orpheus;
 
 int main() {
   AudioManager audio;
@@ -453,3 +454,139 @@ int main() {
   return 0;
 }
 ```
+
+---
+
+## Error Handling
+
+Orpheus uses a `Result<T>` pattern for explicit error handling without exceptions.
+
+### Core Types
+
+| Type | Description |
+|------|-------------|
+| `ErrorCode` | Enum of error categories (FileNotFound, EventNotFound, etc.) |
+| `Error` | Holds an `ErrorCode` and optional message |
+| `Result<T>` | Either a value of type `T` or an `Error` |
+| `Status` | Alias for `Result<void>` for functions that return nothing |
+
+### Usage
+
+```cpp
+// Check initialization
+auto initResult = audio.Init();
+if (initResult.IsError()) {
+  std::cerr << initResult.GetError().What() << "\n";
+  return -1;
+}
+
+// Check sound playback
+auto voiceResult = audio.PlayEvent("explosion");
+if (voiceResult.IsError()) {
+  // Handle error
+} else {
+  VoiceID id = voiceResult.Value();
+}
+
+// Get bus with error handling
+auto busResult = audio.GetBus("Music");
+if (busResult) {  // Implicit bool conversion
+  busResult.Value()->SetVolume(0.5f);
+}
+
+// Use ValueOr for defaults
+VoiceID id = audio.PlayEvent("music").ValueOr(0);
+```
+
+### ErrorCode Values
+
+| Code | Description |
+|------|-------------|
+| `Ok` | No error |
+| `EngineInitFailed` | Audio engine initialization failed |
+| `FileNotFound` | Audio file not found |
+| `EventNotFound` | Named event not registered |
+| `BusNotFound` | Bus doesn't exist |
+| `SnapshotNotFound` | Snapshot doesn't exist |
+| `ReverbBusNotFound` | Reverb bus doesn't exist |
+| `JsonParseError` | Invalid JSON format |
+| `PlaybackFailed` | Sound playback failed |
+| `VoiceAllocationFailed` | Voice pool exhausted |
+
+---
+
+## Logging
+
+Configurable logging with callbacks for integration with your game's logging system.
+
+### Log Levels
+
+| Level | Description |
+|-------|-------------|
+| `Debug` | Detailed debugging info |
+| `Info` | General information |
+| `Warn` | Potential issues |
+| `Error` | Errors that need attention |
+| `None` | Disable all logging |
+
+### Configuration
+
+```cpp
+// Set minimum log level (default: Info)
+Orpheus::GetLogger().SetMinLevel(Orpheus::LogLevel::Debug);
+
+// Set custom callback
+Orpheus::GetLogger().SetCallback([](Orpheus::LogLevel level, 
+                                     const std::string& msg) {
+  myGameLog(level, msg);  // Forward to your system
+});
+
+// Clear callback (revert to stderr)
+Orpheus::GetLogger().ClearCallback();
+```
+
+### Logging Macros
+
+```cpp
+ORPHEUS_DEBUG("Initializing engine");
+ORPHEUS_INFO("Loaded " << count << " events");
+ORPHEUS_WARN("Event not found: " << name);
+ORPHEUS_ERROR("Failed to load: " << path);
+```
+
+---
+
+## Unit Testing
+
+Orpheus includes a comprehensive test suite using [Catch2](https://github.com/catchorg/Catch2).
+
+### Running Tests
+
+```bash
+# Build with tests (default)
+cmake -DORPHEUS_BUILD_TESTS=ON ..
+cmake --build .
+
+# Run tests
+./orpheus_tests
+
+# Run with verbose output
+./orpheus_tests --success
+
+# Run specific test cases
+./orpheus_tests "[Error]"
+./orpheus_tests "[VoicePool]"
+```
+
+### Test Coverage
+
+| Module | Test File |
+|--------|----------|
+| Error, Result, Status | `test_error.cpp` |
+| Types, Vector3 | `test_types.cpp` |
+| Voice, VoiceState | `test_voice.cpp` |
+| Snapshot, BusState | `test_snapshot.cpp` |
+| Parameter | `test_parameter.cpp` |
+| SoundBank, EventDescriptor | `test_soundbank.cpp` |
+| VoicePool | `test_voicepool.cpp` |
+| Logger | `test_log.cpp` |
