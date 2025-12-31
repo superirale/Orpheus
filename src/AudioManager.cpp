@@ -20,6 +20,14 @@ Status AudioManager::Init() {
   CreateBus("SFX");
   CreateBus("Music");
 
+  // Set up bus router for AudioEvent
+  m_Event.SetBusRouter([this](AudioHandle h, const std::string &busName) {
+    if (m_Buses.count(busName)) {
+      m_Buses[busName]->AddHandle(m_Engine, h);
+    }
+  });
+
+  ORPHEUS_INFO("Orpheus audio engine initialized");
   return Ok();
 }
 
@@ -54,17 +62,9 @@ void AudioManager::Update(float dt) {
 
     // Handle voices that need to start playing
     if (voice.IsReal() && voice.handle == 0) {
+      // m_Event.Play() automatically routes to the correct bus via SetBusRouter
+      // callback
       voice.handle = m_Event.Play(voice.eventName);
-      if (voice.handle != 0) {
-        auto eventResult = m_Bank.FindEvent(voice.eventName);
-        if (eventResult) {
-          const auto &ed = eventResult.Value();
-          const std::string &busName = ed.bus.empty() ? "Master" : ed.bus;
-          if (m_Buses.count(busName)) {
-            m_Buses[busName]->AddHandle(m_Engine, voice.handle);
-          }
-        }
-      }
     }
     // Handle voices that became virtual
     else if (voice.IsVirtual() && voice.handle != 0) {
@@ -106,30 +106,20 @@ Result<VoiceID> AudioManager::PlayEvent(const std::string &name,
 
   // Try to make it real (may steal another voice)
   if (m_VoicePool.MakeReal(voice)) {
+    // m_Event.Play() automatically routes to the correct bus via SetBusRouter
+    // callback
     voice->handle = m_Event.Play(name);
-    if (voice->handle != 0) {
-      const std::string &busName = ed.bus.empty() ? "Master" : ed.bus;
-      if (m_Buses.count(busName)) {
-        m_Buses[busName]->AddHandle(m_Engine, voice->handle);
-      }
-    }
   }
 
   return voice->id;
 }
 
 Result<AudioHandle> AudioManager::PlayEventDirect(const std::string &name) {
-  auto eventResult = m_Bank.FindEvent(name);
+  // m_Event.Play() automatically routes to the correct bus via SetBusRouter
+  // callback
   AudioHandle h = m_Event.Play(name);
   if (h == 0) {
     return Error(ErrorCode::PlaybackFailed, "Failed to play event: " + name);
-  }
-  if (eventResult) {
-    const auto &ed = eventResult.Value();
-    const std::string &busName = ed.bus.empty() ? "Master" : ed.bus;
-    if (m_Buses.count(busName)) {
-      m_Buses[busName]->AddHandle(m_Engine, h);
-    }
   }
   return h;
 }

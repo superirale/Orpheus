@@ -51,9 +51,9 @@ SoLoud::BiquadResonantFilter &AudioEvent::GetOcclusionFilter() {
 }
 
 void AudioEvent::RouteHandleToBus(AudioHandle h, const std::string &busName) {
-  (void)h;
-  (void)busName;
-  
+  if (m_BusRouter) {
+    m_BusRouter(h, busName);
+  }
 }
 
 } // namespace Orpheus
