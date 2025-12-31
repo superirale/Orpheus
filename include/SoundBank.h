@@ -3,10 +3,13 @@
 #include <cstdint>
 #include <fstream>
 #include <iostream>
+#include <optional>
 #include <string>
 #include <unordered_map>
 
 #include <nlohmann/json.hpp>
+
+#include "Error.h"
 
 namespace Orpheus {
 
@@ -26,10 +29,10 @@ struct EventDescriptor {
 
 class SoundBank {
 public:
-  bool LoadFromJsonFile(const std::string &jsonPath);
-  bool RegisterEventFromJson(const std::string &jsonString);
+  Status LoadFromJsonFile(const std::string &jsonPath);
+  Status RegisterEventFromJson(const std::string &jsonString);
   void RegisterEvent(const EventDescriptor &ed);
-  bool FindEvent(const std::string &name, EventDescriptor &out);
+  Result<EventDescriptor> FindEvent(const std::string &name);
 
 private:
   std::unordered_map<std::string, EventDescriptor> events;

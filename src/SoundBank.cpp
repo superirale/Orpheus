@@ -2,11 +2,11 @@
 
 namespace Orpheus {
 
-bool SoundBank::LoadFromJsonFile(const std::string &jsonPath) {
+Status SoundBank::LoadFromJsonFile(const std::string &jsonPath) {
   std::ifstream file(jsonPath);
   if (!file.is_open()) {
-    std::cerr << "Failed to open JSON file: " << jsonPath << "\n";
-    return false;
+    return Error(ErrorCode::FileNotFound,
+                 "Failed to open JSON file: " + jsonPath);
   }
 
   try {
@@ -15,17 +15,19 @@ bool SoundBank::LoadFromJsonFile(const std::string &jsonPath) {
 
     if (j.is_array()) {
       for (const auto &eventJson : j) {
-        RegisterEventFromJson(eventJson.dump());
+        auto result = RegisterEventFromJson(eventJson.dump());
+        if (result.IsError()) {
+          return result;
+        }
       }
     }
-    return true;
+    return Ok();
   } catch (const std::exception &e) {
-    std::cerr << "JSON parse error: " << e.what() << "\n";
-    return false;
+    return Error(ErrorCode::JsonParseError, e.what());
   }
 }
 
-bool SoundBank::RegisterEventFromJson(const std::string &jsonString) {
+Status SoundBank::RegisterEventFromJson(const std::string &jsonString) {
   try {
     nlohmann::json j = nlohmann::json::parse(jsonString);
 
@@ -61,15 +63,13 @@ bool SoundBank::RegisterEventFromJson(const std::string &jsonString) {
     }
 
     if (ed.name.empty()) {
-      std::cerr << "Event missing 'name' field\n";
-      return false;
+      return Error(ErrorCode::InvalidFormat, "Event missing 'name' field");
     }
 
     RegisterEvent(ed);
-    return true;
+    return Ok();
   } catch (const std::exception &e) {
-    std::cerr << "JSON parse error: " << e.what() << "\n";
-    return false;
+    return Error(ErrorCode::JsonParseError, e.what());
   }
 }
 
@@ -77,12 +77,12 @@ void SoundBank::RegisterEvent(const EventDescriptor &ed) {
   events[ed.name] = ed;
 }
 
-bool SoundBank::FindEvent(const std::string &name, EventDescriptor &out) {
+Result<EventDescriptor> SoundBank::FindEvent(const std::string &name) {
   auto it = events.find(name);
-  if (it == events.end())
-    return false;
-  out = it->second;
-  return true;
+  if (it == events.end()) {
+    return Error(ErrorCode::EventNotFound, "Event not found: " + name);
+  }
+  return it->second;
 }
 
 } // namespace Orpheus

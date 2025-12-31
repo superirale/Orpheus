@@ -9,6 +9,7 @@
 
 #include "AudioZone.h"
 #include "Bus.h"
+#include "Error.h"
 #include "Event.h"
 #include "Listener.h"
 #include "MixZone.h"
@@ -33,16 +34,17 @@ public:
   ~AudioManager();
 
   // Core lifecycle
-  bool Init();
+  Status Init();
   void Shutdown();
   void Update(float dt);
 
   // Event playback
-  VoiceID PlayEvent(const std::string &name, Vector3 position = {0, 0, 0});
-  AudioHandle PlayEventDirect(const std::string &name);
+  Result<VoiceID> PlayEvent(const std::string &name,
+                            Vector3 position = {0, 0, 0});
+  Result<AudioHandle> PlayEventDirect(const std::string &name);
   void RegisterEvent(const EventDescriptor &ed);
-  bool RegisterEvent(const std::string &jsonString);
-  bool LoadEventsFromFile(const std::string &jsonPath);
+  Status RegisterEvent(const std::string &jsonString);
+  Status LoadEventsFromFile(const std::string &jsonPath);
 
   // Parameters
   void SetGlobalParameter(const std::string &name, float value);
@@ -66,13 +68,13 @@ public:
 
   // Bus API
   void CreateBus(const std::string &name);
-  std::shared_ptr<Bus> GetBus(const std::string &name);
+  Result<std::shared_ptr<Bus>> GetBus(const std::string &name);
 
   // Snapshot API
   void CreateSnapshot(const std::string &name);
   void SetSnapshotBusVolume(const std::string &snap, const std::string &bus,
                             float volume);
-  void ApplySnapshot(const std::string &name, float fadeSeconds = 0.3f);
+  Status ApplySnapshot(const std::string &name, float fadeSeconds = 0.3f);
   void ResetBusVolumes(float fadeSeconds = 0.3f);
   void ResetEventVolume(const std::string &eventName, float fadeSeconds = 0.3f);
 
@@ -96,10 +98,11 @@ public:
   const std::string &GetActiveMixZone() const;
 
   // Reverb Bus API
-  bool CreateReverbBus(const std::string &name, float roomSize = 0.5f,
-                       float damp = 0.5f, float wet = 0.5f, float width = 1.0f);
-  bool CreateReverbBus(const std::string &name, ReverbPreset preset);
-  std::shared_ptr<ReverbBus> GetReverbBus(const std::string &name);
+  Status CreateReverbBus(const std::string &name, float roomSize = 0.5f,
+                         float damp = 0.5f, float wet = 0.5f,
+                         float width = 1.0f);
+  Status CreateReverbBus(const std::string &name, ReverbPreset preset);
+  Result<std::shared_ptr<ReverbBus>> GetReverbBus(const std::string &name);
   void SetReverbParams(const std::string &name, float wet, float roomSize,
                        float damp, float fadeTime = 0.0f);
   void AddReverbZone(const std::string &name, const std::string &reverbBusName,

@@ -6,18 +6,18 @@ AudioManager::AudioManager() : m_Engine(), m_Event(m_Engine, m_Bank) {}
 
 AudioManager::~AudioManager() { Shutdown(); }
 
-bool AudioManager::Init() {
+Status AudioManager::Init() {
   SoLoud::result r = m_Engine.init();
   if (r != SoLoud::SO_NO_ERROR) {
-    std::cerr << "SoLoud init failed: " << r << "\n";
-    return false;
+    return Error(ErrorCode::EngineInitFailed,
+                 "SoLoud init failed with code: " + std::to_string(r));
   }
   // Create default buses
   CreateBus("Master");
   CreateBus("SFX");
   CreateBus("Music");
 
-  return true;
+  return Ok();
 }
 
 void AudioManager::Shutdown() { m_Engine.deinit(); }
@@ -53,8 +53,9 @@ void AudioManager::Update(float dt) {
     if (voice.IsReal() && voice.handle == 0) {
       voice.handle = m_Event.Play(voice.eventName);
       if (voice.handle != 0) {
-        EventDescriptor ed;
-        if (m_Bank.FindEvent(voice.eventName, ed)) {
+        auto eventResult = m_Bank.FindEvent(voice.eventName);
+        if (eventResult) {
+          const auto &ed = eventResult.Value();
           const std::string &busName = ed.bus.empty() ? "Master" : ed.bus;
           if (m_Buses.count(busName)) {
             m_Buses[busName]->AddHandle(m_Engine, voice.handle);
@@ -84,18 +85,19 @@ void AudioManager::Update(float dt) {
   m_Engine.update3dAudio();
 }
 
-VoiceID AudioManager::PlayEvent(const std::string &name, Vector3 position) {
-  EventDescriptor ed;
-  if (!m_Bank.FindEvent(name, ed)) {
-    std::cerr << "Event not found: " << name << "\n";
-    return 0;
+Result<VoiceID> AudioManager::PlayEvent(const std::string &name,
+                                        Vector3 position) {
+  auto eventResult = m_Bank.FindEvent(name);
+  if (eventResult.IsError()) {
+    return eventResult.GetError();
   }
+  const auto &ed = eventResult.Value();
 
   // Allocate voice in pool
   Voice *voice =
       m_VoicePool.AllocateVoice(name, ed.priority, position, ed.maxDistance);
   if (!voice)
-    return 0;
+    return Error(ErrorCode::VoiceAllocationFailed, "Failed to allocate voice");
 
   voice->volume = ed.volumeMin;
 
@@ -113,13 +115,14 @@ VoiceID AudioManager::PlayEvent(const std::string &name, Vector3 position) {
   return voice->id;
 }
 
-AudioHandle AudioManager::PlayEventDirect(const std::string &name) {
-  EventDescriptor ed;
-  if (!m_Bank.FindEvent(name, ed)) {
-    return m_Event.Play(name);
-  }
+Result<AudioHandle> AudioManager::PlayEventDirect(const std::string &name) {
+  auto eventResult = m_Bank.FindEvent(name);
   AudioHandle h = m_Event.Play(name);
-  if (h != 0) {
+  if (h == 0) {
+    return Error(ErrorCode::PlaybackFailed, "Failed to play event: " + name);
+  }
+  if (eventResult) {
+    const auto &ed = eventResult.Value();
     const std::string &busName = ed.bus.empty() ? "Master" : ed.bus;
     if (m_Buses.count(busName)) {
       m_Buses[busName]->AddHandle(m_Engine, h);
@@ -132,11 +135,11 @@ void AudioManager::RegisterEvent(const EventDescriptor &ed) {
   m_Bank.RegisterEvent(ed);
 }
 
-bool AudioManager::RegisterEvent(const std::string &jsonString) {
+Status AudioManager::RegisterEvent(const std::string &jsonString) {
   return m_Bank.RegisterEventFromJson(jsonString);
 }
 
-bool AudioManager::LoadEventsFromFile(const std::string &jsonPath) {
+Status AudioManager::LoadEventsFromFile(const std::string &jsonPath) {
   return m_Bank.LoadFromJsonFile(jsonPath);
 }
 
@@ -154,7 +157,10 @@ void AudioManager::AddAudioZone(const std::string &eventName,
                                 const Vector3 &pos, float inner, float outer) {
   m_Zones.emplace_back(std::make_shared<AudioZone>(
       eventName, pos, inner, outer,
-      [this](const std::string &name) { return this->PlayEventDirect(name); },
+      [this](const std::string &name) {
+        auto result = this->PlayEventDirect(name);
+        return result.ValueOr(0);
+      },
       [this](AudioHandle h, float v) { m_Engine.setVolume(h, v); },
       [this](AudioHandle h) { m_Engine.stop(h); },
       [this](AudioHandle h) { return m_Engine.isValidVoiceHandle(h); }));
@@ -166,7 +172,10 @@ void AudioManager::AddAudioZone(const std::string &eventName,
                                 float fadeOut) {
   m_Zones.emplace_back(std::make_shared<AudioZone>(
       eventName, pos, inner, outer,
-      [this](const std::string &name) { return this->PlayEventDirect(name); },
+      [this](const std::string &name) {
+        auto result = this->PlayEventDirect(name);
+        return result.ValueOr(0);
+      },
       [this](AudioHandle h, float v) { m_Engine.setVolume(h, v); },
       [this](AudioHandle h) { m_Engine.stop(h); },
       [this](AudioHandle h) { return m_Engine.isValidVoiceHandle(h); },
@@ -226,8 +235,12 @@ void AudioManager::CreateBus(const std::string &name) {
   m_Buses[name] = std::make_shared<Bus>(name);
 }
 
-std::shared_ptr<Bus> AudioManager::GetBus(const std::string &name) {
-  return m_Buses[name];
+Result<std::shared_ptr<Bus>> AudioManager::GetBus(const std::string &name) {
+  auto it = m_Buses.find(name);
+  if (it == m_Buses.end()) {
+    return Error(ErrorCode::BusNotFound, "Bus not found: " + name);
+  }
+  return it->second;
 }
 
 void AudioManager::CreateSnapshot(const std::string &name) {
@@ -239,12 +252,17 @@ void AudioManager::SetSnapshotBusVolume(const std::string &snap,
   m_Snapshots[snap].SetBusState(bus, BusState{volume});
 }
 
-void AudioManager::ApplySnapshot(const std::string &name, float fadeSeconds) {
-  const auto &states = m_Snapshots[name].GetStates();
+Status AudioManager::ApplySnapshot(const std::string &name, float fadeSeconds) {
+  auto it = m_Snapshots.find(name);
+  if (it == m_Snapshots.end()) {
+    return Error(ErrorCode::SnapshotNotFound, "Snapshot not found: " + name);
+  }
+  const auto &states = it->second.GetStates();
   for (const auto &[busName, state] : states) {
     if (m_Buses.count(busName))
       m_Buses[busName]->SetTargetVolume(state.volume, fadeSeconds);
   }
+  return Ok();
 }
 
 void AudioManager::ResetBusVolumes(float fadeSeconds) {
@@ -255,8 +273,9 @@ void AudioManager::ResetBusVolumes(float fadeSeconds) {
 
 void AudioManager::ResetEventVolume(const std::string &eventName,
                                     float fadeSeconds) {
-  EventDescriptor ed;
-  if (m_Bank.FindEvent(eventName, ed)) {
+  auto eventResult = m_Bank.FindEvent(eventName);
+  if (eventResult) {
+    const auto &ed = eventResult.Value();
     const std::string &busName = ed.bus.empty() ? "Master" : ed.bus;
     if (m_Buses.count(busName)) {
       m_Buses[busName]->SetTargetVolume(ed.volumeMin, fadeSeconds);
@@ -321,51 +340,58 @@ const std::string &AudioManager::GetActiveMixZone() const {
 
 SoLoud::Soloud &AudioManager::Engine() { return m_Engine; }
 
-bool AudioManager::CreateReverbBus(const std::string &name, float roomSize,
-                                   float damp, float wet, float width) {
+Status AudioManager::CreateReverbBus(const std::string &name, float roomSize,
+                                     float damp, float wet, float width) {
   if (m_ReverbBuses.count(name) > 0) {
-    return false;
+    return Error(ErrorCode::BusAlreadyExists,
+                 "Reverb bus already exists: " + name);
   }
 
   auto reverbBus = std::make_shared<ReverbBus>(name);
   reverbBus->SetParams(wet, roomSize, damp, width);
 
   if (!reverbBus->Init(m_Engine)) {
-    std::cerr << "Failed to initialize reverb bus: " << name << "\n";
-    return false;
+    return Error(ErrorCode::ReverbBusInitFailed,
+                 "Failed to initialize reverb bus: " + name);
   }
 
   m_ReverbBuses[name] = reverbBus;
-  return true;
+  return Ok();
 }
 
-bool AudioManager::CreateReverbBus(const std::string &name,
-                                   ReverbPreset preset) {
+Status AudioManager::CreateReverbBus(const std::string &name,
+                                     ReverbPreset preset) {
   if (m_ReverbBuses.count(name) > 0) {
-    return false;
+    return Error(ErrorCode::BusAlreadyExists,
+                 "Reverb bus already exists: " + name);
   }
 
   auto reverbBus = std::make_shared<ReverbBus>(name);
   reverbBus->ApplyPreset(preset);
 
   if (!reverbBus->Init(m_Engine)) {
-    std::cerr << "Failed to initialize reverb bus: " << name << "\n";
-    return false;
+    return Error(ErrorCode::ReverbBusInitFailed,
+                 "Failed to initialize reverb bus: " + name);
   }
 
   m_ReverbBuses[name] = reverbBus;
-  return true;
+  return Ok();
 }
 
-std::shared_ptr<ReverbBus> AudioManager::GetReverbBus(const std::string &name) {
+Result<std::shared_ptr<ReverbBus>>
+AudioManager::GetReverbBus(const std::string &name) {
   auto it = m_ReverbBuses.find(name);
-  return (it != m_ReverbBuses.end()) ? it->second : nullptr;
+  if (it == m_ReverbBuses.end()) {
+    return Error(ErrorCode::ReverbBusNotFound, "Reverb bus not found: " + name);
+  }
+  return it->second;
 }
 
 void AudioManager::SetReverbParams(const std::string &name, float wet,
                                    float roomSize, float damp, float fadeTime) {
-  auto bus = GetReverbBus(name);
-  if (bus) {
+  auto busResult = GetReverbBus(name);
+  if (busResult) {
+    auto &bus = busResult.Value();
     bus->SetWet(wet, fadeTime);
     bus->SetRoomSize(roomSize, fadeTime);
     bus->SetDamp(damp, fadeTime);

@@ -12,8 +12,10 @@ int main(int argc, char **argv) {
 
   // Create the audio manager
   AudioManager audio;
-  if (!audio.Init()) {
-    std::cerr << "Failed to initialize AudioManager\n";
+  auto initResult = audio.Init();
+  if (initResult.IsError()) {
+    std::cerr << "Failed to initialize AudioManager: "
+              << initResult.GetError().What() << "\n";
     return -1;
   }
 

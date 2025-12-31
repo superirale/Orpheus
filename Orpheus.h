@@ -4,6 +4,7 @@
 #include "include/AudioManager.h"
 #include "include/Bus.h"
 #include "include/DSPFilters.h"
+#include "include/Error.h"
 #include "include/Event.h"
 #include "include/OcclusionMaterial.h"
 #include "include/OcclusionProcessor.h"

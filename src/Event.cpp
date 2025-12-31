@@ -10,11 +10,12 @@ AudioEvent::AudioEvent(SoLoud::Soloud &engine, SoundBank &bank)
 
 AudioHandle AudioEvent::Play(const std::string &eventName,
                              const std::string &busName) {
-  EventDescriptor ed;
-  if (!m_Bank.FindEvent(eventName, ed)) {
+  auto eventResult = m_Bank.FindEvent(eventName);
+  if (eventResult.IsError()) {
     std::cerr << "Event not found: " << eventName << "\n";
     return 0;
   }
+  const auto &ed = eventResult.Value();
 
   float volume = ed.volumeMin;
   float pitch = ed.pitchMin;
