@@ -1,4 +1,4 @@
-# GoldenLyre 🎵
+# Orpheus 🎵
 
 A lightweight, FMOD/Wwise-inspired audio engine built on [SoLoud](https://solhsa.com/soloud/).
 
@@ -19,41 +19,41 @@ A lightweight, FMOD/Wwise-inspired audio engine built on [SoLoud](https://solhsa
 ## Quick Start
 
 ```cpp
-#include "GoldenLyre.h"
+#include "Orpheus.h"
 
 int main() {
   AudioManager audio;
-  audio.init();
+  audio.Init();
 
   // Load and play events
-  audio.loadEventsFromFile("assets/events.json");
-  audio.playEvent("background_music");
+  audio.LoadEventsFromFile("assets/events.json");
+  audio.PlayEvent("background_music");
 
   // 3D listener
-  ListenerID listener = audio.createListener();
-  audio.setListenerPosition(listener, 0, 0, 0);
+  ListenerID listener = audio.CreateListener();
+  audio.SetListenerPosition(listener, 0, 0, 0);
 
   // Basic audio zone (plays sound when listener is near)
-  audio.addAudioZone("forest_ambient", {100, 0, 50}, 10.0f, 50.0f);
+  audio.AddAudioZone("forest_ambient", {100, 0, 50}, 10.0f, 50.0f);
 
-  // Zone-triggered snapshot (NEW!)
+  // Zone-triggered snapshot
   // Automatically applies "Underwater" mix when entering the waterfall zone
-  audio.createSnapshot("Underwater");
-  audio.setSnapshotBusVolume("Underwater", "Music", 0.3f);
-  audio.addAudioZone("waterfall", {60, 0, 0}, 5.0f, 15.0f, "Underwater");
+  audio.CreateSnapshot("Underwater");
+  audio.SetSnapshotBusVolume("Underwater", "Music", 0.3f);
+  audio.AddAudioZone("waterfall", {60, 0, 0}, 5.0f, 15.0f, "Underwater");
 
   // Mix zones for area-based mixing
-  audio.createSnapshot("Combat");
-  audio.setSnapshotBusVolume("Combat", "Music", 0.2f);
-  audio.addMixZone("arena", "Combat", {100, 0, 0}, 10.0f, 25.0f, 200);
+  audio.CreateSnapshot("Combat");
+  audio.SetSnapshotBusVolume("Combat", "Music", 0.2f);
+  audio.AddMixZone("arena", "Combat", {100, 0, 0}, 10.0f, 25.0f, 200);
 
   // Game loop
   while (running) {
-    audio.setListenerPosition(listener, playerX, playerY, playerZ);
-    audio.update(deltaTime);
+    audio.SetListenerPosition(listener, playerX, playerY, playerZ);
+    audio.Update(deltaTime);
   }
 
-  audio.shutdown();
+  audio.Shutdown();
 }
 ```
 
@@ -63,7 +63,7 @@ int main() {
 mkdir build && cd build
 cmake ..
 cmake --build . -j8
-./goldenlyre_example
+./orpheus_example
 ```
 
 **Requirements:**
@@ -86,7 +86,7 @@ SoLoud and nlohmann/json are fetched automatically via CMake FetchContent.
 
 ## Audio Zones vs Mix Zones
 
-GoldenLyre provides two spatial audio systems:
+Orpheus provides two spatial audio systems:
 
 | Feature | Audio Zones | Mix Zones |
 |---------|-------------|-----------|
@@ -97,16 +97,16 @@ GoldenLyre provides two spatial audio systems:
 
 ```cpp
 // Audio Zone: plays "waterfall" sound + applies "Underwater" snapshot
-audio.addAudioZone("waterfall", {60, 0, 0}, 5.0f, 15.0f, "Underwater");
+audio.AddAudioZone("waterfall", {60, 0, 0}, 5.0f, 15.0f, "Underwater");
 
 // Mix Zone: only applies "Combat" snapshot (no sound playback)
-audio.addMixZone("arena", "Combat", {100, 0, 0}, 10.0f, 25.0f, 200);
+audio.AddMixZone("arena", "Combat", {100, 0, 0}, 10.0f, 25.0f, 200);
 ```
 
 ## Project Structure
 
 ```
-GoldenLyre/
+Orpheus/
 ├── include/           # Headers
 │   ├── AudioManager.h # Main API
 │   ├── AudioZone.h    # Spatial audio regions

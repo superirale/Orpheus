@@ -1,4 +1,4 @@
-#include "../GoldenLyre.h"
+#include "../Orpheus.h"
 
 int main(int argc, char **argv) {
   (void)argc;
@@ -11,7 +11,7 @@ int main(int argc, char **argv) {
     return -1;
   }
 
-  std::cout << "GoldenLyre Audio Engine initialized!\n";
+  std::cout << "Orpheus Audio Engine initialized!\n";
 
   // Configure voice pool
   audio.SetMaxVoices(8);

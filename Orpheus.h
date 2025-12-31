@@ -3,7 +3,7 @@
 // Include precompiled header with STL and SoLoud dependencies
 #include "pch.h"
 
-// GoldenLyre library headers
+// Orpheus library headers
 #include "include/AudioManager.h"
 #include "include/Bus.h"
 #include "include/DSPFilters.h"

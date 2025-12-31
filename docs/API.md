@@ -1,6 +1,6 @@
-# GoldenLyre API Reference
+# Orpheus API Reference
 
-GoldenLyre is a lightweight audio engine wrapper around SoLoud, providing FMOD/Wwise-style features.
+Orpheus is a lightweight audio engine wrapper around SoLoud, providing FMOD/Wwise-style features.
 
 ---
 

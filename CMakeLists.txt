@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.16)
-project(GoldenLyre 
+project(Orpheus 
     VERSION 1.0.0 
     DESCRIPTION "Audio management library built on SoLoud"
     LANGUAGES C CXX
@@ -14,17 +14,17 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 # Options
-option(GOLDENLYRE_BUILD_EXAMPLES "Build example applications" ON)
-option(GOLDENLYRE_USE_PCH "Use precompiled headers" ON)
+option(ORPHEUS_BUILD_EXAMPLES "Build example applications" ON)
+option(ORPHEUS_USE_PCH "Use precompiled headers" ON)
 
 # -----------------------------------------------------------------------------
 # Find or Fetch SoLoud dependency
 # -----------------------------------------------------------------------------
-option(GOLDENLYRE_USE_SYSTEM_SOLOUD "Prefer system-installed SoLoud" ON)
+option(ORPHEUS_USE_SYSTEM_SOLOUD "Prefer system-installed SoLoud" ON)
 
 set(SOLOUD_FOUND_SYSTEM FALSE)
 
-if(GOLDENLYRE_USE_SYSTEM_SOLOUD)
+if(ORPHEUS_USE_SYSTEM_SOLOUD)
     # Try to find SoLoud via CMake config first
     find_package(soloud CONFIG QUIET)
 
@@ -185,10 +185,10 @@ if(NOT SOLOUD_FOUND_SYSTEM AND NOT soloud_FOUND)
 endif()
 
 # -----------------------------------------------------------------------------
-# GoldenLyre Library
+# Orpheus Library
 # -----------------------------------------------------------------------------
 # Collect source files
-set(GOLDENLYRE_SOURCES
+set(ORPHEUS_SOURCES
     src/AudioManager.cpp
     src/OcclusionProcessor.cpp
     src/ReverbBus.cpp
@@ -201,7 +201,7 @@ set(GOLDENLYRE_SOURCES
     src/AudioZone.cpp
 )
 
-set(GOLDENLYRE_HEADERS
+set(ORPHEUS_HEADERS
     include/AudioManager.h
     include/Bus.h
     include/DSPFilters.h
@@ -212,11 +212,11 @@ set(GOLDENLYRE_HEADERS
 )
 
 # Create the library
-add_library(goldenlyre ${GOLDENLYRE_SOURCES} ${GOLDENLYRE_HEADERS})
-add_library(GoldenLyre::goldenlyre ALIAS goldenlyre)
+add_library(orpheus ${ORPHEUS_SOURCES} ${ORPHEUS_HEADERS})
+add_library(Orpheus::orpheus ALIAS orpheus)
 
 # Include directories
-target_include_directories(goldenlyre 
+target_include_directories(orpheus 
     PUBLIC 
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
         $<INSTALL_INTERFACE:include>
@@ -225,42 +225,42 @@ target_include_directories(goldenlyre
 )
 
 # Link SoLoud and add JSON include directory
-target_include_directories(goldenlyre PRIVATE ${JSON_INCLUDE_DIR})
+target_include_directories(orpheus PRIVATE ${JSON_INCLUDE_DIR})
 
 if(soloud_FOUND)
-    target_link_libraries(goldenlyre PUBLIC soloud::soloud)
+    target_link_libraries(orpheus PUBLIC soloud::soloud)
 elseif(SOLOUD_FETCHED)
-    target_link_libraries(goldenlyre PUBLIC soloud_fetched)
+    target_link_libraries(orpheus PUBLIC soloud_fetched)
 else()
-    target_include_directories(goldenlyre PUBLIC ${SOLOUD_INCLUDE_DIRS})
-    target_link_libraries(goldenlyre PUBLIC ${SOLOUD_LIBRARIES})
+    target_include_directories(orpheus PUBLIC ${SOLOUD_INCLUDE_DIRS})
+    target_link_libraries(orpheus PUBLIC ${SOLOUD_LIBRARIES})
 endif()
 
 # Precompiled headers
-if(GOLDENLYRE_USE_PCH AND CMAKE_VERSION VERSION_GREATER_EQUAL "3.16")
-    target_precompile_headers(goldenlyre PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/pch.h)
+if(ORPHEUS_USE_PCH AND CMAKE_VERSION VERSION_GREATER_EQUAL "3.16")
+    target_precompile_headers(orpheus PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/pch.h)
 endif()
 
 # Compiler warnings
 if(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang|AppleClang")
-    target_compile_options(goldenlyre PRIVATE -Wall -Wextra -Wpedantic)
+    target_compile_options(orpheus PRIVATE -Wall -Wextra -Wpedantic)
 elseif(MSVC)
-    target_compile_options(goldenlyre PRIVATE /W4)
+    target_compile_options(orpheus PRIVATE /W4)
 endif()
 
 # -----------------------------------------------------------------------------
 # Example Application
 # -----------------------------------------------------------------------------
-if(GOLDENLYRE_BUILD_EXAMPLES)
-    add_executable(goldenlyre_example example/main.cpp)
-    target_include_directories(goldenlyre_example PRIVATE ${JSON_INCLUDE_DIR})
-    target_link_libraries(goldenlyre_example PRIVATE goldenlyre)
+if(ORPHEUS_BUILD_EXAMPLES)
+    add_executable(orpheus_example example/main.cpp)
+    target_include_directories(orpheus_example PRIVATE ${JSON_INCLUDE_DIR})
+    target_link_libraries(orpheus_example PRIVATE orpheus)
     
     # Copy assets for examples
-    add_custom_command(TARGET goldenlyre_example POST_BUILD
+    add_custom_command(TARGET orpheus_example POST_BUILD
         COMMAND ${CMAKE_COMMAND} -E copy_directory
             ${CMAKE_CURRENT_SOURCE_DIR}/assets
-            $<TARGET_FILE_DIR:goldenlyre_example>/assets
+            $<TARGET_FILE_DIR:orpheus_example>/assets
         COMMENT "Copying assets to build directory"
     )
 endif()
@@ -272,8 +272,8 @@ include(GNUInstallDirs)
 
 # Install targets - include soloud_fetched if we built it
 if(SOLOUD_FETCHED)
-    install(TARGETS goldenlyre soloud_fetched
-        EXPORT GoldenLyreTargets
+    install(TARGETS orpheus soloud_fetched
+        EXPORT OrpheusTargets
         LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
         ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
         RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
@@ -284,43 +284,43 @@ if(SOLOUD_FETCHED)
         DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/soloud
     )
 else()
-    install(TARGETS goldenlyre
-        EXPORT GoldenLyreTargets
+    install(TARGETS orpheus
+        EXPORT OrpheusTargets
         LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
         ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
         RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
     )
 endif()
 
-install(FILES ${GOLDENLYRE_HEADERS}
-    DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/goldenlyre
+install(FILES ${ORPHEUS_HEADERS}
+    DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/orpheus
 )
 
-install(EXPORT GoldenLyreTargets
-    FILE GoldenLyreTargets.cmake
-    NAMESPACE GoldenLyre::
-    DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/GoldenLyre
+install(EXPORT OrpheusTargets
+    FILE OrpheusTargets.cmake
+    NAMESPACE Orpheus::
+    DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/Orpheus
 )
 
 # Package configuration
 include(CMakePackageConfigHelpers)
 
 configure_package_config_file(
-    ${CMAKE_CURRENT_SOURCE_DIR}/cmake/GoldenLyreConfig.cmake.in
-    ${CMAKE_CURRENT_BINARY_DIR}/GoldenLyreConfig.cmake
-    INSTALL_DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/GoldenLyre
+    ${CMAKE_CURRENT_SOURCE_DIR}/cmake/OrpheusConfig.cmake.in
+    ${CMAKE_CURRENT_BINARY_DIR}/OrpheusConfig.cmake
+    INSTALL_DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/Orpheus
 )
 
 write_basic_package_version_file(
-    ${CMAKE_CURRENT_BINARY_DIR}/GoldenLyreConfigVersion.cmake
+    ${CMAKE_CURRENT_BINARY_DIR}/OrpheusConfigVersion.cmake
     VERSION ${PROJECT_VERSION}
     COMPATIBILITY SameMajorVersion
 )
 
 install(FILES
-    ${CMAKE_CURRENT_BINARY_DIR}/GoldenLyreConfig.cmake
-    ${CMAKE_CURRENT_BINARY_DIR}/GoldenLyreConfigVersion.cmake
-    DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/GoldenLyre
+    ${CMAKE_CURRENT_BINARY_DIR}/OrpheusConfig.cmake
+    ${CMAKE_CURRENT_BINARY_DIR}/OrpheusConfigVersion.cmake
+    DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/Orpheus
 )
 
 # -----------------------------------------------------------------------------
@@ -335,8 +335,8 @@ else()
 endif()
 
 message(STATUS "")
-message(STATUS "GoldenLyre ${PROJECT_VERSION}")
+message(STATUS "Orpheus ${PROJECT_VERSION}")
 message(STATUS "  SoLoud:                  ${SOLOUD_SOURCE}")
-message(STATUS "  Build examples:          ${GOLDENLYRE_BUILD_EXAMPLES}")
-message(STATUS "  Use precompiled headers: ${GOLDENLYRE_USE_PCH}")
+message(STATUS "  Build examples:          ${ORPHEUS_BUILD_EXAMPLES}")
+message(STATUS "  Use precompiled headers: ${ORPHEUS_USE_PCH}")
 message(STATUS "")
