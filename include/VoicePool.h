@@ -1,7 +1,14 @@
 #pragma once
 
-#include "Voice.h"
 #include <algorithm>
+#include <cstdint>
+#include <limits>
+#include <string>
+#include <vector>
+
+#include "Voice.h"
+
+namespace Orpheus {
 
 class VoicePool {
 public:
@@ -41,3 +48,5 @@ private:
   float m_CurrentTime = 0.0f;
   StealBehavior m_StealBehavior = StealBehavior::Quietest;
 };
+
+} // namespace Orpheus

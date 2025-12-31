@@ -1,5 +1,9 @@
-
 #pragma once
+
+#include <string>
+#include <unordered_map>
+
+namespace Orpheus {
 
 struct BusState {
   float volume = 1.0f;
@@ -43,3 +47,5 @@ private:
   std::unordered_map<std::string, BusState> busStates;
   std::unordered_map<std::string, ReverbBusState> reverbStates;
 };
+
+} // namespace Orpheus

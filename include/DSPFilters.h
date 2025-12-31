@@ -1,5 +1,7 @@
 #pragma once
 
+namespace Orpheus {
+
 // Placeholder filter classes - these use the SoLoud filter architecture
 // In SoLoud, you typically use built-in filters or create FilterInstance
 // subclasses
@@ -38,3 +40,5 @@ public:
 private:
   float cutoff, resonance;
 };
+
+} // namespace Orpheus

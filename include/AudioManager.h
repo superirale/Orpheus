@@ -1,5 +1,12 @@
 #pragma once
 
+#include <functional>
+#include <memory>
+#include <mutex>
+#include <string>
+#include <unordered_map>
+#include <vector>
+
 #include "AudioZone.h"
 #include "Bus.h"
 #include "Event.h"
@@ -13,6 +20,8 @@
 #include "SoundBank.h"
 #include "Types.h"
 #include "VoicePool.h"
+
+namespace Orpheus {
 
 // Zone callbacks
 using ZoneEnterCallback = std::function<void(const std::string &)>;
@@ -146,3 +155,5 @@ private:
   // Occlusion system
   OcclusionProcessor m_OcclusionProcessor;
 };
+
+} // namespace Orpheus

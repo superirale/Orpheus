@@ -1,6 +1,11 @@
 #pragma once
 
+#include <algorithm>
+#include <vector>
+
 #include "Types.h"
+
+namespace Orpheus {
 
 class VirtualVoiceManager {
 public:
@@ -17,3 +22,5 @@ private:
   size_t mLimit;
   std::vector<AudioHandle> mActiveHandles;
 };
+
+} // namespace Orpheus

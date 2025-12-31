@@ -1,5 +1,6 @@
 #include "../include/ReverbZone.h"
-#include "../pch.h"
+
+namespace Orpheus {
 
 ReverbZone::ReverbZone(const std::string &name,
                        const std::string &reverbBusName,
@@ -45,3 +46,5 @@ float ReverbZone::ComputeInfluence(float dist) const {
     return 0.0f;
   return 1.0f - ((dist - m_InnerRadius) / (m_OuterRadius - m_InnerRadius));
 }
+
+} // namespace Orpheus

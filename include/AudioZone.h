@@ -1,6 +1,12 @@
-// AudioZone.h
 #pragma once
+
+#include <cmath>
+#include <functional>
+#include <string>
+
 #include "Types.h"
+
+namespace Orpheus {
 
 using PlayEventCallback = std::function<AudioHandle(const std::string &)>;
 using SetVolumeCallback = std::function<void(AudioHandle, float)>;
@@ -54,3 +60,5 @@ private:
   float m_FadeInTime;
   float m_FadeOutTime;
 };
+
+} // namespace Orpheus

@@ -1,5 +1,14 @@
 #pragma once
 
+#include <memory>
+#include <string>
+#include <vector>
+
+#include <soloud.h>
+#include <soloud_bus.h>
+
+namespace Orpheus {
+
 class Bus {
 public:
   Bus(const std::string &name);
@@ -28,3 +37,5 @@ private:
   std::vector<SoLoud::handle> m_Handles;
   SoLoud::Soloud *m_Engine = nullptr;
 };
+
+} // namespace Orpheus

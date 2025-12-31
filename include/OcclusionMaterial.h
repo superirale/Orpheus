@@ -1,5 +1,8 @@
-// OcclusionMaterial.h
 #pragma once
+
+#include <string>
+
+namespace Orpheus {
 
 // Defines how a material affects sound propagation
 struct OcclusionMaterial {
@@ -36,3 +39,5 @@ inline const OcclusionMaterial Water{"Water", 0.9f, 0.4f};
 // Default fallback
 inline const OcclusionMaterial Default{"Default", 0.5f, 0.0f};
 } // namespace OcclusionMaterials
+
+} // namespace Orpheus

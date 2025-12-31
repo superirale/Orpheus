@@ -1,5 +1,7 @@
 #include "../include/Bus.h"
 
+namespace Orpheus {
+
 Bus::Bus(const std::string &name) : m_Name(name) {
   m_Bus.reset(new SoLoud::Bus());
 }
@@ -53,3 +55,5 @@ float Bus::GetTargetVolume() const { return m_TargetVolume; }
 const std::string &Bus::GetName() const { return m_Name; }
 
 SoLoud::Bus *Bus::Raw() { return m_Bus.get(); }
+
+} // namespace Orpheus

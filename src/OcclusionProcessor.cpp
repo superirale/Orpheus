@@ -1,5 +1,7 @@
 #include "../include/OcclusionProcessor.h"
 
+namespace Orpheus {
+
 OcclusionProcessor::OcclusionProcessor() { RegisterDefaultMaterials(); }
 
 void OcclusionProcessor::SetQueryCallback(OcclusionQueryCallback callback) {
@@ -135,3 +137,5 @@ void OcclusionProcessor::SmoothValues(Voice &voice, float dt) {
   voice.occlusionSmoothed +=
       alpha * (voice.occlusion - voice.occlusionSmoothed);
 }
+
+} // namespace Orpheus

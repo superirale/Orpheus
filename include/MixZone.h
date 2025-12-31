@@ -1,6 +1,12 @@
 #pragma once
 
+#include <cmath>
+#include <cstdint>
+#include <string>
+
 #include "Types.h"
+
+namespace Orpheus {
 
 class MixZone {
 public:
@@ -39,3 +45,5 @@ private:
   bool m_JustEntered = false;
   bool m_JustExited = false;
 };
+
+} // namespace Orpheus

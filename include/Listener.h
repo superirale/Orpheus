@@ -2,6 +2,8 @@
 
 #include <cstdint>
 
+namespace Orpheus {
+
 using ListenerID = uint32_t;
 
 struct Listener {
@@ -12,3 +14,5 @@ struct Listener {
   float upX = 0, upY = 1, upZ = 0;
   bool active = true;
 };
+
+} // namespace Orpheus

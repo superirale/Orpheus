@@ -1,5 +1,15 @@
 #pragma once
 
+#include <cstdint>
+#include <fstream>
+#include <iostream>
+#include <string>
+#include <unordered_map>
+
+#include <nlohmann/json.hpp>
+
+namespace Orpheus {
+
 struct EventDescriptor {
   std::string name;
   std::string path;
@@ -24,3 +34,5 @@ public:
 private:
   std::unordered_map<std::string, EventDescriptor> events;
 };
+
+} // namespace Orpheus

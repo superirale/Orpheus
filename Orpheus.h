@@ -1,8 +1,5 @@
 #pragma once
 
-// Include precompiled header with STL and SoLoud dependencies
-#include "pch.h"
-
 // Orpheus library headers
 #include "include/AudioManager.h"
 #include "include/Bus.h"

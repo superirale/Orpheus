@@ -1,5 +1,7 @@
 #include "../include/AudioZone.h"
 
+namespace Orpheus {
+
 AudioZone::AudioZone(const std::string &eventName, const Vector3 &position,
                      float innerRadius, float outerRadius,
                      PlayEventCallback playEvent, SetVolumeCallback setVolume,
@@ -78,3 +80,5 @@ float AudioZone::ComputeVolume(float dist) {
     return 0.0f;
   return 1.0f - ((dist - m_InnerRadius) / (m_OuterRadius - m_InnerRadius));
 }
+
+} // namespace Orpheus

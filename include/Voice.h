@@ -1,6 +1,14 @@
 #pragma once
 
+#include <algorithm>
+#include <cmath>
+#include <cstdint>
+#include <string>
+#include <unordered_map>
+
 #include "Types.h"
+
+namespace Orpheus {
 
 // Voice state for virtual voice system
 enum class VoiceState { Real, Virtual, Stopped };
@@ -48,7 +56,7 @@ struct Voice {
     float dx = position.x - listenerPos.x;
     float dy = position.y - listenerPos.y;
     float dz = position.z - listenerPos.z;
-    float dist = sqrtf(dx * dx + dy * dy + dz * dz);
+    float dist = std::sqrt(dx * dx + dy * dy + dz * dz);
     float distAtten = 1.0f - std::min(dist / maxDistance, 1.0f);
     audibility = volume * std::max(distAtten, 0.0f);
   }
@@ -58,10 +66,12 @@ struct Voice {
     float dx = position.x - listenerPos.x;
     float dy = position.y - listenerPos.y;
     float dz = position.z - listenerPos.z;
-    return sqrtf(dx * dx + dy * dy + dz * dz);
+    return std::sqrt(dx * dx + dy * dy + dz * dz);
   }
 
   bool IsReal() const { return state == VoiceState::Real; }
   bool IsVirtual() const { return state == VoiceState::Virtual; }
   bool IsStopped() const { return state == VoiceState::Stopped; }
 };
+
+} // namespace Orpheus

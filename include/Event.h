@@ -1,7 +1,19 @@
 #pragma once
 
+#include <iostream>
+#include <memory>
+#include <string>
+#include <vector>
+
+#include <soloud.h>
+#include <soloud_biquadresonantfilter.h>
+#include <soloud_wav.h>
+#include <soloud_wavstream.h>
+
 #include "SoundBank.h"
 #include "Types.h"
+
+namespace Orpheus {
 
 class AudioEvent {
 public:
@@ -20,3 +32,5 @@ private:
   std::vector<std::shared_ptr<SoLoud::AudioSource>> m_ActiveSounds;
   SoLoud::BiquadResonantFilter m_OcclusionFilter;
 };
+
+} // namespace Orpheus

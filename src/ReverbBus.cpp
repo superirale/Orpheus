@@ -1,5 +1,7 @@
 #include "../include/ReverbBus.h"
 
+namespace Orpheus {
+
 ReverbBus::ReverbBus(const std::string &name) : m_Name(name) {}
 
 bool ReverbBus::Init(SoLoud::Soloud &engine) {
@@ -138,3 +140,5 @@ void ReverbBus::SendToReverb(SoLoud::Soloud &engine, SoLoud::handle audioHandle,
   (void)audioHandle;
   (void)sendLevel;
 }
+
+} // namespace Orpheus

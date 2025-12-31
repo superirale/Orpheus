@@ -1,5 +1,7 @@
 #include "../include/VoicePool.h"
 
+namespace Orpheus {
+
 VoicePool::VoicePool(uint32_t maxRealVoices) : m_MaxRealVoices(maxRealVoices) {}
 
 void VoicePool::SetMaxVoices(uint32_t max) { m_MaxRealVoices = max; }
@@ -161,3 +163,5 @@ void VoicePool::PromoteVirtualVoices() {
     }
   }
 }
+
+} // namespace Orpheus

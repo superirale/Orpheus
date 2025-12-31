@@ -1,7 +1,12 @@
-// OcclusionQuery.h
 #pragma once
 
+#include <functional>
+#include <string>
+#include <vector>
+
 #include "Types.h"
+
+namespace Orpheus {
 
 // Result of a single raycast hit against geometry
 struct OcclusionHit {
@@ -25,7 +30,7 @@ struct OcclusionHit {
 //   Empty vector means unobstructed line of sight.
 //
 // Example implementation:
-//   audio.setOcclusionQueryCallback([&](const Vector3& src, const Vector3& dst)
+//   audio.SetOcclusionQueryCallback([&](const Vector3& src, const Vector3& dst)
 //   {
 //     std::vector<OcclusionHit> hits;
 //     for (auto& hit : physics.raycast(src, dst)) {
@@ -35,3 +40,5 @@ struct OcclusionHit {
 //   });
 using OcclusionQueryCallback = std::function<std::vector<OcclusionHit>(
     const Vector3 &source, const Vector3 &listener)>;
+
+} // namespace Orpheus

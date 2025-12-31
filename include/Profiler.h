@@ -1,12 +1,18 @@
 #pragma once
 
+#include <chrono>
+
+namespace Orpheus {
 
 class Profiler {
 public:
-    void Start();
-    void Stop();
-    void Print();
+  void Start();
+  void Stop();
+  void Print();
+
 private:
-    std::chrono::time_point<std::chrono::high_resolution_clock> m_StartTime;
-    std::chrono::time_point<std::chrono::high_resolution_clock> m_StopTime;
+  std::chrono::time_point<std::chrono::high_resolution_clock> m_StartTime;
+  std::chrono::time_point<std::chrono::high_resolution_clock> m_StopTime;
 };
+
+} // namespace Orpheus

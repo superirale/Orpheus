@@ -1,5 +1,11 @@
 #include "../Orpheus.h"
 
+#include <chrono>
+#include <iostream>
+#include <thread>
+
+using namespace Orpheus;
+
 int main(int argc, char **argv) {
   (void)argc;
   (void)argv;

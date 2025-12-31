@@ -1,5 +1,7 @@
 #include "../include/SoundBank.h"
 
+namespace Orpheus {
+
 bool SoundBank::LoadFromJsonFile(const std::string &jsonPath) {
   std::ifstream file(jsonPath);
   if (!file.is_open()) {
@@ -82,3 +84,5 @@ bool SoundBank::FindEvent(const std::string &name, EventDescriptor &out) {
   out = it->second;
   return true;
 }
+
+} // namespace Orpheus

@@ -1,5 +1,7 @@
 #include "../include/MixZone.h"
 
+namespace Orpheus {
+
 MixZone::MixZone(const std::string &name, const std::string &snapshotName,
                  const Vector3 &position, float innerRadius, float outerRadius,
                  uint8_t priority, float fadeInTime, float fadeOutTime)
@@ -59,3 +61,5 @@ float MixZone::ComputeBlend(float dist) const {
     return 0.0f;
   return 1.0f - ((dist - m_InnerRadius) / (m_OuterRadius - m_InnerRadius));
 }
+
+} // namespace Orpheus

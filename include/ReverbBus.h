@@ -1,8 +1,15 @@
-// ReverbBus.h
 #pragma once
 
-#include "Types.h"
+#include <algorithm>
+#include <string>
+
+#include <soloud.h>
+#include <soloud_bus.h>
 #include <soloud_freeverbfilter.h>
+
+#include "Types.h"
+
+namespace Orpheus {
 
 enum class ReverbPreset { Room, Hall, Cave, Cathedral, Underwater };
 
@@ -49,3 +56,5 @@ private:
 
   bool m_Active = false;
 };
+
+} // namespace Orpheus

@@ -1,9 +1,18 @@
-// OcclusionProcessor.h
 #pragma once
+
+#include <algorithm>
+#include <cmath>
+#include <string>
+#include <unordered_map>
+
+#include <soloud.h>
+#include <soloud_biquadresonantfilter.h>
 
 #include "OcclusionMaterial.h"
 #include "OcclusionQuery.h"
 #include "Voice.h"
+
+namespace Orpheus {
 
 // Processes occlusion for voices and applies DSP effects.
 class OcclusionProcessor {
@@ -61,3 +70,5 @@ private:
   // Update timing
   float m_TimeSinceLastUpdate = 0.0f;
 };
+
+} // namespace Orpheus

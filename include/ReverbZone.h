@@ -1,7 +1,12 @@
-// ReverbZone.h
 #pragma once
 
+#include <cmath>
+#include <cstdint>
+#include <string>
+
 #include "Types.h"
+
+namespace Orpheus {
 
 class ReverbZone {
 public:
@@ -34,3 +39,5 @@ private:
   uint8_t m_Priority;
   float m_CurrentInfluence = 0.0f;
 };
+
+} // namespace Orpheus

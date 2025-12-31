@@ -1,5 +1,7 @@
 #include "../include/Event.h"
 
+namespace Orpheus {
+
 AudioEvent::AudioEvent(SoLoud::Soloud &engine, SoundBank &bank)
     : m_Engine(engine), m_Bank(bank) {
   m_OcclusionFilter.setParams(SoLoud::BiquadResonantFilter::LOWPASS, 22000.0f,
@@ -50,3 +52,5 @@ void AudioEvent::RouteHandleToBus(AudioHandle h, const std::string &busName) {
   (void)h;
   (void)busName;
 }
+
+} // namespace Orpheus

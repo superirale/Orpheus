@@ -1,5 +1,7 @@
 #include "../include/AudioManager.h"
 
+namespace Orpheus {
+
 AudioManager::AudioManager() : m_Engine(), m_Event(m_Engine, m_Bank) {}
 
 AudioManager::~AudioManager() { Shutdown(); }
@@ -513,3 +515,5 @@ void AudioManager::UpdateReverbZones(const Vector3 &listenerPos) {
     bus->SetWet(targetWet, 0.1f);       // Small fade time for smoothness
   }
 }
+
+} // namespace Orpheus

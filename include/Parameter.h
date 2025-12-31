@@ -1,5 +1,10 @@
 #pragma once
 
+#include <functional>
+#include <vector>
+
+namespace Orpheus {
+
 class Parameter {
 public:
   Parameter(float v = 0.0f) : value(v) {}
@@ -15,3 +20,5 @@ private:
   float value;
   std::vector<std::function<void(float)>> listeners;
 };
+
+} // namespace Orpheus
