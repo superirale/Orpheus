@@ -190,6 +190,15 @@ endif()
 # Collect source files
 set(GOLDENLYRE_SOURCES
     src/AudioManager.cpp
+    src/OcclusionProcessor.cpp
+    src/ReverbBus.cpp
+    src/VoicePool.cpp
+    src/Bus.cpp
+    src/MixZone.cpp
+    src/ReverbZone.cpp
+    src/SoundBank.cpp
+    src/Event.cpp
+    src/AudioZone.cpp
 )
 
 set(GOLDENLYRE_HEADERS

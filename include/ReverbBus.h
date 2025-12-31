@@ -4,172 +4,35 @@
 #include "Types.h"
 #include <soloud_freeverbfilter.h>
 
-// Reverb bus presets for common environments
-enum class ReverbPreset {
-  Room,      // Small room - short decay, high damping
-  Hall,      // Concert hall - medium decay
-  Cave,      // Large cave - long decay, low damping
-  Cathedral, // Cathedral - very long decay, wide stereo
-  Underwater // Underwater - heavy wet, high damping
-};
+enum class ReverbPreset { Room, Hall, Cave, Cathedral, Underwater };
 
-// A reverb bus hosts a shared reverb DSP chain.
-// Sounds send signal TO the reverb bus, they don't play ON it.
 class ReverbBus {
 public:
-  ReverbBus(const std::string &name) : m_Name(name) {}
+  ReverbBus(const std::string &name);
 
-  // Initialize the reverb bus and attach to the audio engine
-  bool Init(SoLoud::Soloud &engine) {
-    // Set initial reverb parameters
-    m_Reverb.setParams(m_Freeze ? 1.0f : 0.0f, m_RoomSize, m_Damp, m_Width);
+  bool Init(SoLoud::Soloud &engine);
+  void ApplyPreset(ReverbPreset preset);
+  void SetParams(float wet, float roomSize, float damp, float width);
 
-    // Attach the reverb filter to the bus
-    m_Bus.setFilter(0, &m_Reverb);
+  void SetWet(float wet, float fadeTime = 0.0f);
+  void SetRoomSize(float roomSize, float fadeTime = 0.0f);
+  void SetDamp(float damp, float fadeTime = 0.0f);
+  void SetWidth(float width, float fadeTime = 0.0f);
+  void SetFreeze(bool freeze);
 
-    // Play the bus on the engine (returns handle for routing)
-    m_BusHandle = engine.play(m_Bus);
-    if (m_BusHandle == 0) {
-      return false;
-    }
+  float GetWet() const;
+  float GetRoomSize() const;
+  float GetDamp() const;
+  float GetWidth() const;
+  bool IsFreeze() const;
+  bool IsActive() const;
+  const std::string &GetName() const;
 
-    // Set initial wet level
-    engine.setFilterParameter(m_BusHandle, 0, SoLoud::FreeverbFilter::WET,
-                              m_Wet);
+  SoLoud::Bus &GetBus();
+  SoLoud::handle GetBusHandle() const;
 
-    m_Engine = &engine;
-    m_Active = true;
-    return true;
-  }
-
-  // Apply a preset
-  void ApplyPreset(ReverbPreset preset) {
-    switch (preset) {
-    case ReverbPreset::Room:
-      SetParams(0.3f, 0.4f, 0.7f, 0.8f);
-      break;
-    case ReverbPreset::Hall:
-      SetParams(0.5f, 0.6f, 0.5f, 1.0f);
-      break;
-    case ReverbPreset::Cave:
-      SetParams(0.6f, 0.85f, 0.3f, 1.0f);
-      break;
-    case ReverbPreset::Cathedral:
-      SetParams(0.7f, 0.95f, 0.2f, 1.0f);
-      break;
-    case ReverbPreset::Underwater:
-      SetParams(0.9f, 0.7f, 0.8f, 0.5f);
-      break;
-    }
-  }
-
-  // Set all reverb parameters at once
-  void SetParams(float wet, float roomSize, float damp, float width) {
-    m_Wet = std::clamp(wet, 0.0f, 1.0f);
-    m_RoomSize = std::clamp(roomSize, 0.0f, 1.0f);
-    m_Damp = std::clamp(damp, 0.0f, 1.0f);
-    m_Width = std::clamp(width, 0.0f, 1.0f);
-
-    m_Reverb.setParams(m_Freeze ? 1.0f : 0.0f, m_RoomSize, m_Damp, m_Width);
-
-    // Update filter parameters on the engine
-    if (m_Engine && m_BusHandle != 0) {
-      m_Engine->setFilterParameter(m_BusHandle, 0, SoLoud::FreeverbFilter::WET,
-                                   m_Wet);
-      m_Engine->setFilterParameter(
-          m_BusHandle, 0, SoLoud::FreeverbFilter::ROOMSIZE, m_RoomSize);
-      m_Engine->setFilterParameter(m_BusHandle, 0, SoLoud::FreeverbFilter::DAMP,
-                                   m_Damp);
-      m_Engine->setFilterParameter(m_BusHandle, 0,
-                                   SoLoud::FreeverbFilter::WIDTH, m_Width);
-    }
-  }
-
-  // Individual parameter setters with smooth fading
-  void SetWet(float wet, float fadeTime = 0.0f) {
-    m_Wet = std::clamp(wet, 0.0f, 1.0f);
-    if (m_Engine && m_BusHandle != 0) {
-      if (fadeTime > 0.0f) {
-        m_Engine->fadeFilterParameter(
-            m_BusHandle, 0, SoLoud::FreeverbFilter::WET, m_Wet, fadeTime);
-      } else {
-        m_Engine->setFilterParameter(m_BusHandle, 0,
-                                     SoLoud::FreeverbFilter::WET, m_Wet);
-      }
-    }
-  }
-
-  void SetRoomSize(float roomSize, float fadeTime = 0.0f) {
-    m_RoomSize = std::clamp(roomSize, 0.0f, 1.0f);
-    if (m_Engine && m_BusHandle != 0) {
-      if (fadeTime > 0.0f) {
-        m_Engine->fadeFilterParameter(m_BusHandle, 0,
-                                      SoLoud::FreeverbFilter::ROOMSIZE,
-                                      m_RoomSize, fadeTime);
-      } else {
-        m_Engine->setFilterParameter(
-            m_BusHandle, 0, SoLoud::FreeverbFilter::ROOMSIZE, m_RoomSize);
-      }
-    }
-  }
-
-  void SetDamp(float damp, float fadeTime = 0.0f) {
-    m_Damp = std::clamp(damp, 0.0f, 1.0f);
-    if (m_Engine && m_BusHandle != 0) {
-      if (fadeTime > 0.0f) {
-        m_Engine->fadeFilterParameter(
-            m_BusHandle, 0, SoLoud::FreeverbFilter::DAMP, m_Damp, fadeTime);
-      } else {
-        m_Engine->setFilterParameter(m_BusHandle, 0,
-                                     SoLoud::FreeverbFilter::DAMP, m_Damp);
-      }
-    }
-  }
-
-  void SetWidth(float width, float fadeTime = 0.0f) {
-    m_Width = std::clamp(width, 0.0f, 1.0f);
-    if (m_Engine && m_BusHandle != 0) {
-      if (fadeTime > 0.0f) {
-        m_Engine->fadeFilterParameter(
-            m_BusHandle, 0, SoLoud::FreeverbFilter::WIDTH, m_Width, fadeTime);
-      } else {
-        m_Engine->setFilterParameter(m_BusHandle, 0,
-                                     SoLoud::FreeverbFilter::WIDTH, m_Width);
-      }
-    }
-  }
-
-  void SetFreeze(bool freeze) {
-    m_Freeze = freeze;
-    if (m_Engine && m_BusHandle != 0) {
-      m_Engine->setFilterParameter(
-          m_BusHandle, 0, SoLoud::FreeverbFilter::FREEZE, freeze ? 1.0f : 0.0f);
-    }
-  }
-
-  // Getters
-  float GetWet() const { return m_Wet; }
-  float GetRoomSize() const { return m_RoomSize; }
-  float GetDamp() const { return m_Damp; }
-  float GetWidth() const { return m_Width; }
-  bool IsFreeze() const { return m_Freeze; }
-  bool IsActive() const { return m_Active; }
-  const std::string &GetName() const { return m_Name; }
-
-  // Get the bus for routing sounds into the reverb
-  SoLoud::Bus &GetBus() { return m_Bus; }
-  SoLoud::handle GetBusHandle() const { return m_BusHandle; }
-
-  // Send a sound to this reverb bus with a given level (0.0-1.0)
   void SendToReverb(SoLoud::Soloud &engine, SoLoud::handle audioHandle,
-                    float sendLevel) {
-    if (!m_Active || m_BusHandle == 0)
-      return;
-    (void)engine;
-    (void)audioHandle;
-    (void)sendLevel;
-    // TODO: Implement proper send routing using SoLoud Bus play/stop
-  }
+                    float sendLevel);
 
 private:
   std::string m_Name;
@@ -178,7 +41,6 @@ private:
   SoLoud::Soloud *m_Engine = nullptr;
   SoLoud::handle m_BusHandle = 0;
 
-  // Reverb parameters
   float m_Wet = 0.5f;
   float m_RoomSize = 0.5f;
   float m_Damp = 0.5f;
