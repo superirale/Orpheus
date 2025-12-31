@@ -16,26 +16,26 @@ struct ReverbBusState {
 class Snapshot {
 public:
   // Bus volume control
-  void setBusState(const std::string &busName, const BusState &state) {
+  void SetBusState(const std::string &busName, const BusState &state) {
     busStates[busName] = state;
   }
 
-  const std::unordered_map<std::string, BusState> &getStates() const {
+  const std::unordered_map<std::string, BusState> &GetStates() const {
     return busStates;
   }
 
   // Reverb bus parameter control
-  void setReverbState(const std::string &reverbBusName,
+  void SetReverbState(const std::string &reverbBusName,
                       const ReverbBusState &state) {
     reverbStates[reverbBusName] = state;
   }
 
   const std::unordered_map<std::string, ReverbBusState> &
-  getReverbStates() const {
+  GetReverbStates() const {
     return reverbStates;
   }
 
-  bool hasReverbState(const std::string &reverbBusName) const {
+  bool HasReverbState(const std::string &reverbBusName) const {
     return reverbStates.count(reverbBusName) > 0;
   }
 

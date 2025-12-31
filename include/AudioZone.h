@@ -41,9 +41,9 @@ public:
         m_ApplySnapshot(applySnapshot), m_RevertSnapshot(revertSnapshot),
         m_WasActive(false), m_FadeInTime(fadeIn), m_FadeOutTime(fadeOut) {}
 
-  void update(const Vector3 &listenerPos) {
-    float dist = distance(listenerPos, m_Position);
-    float vol = computeVolume(dist);
+  void Update(const Vector3 &listenerPos) {
+    float dist = Distance(listenerPos, m_Position);
+    float vol = ComputeVolume(dist);
     bool isActive = (vol > 0.0f);
 
     if (isActive) {
@@ -56,7 +56,7 @@ public:
       }
 
       // Zone entered - apply snapshot
-      if (!m_WasActive && hasSnapshot()) {
+      if (!m_WasActive && HasSnapshot()) {
         m_ApplySnapshot(m_SnapshotName, m_FadeInTime);
       }
     } else {
@@ -67,7 +67,7 @@ public:
       }
 
       // Zone exited - revert snapshot
-      if (m_WasActive && hasSnapshot()) {
+      if (m_WasActive && HasSnapshot()) {
         m_RevertSnapshot(m_FadeOutTime);
       }
     }
@@ -76,23 +76,23 @@ public:
   }
 
   // Accessors
-  bool isActive() const { return m_WasActive; }
-  bool hasSnapshot() const {
+  bool IsActive() const { return m_WasActive; }
+  bool HasSnapshot() const {
     return !m_SnapshotName.empty() && m_ApplySnapshot;
   }
-  const std::string &getSnapshotName() const { return m_SnapshotName; }
-  const std::string &getEventName() const { return m_EventName; }
-  const Vector3 &getPosition() const { return m_Position; }
+  const std::string &GetSnapshotName() const { return m_SnapshotName; }
+  const std::string &GetEventName() const { return m_EventName; }
+  const Vector3 &GetPosition() const { return m_Position; }
 
 private:
-  float distance(const Vector3 &a, const Vector3 &b) {
+  float Distance(const Vector3 &a, const Vector3 &b) {
     float dx = a.x - b.x;
     float dy = a.y - b.y;
     float dz = a.z - b.z;
     return sqrtf(dx * dx + dy * dy + dz * dz);
   }
 
-  float computeVolume(float dist) {
+  float ComputeVolume(float dist) {
     if (dist < m_InnerRadius)
       return 1.0f;
     if (dist > m_OuterRadius)

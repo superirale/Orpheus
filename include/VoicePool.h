@@ -8,20 +8,20 @@ public:
   VoicePool(uint32_t maxRealVoices = 32) : m_MaxRealVoices(maxRealVoices) {}
 
   // Set max simultaneous real voices
-  void setMaxVoices(uint32_t max) { m_MaxRealVoices = max; }
-  uint32_t getMaxVoices() const { return m_MaxRealVoices; }
+  void SetMaxVoices(uint32_t max) { m_MaxRealVoices = max; }
+  uint32_t GetMaxVoices() const { return m_MaxRealVoices; }
 
   // Set stealing behavior
-  void setStealBehavior(StealBehavior behavior) { m_StealBehavior = behavior; }
-  StealBehavior getStealBehavior() const { return m_StealBehavior; }
+  void SetStealBehavior(StealBehavior behavior) { m_StealBehavior = behavior; }
+  StealBehavior GetStealBehavior() const { return m_StealBehavior; }
 
   // Allocate a new voice (returns nullptr if can't allocate and steal fails)
-  Voice *allocateVoice(const std::string &eventName, uint8_t priority,
+  Voice *AllocateVoice(const std::string &eventName, uint8_t priority,
                        const Vector3 &position, float maxDistance) {
     // Find or create a voice slot
-    Voice *voice = findFreeVoice();
+    Voice *voice = FindFreeVoice();
     if (!voice) {
-      voice = createVoice();
+      voice = CreateVoice();
     }
 
     voice->id = m_NextVoiceID++;
@@ -37,18 +37,18 @@ public:
   }
 
   // Try to make a voice real (returns true if successful)
-  bool makeReal(Voice *voice) {
-    if (!voice || voice->isReal())
+  bool MakeReal(Voice *voice) {
+    if (!voice || voice->IsReal())
       return voice != nullptr;
 
-    uint32_t realCount = getRealVoiceCount();
+    uint32_t realCount = GetRealVoiceCount();
     if (realCount < m_MaxRealVoices) {
       voice->state = VoiceState::Real;
       return true;
     }
 
     // Need to steal a voice
-    Voice *victim = findVoiceToSteal(voice->priority, voice->audibility);
+    Voice *victim = FindVoiceToSteal(voice->priority, voice->audibility);
     if (victim) {
       victim->state = VoiceState::Virtual;
       victim->handle = 0;
@@ -61,15 +61,15 @@ public:
   }
 
   // Make a voice virtual (stop playing but track)
-  void makeVirtual(Voice *voice) {
-    if (voice && voice->isReal()) {
+  void MakeVirtual(Voice *voice) {
+    if (voice && voice->IsReal()) {
       voice->state = VoiceState::Virtual;
       voice->handle = 0;
     }
   }
 
   // Stop and release a voice
-  void stopVoice(Voice *voice) {
+  void StopVoice(Voice *voice) {
     if (voice) {
       voice->state = VoiceState::Stopped;
       voice->handle = 0;
@@ -77,61 +77,61 @@ public:
   }
 
   // Update all voices (call each frame)
-  void update(float dt, const Vector3 &listenerPos) {
+  void Update(float dt, const Vector3 &listenerPos) {
     m_CurrentTime += dt;
 
     // Update audibility for all active voices
     for (auto &voice : m_Voices) {
-      if (voice.isStopped())
+      if (voice.IsStopped())
         continue;
 
       voice.playbackTime += dt;
-      voice.updateAudibility(listenerPos);
+      voice.UpdateAudibility(listenerPos);
     }
 
     // Promote virtual voices that are now more audible than real ones
-    promoteVirtualVoices();
+    PromoteVirtualVoices();
   }
 
   // Get voice counts
-  uint32_t getRealVoiceCount() const {
+  uint32_t GetRealVoiceCount() const {
     return std::count_if(m_Voices.begin(), m_Voices.end(),
-                         [](const Voice &v) { return v.isReal(); });
+                         [](const Voice &v) { return v.IsReal(); });
   }
 
-  uint32_t getVirtualVoiceCount() const {
+  uint32_t GetVirtualVoiceCount() const {
     return std::count_if(m_Voices.begin(), m_Voices.end(),
-                         [](const Voice &v) { return v.isVirtual(); });
+                         [](const Voice &v) { return v.IsVirtual(); });
   }
 
-  uint32_t getActiveVoiceCount() const {
-    return getRealVoiceCount() + getVirtualVoiceCount();
+  uint32_t GetActiveVoiceCount() const {
+    return GetRealVoiceCount() + GetVirtualVoiceCount();
   }
 
   // Get all voices (for iteration)
-  std::vector<Voice> &getVoices() { return m_Voices; }
-  const std::vector<Voice> &getVoices() const { return m_Voices; }
+  std::vector<Voice> &GetVoices() { return m_Voices; }
+  const std::vector<Voice> &GetVoices() const { return m_Voices; }
 
 private:
-  Voice *findFreeVoice() {
+  Voice *FindFreeVoice() {
     for (auto &v : m_Voices) {
-      if (v.isStopped())
+      if (v.IsStopped())
         return &v;
     }
     return nullptr;
   }
 
-  Voice *createVoice() {
+  Voice *CreateVoice() {
     m_Voices.emplace_back();
     return &m_Voices.back();
   }
 
-  Voice *findVoiceToSteal(uint8_t newPriority, float newAudibility) {
+  Voice *FindVoiceToSteal(uint8_t newPriority, float newAudibility) {
     Voice *victim = nullptr;
     float victimScore = std::numeric_limits<float>::max();
 
     for (auto &v : m_Voices) {
-      if (!v.isReal())
+      if (!v.IsReal())
         continue;
       // Never steal higher priority
       if (v.priority > newPriority)
@@ -163,11 +163,11 @@ private:
     return victim;
   }
 
-  void promoteVirtualVoices() {
+  void PromoteVirtualVoices() {
     // Sort virtual voices by audibility (highest first)
     std::vector<Voice *> virtualVoices;
     for (auto &v : m_Voices) {
-      if (v.isVirtual())
+      if (v.IsVirtual())
         virtualVoices.push_back(&v);
     }
 
@@ -176,7 +176,7 @@ private:
 
     // Try to promote each virtual voice
     for (Voice *v : virtualVoices) {
-      if (getRealVoiceCount() >= m_MaxRealVoices)
+      if (GetRealVoiceCount() >= m_MaxRealVoices)
         break;
       // Only promote if audibility > 0 (in range)
       if (v->audibility > 0.01f) {

@@ -44,7 +44,7 @@ struct Voice {
   float occlusionVolume = 1.0f;        // Volume modifier from occlusion
 
   // Calculate audibility based on listener position
-  void updateAudibility(const Vector3 &listenerPos) {
+  void UpdateAudibility(const Vector3 &listenerPos) {
     float dx = position.x - listenerPos.x;
     float dy = position.y - listenerPos.y;
     float dz = position.z - listenerPos.z;
@@ -54,14 +54,14 @@ struct Voice {
   }
 
   // Get distance to listener
-  float getDistance(const Vector3 &listenerPos) const {
+  float GetDistance(const Vector3 &listenerPos) const {
     float dx = position.x - listenerPos.x;
     float dy = position.y - listenerPos.y;
     float dz = position.z - listenerPos.z;
     return sqrtf(dx * dx + dy * dy + dz * dz);
   }
 
-  bool isReal() const { return state == VoiceState::Real; }
-  bool isVirtual() const { return state == VoiceState::Virtual; }
-  bool isStopped() const { return state == VoiceState::Stopped; }
+  bool IsReal() const { return state == VoiceState::Real; }
+  bool IsVirtual() const { return state == VoiceState::Virtual; }
+  bool IsStopped() const { return state == VoiceState::Stopped; }
 };

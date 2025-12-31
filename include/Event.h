@@ -12,10 +12,10 @@ public:
                                 0.5f);
   }
 
-  AudioHandle play(const std::string &eventName,
+  AudioHandle Play(const std::string &eventName,
                    const std::string &busName = "Master") {
     EventDescriptor ed;
-    if (!m_Bank.findEvent(eventName, ed)) {
+    if (!m_Bank.FindEvent(eventName, ed)) {
       std::cerr << "Event not found: " << eventName << "\n";
       return 0;
     }
@@ -36,7 +36,7 @@ public:
       m_Engine.setVolume(h, volume);
       m_Engine.setSamplerate(
           h, (unsigned int)(m_Engine.getBackendSamplerate() * pitch));
-      routeHandleToBus(h, busName);
+      RouteHandleToBus(h, busName);
       return h;
     } else {
       auto wav = std::make_shared<SoLoud::Wav>();
@@ -48,18 +48,18 @@ public:
       m_Engine.setVolume(h, volume);
       m_Engine.setSamplerate(
           h, (unsigned int)(m_Engine.getBackendSamplerate() * pitch));
-      routeHandleToBus(h, busName);
+      RouteHandleToBus(h, busName);
       return h;
     }
   }
 
   // Get the occlusion filter for parameter updates
-  SoLoud::BiquadResonantFilter &getOcclusionFilter() {
+  SoLoud::BiquadResonantFilter &GetOcclusionFilter() {
     return m_OcclusionFilter;
   }
 
 private:
-  void routeHandleToBus(AudioHandle h, const std::string &busName) {
+  void RouteHandleToBus(AudioHandle h, const std::string &busName) {
     // Ideal: SoLoud supports playing via a specific Bus instance. If not
     // available, you can mix by playing the sound but applying filters/volumes
     // based on bus.

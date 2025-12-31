@@ -7,15 +7,15 @@ public:
   }
 
   // Attach a SoLoud filter
-  void addFilter(std::shared_ptr<SoLoud::Filter> f) { filters.push_back(f); }
+  void AddFilter(std::shared_ptr<SoLoud::Filter> f) { filters.push_back(f); }
 
   // Add a sound handle to this bus for volume control
-  void addHandle(SoLoud::Soloud &engine, SoLoud::handle h) {
+  void AddHandle(SoLoud::Soloud &engine, SoLoud::handle h) {
     m_Engine = &engine;
     m_Handles.push_back(h);
   }
 
-  void update(float dt) {
+  void Update(float dt) {
     // Calculate interpolation based on fade time
     if (m_FadeTime > 0.0f) {
       // Linear fade over the specified time
@@ -46,27 +46,27 @@ public:
   }
 
   // Immediate volume change (no fade)
-  void setVolume(float v) {
+  void SetVolume(float v) {
     m_Volume = v;
     m_TargetVolume = v;
     m_FadeTime = 0.0f;
   }
 
   // Set target volume with optional fade time (default: instant)
-  void setTargetVolume(float v, float fadeSeconds = 0.0f) {
+  void SetTargetVolume(float v, float fadeSeconds = 0.0f) {
     m_StartVolume = m_Volume;
     m_TargetVolume = v;
     m_FadeTime =
         fadeSeconds > 0.0f ? fadeSeconds : 0.001f; // Small epsilon for instant
   }
 
-  float getVolume() const { return m_Volume; }
-  float getTargetVolume() const { return m_TargetVolume; }
+  float GetVolume() const { return m_Volume; }
+  float GetTargetVolume() const { return m_TargetVolume; }
 
-  const std::string &getName() const { return m_Name; }
+  const std::string &GetName() const { return m_Name; }
 
   // Expose the SoLoud::Bus pointer for routing
-  SoLoud::Bus *raw() { return m_Bus.get(); }
+  SoLoud::Bus *Raw() { return m_Bus.get(); }
 
 private:
   std::unique_ptr<SoLoud::Bus> m_Bus;

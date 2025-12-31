@@ -17,7 +17,7 @@ struct EventDescriptor {
 class SoundBank {
 public:
   // Load all events from a JSON file containing an array of event objects
-  bool loadFromJsonFile(const std::string &jsonPath) {
+  bool LoadFromJsonFile(const std::string &jsonPath) {
     std::ifstream file(jsonPath);
     if (!file.is_open()) {
       std::cerr << "Failed to open JSON file: " << jsonPath << "\n";
@@ -31,7 +31,7 @@ public:
       // Handle array of events
       if (j.is_array()) {
         for (const auto &eventJson : j) {
-          registerEventFromJson(eventJson.dump());
+          RegisterEventFromJson(eventJson.dump());
         }
       }
       return true;
@@ -42,16 +42,7 @@ public:
   }
 
   // Register event from a JSON string
-  // Format:
-  // {
-  //   "name": "explosion",
-  //   "sound": "assets/sfx/explosion.wav",
-  //   "bus": "SFX",
-  //   "volume": [0.8, 1.0],
-  //   "pitch": [0.9, 1.1],
-  //   "parameters": { "distance": "attenuation" }
-  // }
-  bool registerEventFromJson(const std::string &jsonString) {
+  bool RegisterEventFromJson(const std::string &jsonString) {
     try {
       nlohmann::json j = nlohmann::json::parse(jsonString);
 
@@ -99,7 +90,7 @@ public:
         return false;
       }
 
-      registerEvent(ed);
+      RegisterEvent(ed);
       return true;
     } catch (const std::exception &e) {
       std::cerr << "JSON parse error: " << e.what() << "\n";
@@ -107,9 +98,9 @@ public:
     }
   }
 
-  void registerEvent(const EventDescriptor &ed) { events[ed.name] = ed; }
+  void RegisterEvent(const EventDescriptor &ed) { events[ed.name] = ed; }
 
-  bool findEvent(const std::string &name, EventDescriptor &out) {
+  bool FindEvent(const std::string &name, EventDescriptor &out) {
     auto it = events.find(name);
     if (it == events.end())
       return false;

@@ -12,18 +12,18 @@ The main entry point for all audio operations.
 
 | Method | Description |
 |--------|-------------|
-| `bool init()` | Initialize the audio engine. Returns `true` on success. |
-| `void shutdown()` | Deinitialize the audio engine. |
-| `void update(float dt)` | Call every frame to update 3D audio, buses, and zones. |
+| `bool Init()` | Initialize the audio engine. Returns `true` on success. |
+| `void Shutdown()` | Deinitialize the audio engine. |
+| `void Update(float dt)` | Call every frame to update 3D audio, buses, and zones. |
 
 ### Events
 
 | Method | Description |
 |--------|-------------|
-| `void registerEvent(const EventDescriptor& ed)` | Register an event using a struct. |
-| `bool registerEvent(const std::string& jsonString)` | Register an event from a JSON string. |
-| `bool loadEventsFromFile(const std::string& jsonPath)` | Load multiple events from a JSON file. |
-| `AudioHandle playEvent(const std::string& name)` | Play a registered event. Returns a handle. |
+| `void RegisterEvent(const EventDescriptor& ed)` | Register an event using a struct. |
+| `bool RegisterEvent(const std::string& jsonString)` | Register an event from a JSON string. |
+| `bool LoadEventsFromFile(const std::string& jsonPath)` | Load multiple events from a JSON file. |
+| `VoiceID PlayEvent(const std::string& name)` | Play a registered event. Returns a voice ID. |
 
 **EventDescriptor struct:**
 ```cpp
@@ -64,11 +64,11 @@ Virtual voices and voice stealing for CPU management.
 
 | Method | Description |
 |--------|-------------|
-| `void setMaxVoices(uint32_t max)` | Set max simultaneous real voices (default: 32). |
-| `void setStealBehavior(StealBehavior behavior)` | Set stealing: `Oldest`, `Furthest`, `Quietest`, `None`. |
-| `uint32_t getRealVoiceCount()` | Count of currently playing voices. |
-| `uint32_t getVirtualVoiceCount()` | Count of virtualized (silent) voices. |
-| `uint32_t getActiveVoiceCount()` | Total real + virtual voices. |
+| `void SetMaxVoices(uint32_t max)` | Set max simultaneous real voices (default: 32). |
+| `void SetStealBehavior(StealBehavior behavior)` | Set stealing: `Oldest`, `Furthest`, `Quietest`, `None`. |
+| `uint32_t GetRealVoiceCount()` | Count of currently playing voices. |
+| `uint32_t GetVirtualVoiceCount()` | Count of virtualized (silent) voices. |
+| `uint32_t GetActiveVoiceCount()` | Total real + virtual voices. |
 
 **How it works:**
 - When max voices reached, lowest-priority/least-audible voice is stolen
@@ -78,16 +78,16 @@ Virtual voices and voice stealing for CPU management.
 
 **Example:**
 ```cpp
-audio.setMaxVoices(32);
-audio.setStealBehavior(StealBehavior::Quietest);
+audio.SetMaxVoices(32);
+audio.SetStealBehavior(StealBehavior::Quietest);
 
 // Spawn 100 sounds - only 32 will play, rest virtualized
 for (int i = 0; i < 100; i++) {
-  audio.playEvent("footstep", randomPosition);
+  audio.PlayEvent("footstep", randomPosition);
 }
 
-std::cout << "Real: " << audio.getRealVoiceCount()
-          << " Virtual: " << audio.getVirtualVoiceCount();
+std::cout << "Real: " << audio.GetRealVoiceCount()
+          << " Virtual: " << audio.GetVirtualVoiceCount();
 ```
 
 ---
@@ -97,12 +97,12 @@ std::cout << "Real: " << audio.getRealVoiceCount()
 Spatial regions that automatically apply snapshots when the listener enters.
 
 | Method | Description |
-|--------|-------------|
-| `void addMixZone(name, snapshotName, pos, inner, outer, priority, fadeIn, fadeOut)` | Add a mix zone. |
-| `void removeMixZone(const std::string& name)` | Remove a mix zone. |
-| `void setZoneEnterCallback(fn)` | Set callback for zone entry. |
-| `void setZoneExitCallback(fn)` | Set callback for zone exit. |
-| `const std::string& getActiveMixZone()` | Get currently active zone name. |
+|--------|--------------|
+| `void AddMixZone(name, snapshotName, pos, inner, outer, priority, fadeIn, fadeOut)` | Add a mix zone. |
+| `void RemoveMixZone(const std::string& name)` | Remove a mix zone. |
+| `void SetZoneEnterCallback(fn)` | Set callback for zone entry. |
+| `void SetZoneExitCallback(fn)` | Set callback for zone exit. |
+| `const std::string& GetActiveMixZone()` | Get currently active zone name. |
 
 **Parameters:**
 - `inner`: Inner radius (full snapshot intensity)
@@ -112,18 +112,18 @@ Spatial regions that automatically apply snapshots when the listener enters.
 **Example:**
 ```cpp
 // Create snapshots
-audio.createSnapshot("Cave");
-audio.setSnapshotBusVolume("Cave", "Music", 0.4f);
+audio.CreateSnapshot("Cave");
+audio.SetSnapshotBusVolume("Cave", "Music", 0.4f);
 
-audio.createSnapshot("Combat");
-audio.setSnapshotBusVolume("Combat", "Music", 0.2f);
+audio.CreateSnapshot("Combat");
+audio.SetSnapshotBusVolume("Combat", "Music", 0.2f);
 
 // Create zones with priority
-audio.addMixZone("cave", "Cave", {30, 0, 0}, 5.0f, 15.0f, 100);
-audio.addMixZone("arena", "Combat", {60, 0, 0}, 10.0f, 25.0f, 200);
+audio.AddMixZone("cave", "Cave", {30, 0, 0}, 5.0f, 15.0f, 100);
+audio.AddMixZone("arena", "Combat", {60, 0, 0}, 10.0f, 25.0f, 200);
 
 // Optional: track zone events
-audio.setZoneEnterCallback([](const std::string& zone) {
+audio.SetZoneEnterCallback([](const std::string& zone) {
   std::cout << "Entered: " << zone << "\n";
 });
 ```
@@ -135,19 +135,19 @@ audio.setZoneEnterCallback([](const std::string& zone) {
 Handle-based 3D listener management (FMOD/Wwise style).
 
 | Method | Description |
-|--------|-------------|
-| `ListenerID createListener()` | Create a new listener. Returns a handle. |
-| `void destroyListener(ListenerID id)` | Remove a listener. |
-| `void setListenerPosition(ListenerID id, const Vector3& pos)` | Set listener position. |
-| `void setListenerPosition(ListenerID id, float x, float y, float z)` | Set listener position (floats). |
-| `void setListenerVelocity(ListenerID id, const Vector3& vel)` | Set velocity for Doppler effects. |
-| `void setListenerOrientation(ListenerID id, const Vector3& forward, const Vector3& up)` | Set listener orientation. |
+|--------|--------------|
+| `ListenerID CreateListener()` | Create a new listener. Returns a handle. |
+| `void DestroyListener(ListenerID id)` | Remove a listener. |
+| `void SetListenerPosition(ListenerID id, const Vector3& pos)` | Set listener position. |
+| `void SetListenerPosition(ListenerID id, float x, float y, float z)` | Set listener position (floats). |
+| `void SetListenerVelocity(ListenerID id, const Vector3& vel)` | Set velocity for Doppler effects. |
+| `void SetListenerOrientation(ListenerID id, const Vector3& forward, const Vector3& up)` | Set listener orientation. |
 
 **Example:**
 ```cpp
-ListenerID listener = audio.createListener();
-audio.setListenerPosition(listener, 0.0f, 0.0f, 0.0f);
-audio.update(dt);  // Process all listeners
+ListenerID listener = audio.CreateListener();
+audio.SetListenerPosition(listener, 0.0f, 0.0f, 0.0f);
+audio.Update(dt);  // Process all listeners
 ```
 
 ---
@@ -158,8 +158,8 @@ Spatial audio regions that trigger events based on listener distance. Zones use 
 
 | Method | Description |
 |--------|-------------|
-| `void addAudioZone(eventName, pos, inner, outer)` | Add a zone using an event. |
-| `void addAudioZone(eventName, pos, inner, outer, snapshotName, fadeIn, fadeOut)` | Add a zone with snapshot binding. |
+| `void AddAudioZone(eventName, pos, inner, outer)` | Add a zone using an event. |
+| `void AddAudioZone(eventName, pos, inner, outer, snapshotName, fadeIn, fadeOut)` | Add a zone with snapshot binding. |
 
 - **eventName**: Name of a registered event (not a file path)
 - **innerRadius**: Full volume distance
@@ -171,10 +171,10 @@ Spatial audio regions that trigger events based on listener distance. Zones use 
 **Basic Example:**
 ```cpp
 // Register the event first
-audio.registerEvent(ambientEvent);
+audio.RegisterEvent(ambientEvent);
 
 // Create zone using event name
-audio.addAudioZone("forest_ambient", {100, 0, 50}, 10.0f, 50.0f);
+audio.AddAudioZone("forest_ambient", {100, 0, 50}, 10.0f, 50.0f);
 ```
 
 ### Zone-Triggered Snapshots
@@ -183,18 +183,18 @@ You can bind snapshots directly to AudioZones. This applies the snapshot when th
 
 ```cpp
 // Create an underwater snapshot
-audio.createSnapshot("Underwater");
-audio.setSnapshotBusVolume("Underwater", "Music", 0.4f);
-audio.setSnapshotBusVolume("Underwater", "SFX", 0.6f);
+audio.CreateSnapshot("Underwater");
+audio.SetSnapshotBusVolume("Underwater", "Music", 0.4f);
+audio.SetSnapshotBusVolume("Underwater", "SFX", 0.6f);
 
 // Register the waterfall ambient event
-audio.registerEvent(waterfallEvent);
+audio.RegisterEvent(waterfallEvent);
 
 // Zone that triggers "Underwater" snapshot when listener is near
-audio.addAudioZone("waterfall", {100, 0, 0}, 10.0f, 20.0f, "Underwater");
+audio.AddAudioZone("waterfall", {100, 0, 0}, 10.0f, 20.0f, "Underwater");
 
 // With custom fade times (1s fade in, 2s fade out)
-audio.addAudioZone("cave_drip", {50, 0, 0}, 5.0f, 15.0f, "Cave", 1.0f, 2.0f);
+audio.AddAudioZone("cave_drip", {50, 0, 0}, 5.0f, 15.0f, "Cave", 1.0f, 2.0f);
 ```
 
 **How it works:**
@@ -209,18 +209,18 @@ audio.addAudioZone("cave_drip", {50, 0, 0}, 5.0f, 15.0f, "Cave", 1.0f, 2.0f);
 Audio routing channels with volume control.
 
 | Method | Description |
-|--------|-------------|
-| `void createBus(const std::string& name)` | Create a new bus. |
-| `std::shared_ptr<Bus> getBus(const std::string& name)` | Get a bus by name. |
+|--------|--------------|
+| `void CreateBus(const std::string& name)` | Create a new bus. |
+| `std::shared_ptr<Bus> GetBus(const std::string& name)` | Get a bus by name. |
 
 **Bus methods:**
 | Method | Description |
-|--------|-------------|
-| `void setVolume(float v)` | Set immediate volume (no fade). |
-| `void setTargetVolume(float v, float fadeSeconds = 0)` | Set target with configurable fade time. |
-| `float getVolume() const` | Get current volume. |
-| `float getTargetVolume() const` | Get target volume. |
-| `void addFilter(std::shared_ptr<SoLoud::Filter> f)` | Attach a DSP filter. |
+|--------|--------------|
+| `void SetVolume(float v)` | Set immediate volume (no fade). |
+| `void SetTargetVolume(float v, float fadeSeconds = 0)` | Set target with configurable fade time. |
+| `float GetVolume() const` | Get current volume. |
+| `float GetTargetVolume() const` | Get target volume. |
+| `void AddFilter(std::shared_ptr<SoLoud::Filter> f)` | Attach a DSP filter. |
 
 **Default buses:** `Master`, `SFX`, `Music`
 
@@ -231,27 +231,27 @@ Audio routing channels with volume control.
 Save and restore bus mix states with smooth fade transitions.
 
 | Method | Description |
-|--------|-------------|
-| `void createSnapshot(const std::string& name)` | Create a named snapshot. |
-| `void setSnapshotBusVolume(const std::string& snap, const std::string& bus, float volume)` | Set a bus volume in a snapshot. |
-| `void applySnapshot(const std::string& name, float fadeSeconds = 0.3f)` | Apply a snapshot with fade. |
-| `void resetBusVolumes(float fadeSeconds = 0.3f)` | Reset all buses to 1.0 with fade. |
-| `void resetEventVolume(const std::string& eventName, float fadeSeconds = 0.3f)` | Reset bus to event's `volumeMin` with fade. |
+|--------|--------------|
+| `void CreateSnapshot(const std::string& name)` | Create a named snapshot. |
+| `void SetSnapshotBusVolume(const std::string& snap, const std::string& bus, float volume)` | Set a bus volume in a snapshot. |
+| `void ApplySnapshot(const std::string& name, float fadeSeconds = 0.3f)` | Apply a snapshot with fade. |
+| `void ResetBusVolumes(float fadeSeconds = 0.3f)` | Reset all buses to 1.0 with fade. |
+| `void ResetEventVolume(const std::string& eventName, float fadeSeconds = 0.3f)` | Reset bus to event's `volumeMin` with fade. |
 
 **Example:**
 ```cpp
 // Create snapshots
-audio.createSnapshot("Combat");
-audio.setSnapshotBusVolume("Combat", "Music", 0.3f);
-audio.setSnapshotBusVolume("Combat", "SFX", 1.0f);
+audio.CreateSnapshot("Combat");
+audio.SetSnapshotBusVolume("Combat", "Music", 0.3f);
+audio.SetSnapshotBusVolume("Combat", "SFX", 1.0f);
 
 // Enter combat - music fades down over 2 seconds
-audio.applySnapshot("Combat", 2.0f);
+audio.ApplySnapshot("Combat", 2.0f);
 
 // Exit combat - restore volumes with 1 second fade
-audio.resetBusVolumes(1.0f);
+audio.ResetBusVolumes(1.0f);
 // OR
-audio.resetEventVolume("music", 0.5f);
+audio.ResetEventVolume("music", 0.5f);
 ```
 
 ---
@@ -263,14 +263,14 @@ Reverb buses provide environment-based spatial coloration without duplicating ef
 ### Core API
 
 | Method | Description |
-|--------|-------------|
-| `bool createReverbBus(name, roomSize, damp, wet, width)` | Create a reverb bus with custom parameters. |
-| `bool createReverbBus(name, ReverbPreset)` | Create a reverb bus from a preset. |
-| `shared_ptr<ReverbBus> getReverbBus(name)` | Get a reverb bus by name. |
-| `void setReverbParams(name, wet, roomSize, damp, fadeTime)` | Adjust reverb parameters with fade. |
-| `void addReverbZone(name, reverbBusName, pos, inner, outer, priority)` | Add a spatial reverb influence zone. |
-| `void removeReverbZone(name)` | Remove a reverb zone. |
-| `void setSnapshotReverbParams(snapshot, reverbBus, wet, roomSize, damp, width)` | Control reverb via snapshots. |
+|--------|--------------|
+| `bool CreateReverbBus(name, roomSize, damp, wet, width)` | Create a reverb bus with custom parameters. |
+| `bool CreateReverbBus(name, ReverbPreset)` | Create a reverb bus from a preset. |
+| `shared_ptr<ReverbBus> GetReverbBus(name)` | Get a reverb bus by name. |
+| `void SetReverbParams(name, wet, roomSize, damp, fadeTime)` | Adjust reverb parameters with fade. |
+| `void AddReverbZone(name, reverbBusName, pos, inner, outer, priority)` | Add a spatial reverb influence zone. |
+| `void RemoveReverbZone(name)` | Remove a reverb zone. |
+| `void SetSnapshotReverbParams(snapshot, reverbBus, wet, roomSize, damp, width)` | Control reverb via snapshots. |
 
 ### Reverb Presets
 
@@ -293,25 +293,25 @@ Reverb zones define spatial regions where reverb influence fades in/out based on
 **Example:**
 ```cpp
 // Create reverb buses
-audio.createReverbBus("CaveReverb", ReverbPreset::Cave);
-audio.createReverbBus("HallReverb", ReverbPreset::Hall);
+audio.CreateReverbBus("CaveReverb", ReverbPreset::Cave);
+audio.CreateReverbBus("HallReverb", ReverbPreset::Hall);
 
 // Create reverb zones
-audio.addReverbZone("cave_entrance", "CaveReverb", {50, 0, 0}, 10.0f, 30.0f, 150);
-audio.addReverbZone("arena_hall", "HallReverb", {100, 0, 0}, 15.0f, 40.0f, 100);
+audio.AddReverbZone("cave_entrance", "CaveReverb", {50, 0, 0}, 10.0f, 30.0f, 150);
+audio.AddReverbZone("arena_hall", "HallReverb", {100, 0, 0}, 15.0f, 40.0f, 100);
 
 // Manual parameter control with fade
-audio.setReverbParams("CaveReverb", 0.8f, 0.9f, 0.3f, 2.0f);  // 2 second fade
+audio.SetReverbParams("CaveReverb", 0.8f, 0.9f, 0.3f, 2.0f);  // 2 second fade
 
 // Snapshot-based reverb control
-audio.createSnapshot("Underwater");
-audio.setSnapshotReverbParams("Underwater", "CaveReverb", 0.95f, 0.7f, 0.8f, 0.5f);
-audio.applySnapshot("Underwater", 1.0f);
+audio.CreateSnapshot("Underwater");
+audio.SetSnapshotReverbParams("Underwater", "CaveReverb", 0.95f, 0.7f, 0.8f, 0.5f);
+audio.ApplySnapshot("Underwater", 1.0f);
 
 // Game loop - reverb zones update automatically
 while (running) {
-  audio.setListenerPosition(listener, playerX, playerY, playerZ);
-  audio.update(dt);  // Reverb wet level fades based on zone proximity
+  audio.SetListenerPosition(listener, playerX, playerY, playerZ);
+  audio.Update(dt);  // Reverb wet level fades based on zone proximity
 }
 ```
 
@@ -340,14 +340,14 @@ Simulate how physical geometry affects sound propagation between sources and lis
 
 | Method | Description |
 |--------|-------------|
-| `void setOcclusionQueryCallback(callback)` | Set callback for game-provided raycasts |
-| `void registerOcclusionMaterial(mat)` | Register a custom material |
-| `void setOcclusionEnabled(bool)` | Enable/disable occlusion processing |
-| `void setOcclusionThreshold(float)` | Set obstruction→occlusion threshold (0-1) |
-| `void setOcclusionSmoothingTime(float)` | Set transition smoothing (seconds) |
-| `void setOcclusionUpdateRate(float hz)` | Set query rate (Hz) |
-| `void setOcclusionLowPassRange(min, max)` | Set filter frequency range |
-| `void setOcclusionVolumeReduction(float)` | Set max volume reduction (0-1) |
+| `void SetOcclusionQueryCallback(callback)` | Set callback for game-provided raycasts |
+| `void RegisterOcclusionMaterial(mat)` | Register a custom material |
+| `void SetOcclusionEnabled(bool)` | Enable/disable occlusion processing |
+| `void SetOcclusionThreshold(float)` | Set obstruction→occlusion threshold (0-1) |
+| `void SetOcclusionSmoothingTime(float)` | Set transition smoothing (seconds) |
+| `void SetOcclusionUpdateRate(float hz)` | Set query rate (Hz) |
+| `void SetOcclusionLowPassRange(min, max)` | Set filter frequency range |
+| `void SetOcclusionVolumeReduction(float)` | Set max volume reduction (0-1) |
 
 ### Built-in Materials
 
@@ -363,7 +363,7 @@ Simulate how physical geometry affects sound propagation between sources and lis
 
 ```cpp
 // Set up occlusion query callback (game provides raycasts)
-audio.setOcclusionQueryCallback(
+audio.SetOcclusionQueryCallback(
   [](const Vector3& source, const Vector3& listener) -> std::vector<OcclusionHit> {
     std::vector<OcclusionHit> hits;
     
@@ -375,14 +375,14 @@ audio.setOcclusionQueryCallback(
   });
 
 // Configure occlusion
-audio.setOcclusionEnabled(true);
-audio.setOcclusionThreshold(0.7f);      // 70% obstruction → occlusion kicks in
-audio.setOcclusionSmoothingTime(0.1f);  // 100ms transitions
-audio.setOcclusionLowPassRange(400.0f, 22000.0f);  // Filter range
-audio.setOcclusionVolumeReduction(0.5f);  // Max 50% volume reduction
+audio.SetOcclusionEnabled(true);
+audio.SetOcclusionThreshold(0.7f);      // 70% obstruction → occlusion kicks in
+audio.SetOcclusionSmoothingTime(0.1f);  // 100ms transitions
+audio.SetOcclusionLowPassRange(400.0f, 22000.0f);  // Filter range
+audio.SetOcclusionVolumeReduction(0.5f);  // Max 50% volume reduction
 
 // Register custom materials
-audio.registerOcclusionMaterial({"BrickWall", 0.7f, 0.2f});
+audio.RegisterOcclusionMaterial({"BrickWall", 0.7f, 0.2f});
 ```
 
 ### DSP Mapping
@@ -401,8 +401,8 @@ Global parameters that can drive audio behavior.
 
 | Method | Description |
 |--------|-------------|
-| `void setGlobalParameter(const std::string& name, float value)` | Set a global parameter. |
-| `Parameter* getParam(const std::string& name)` | Get a parameter to read or bind. |
+| `void SetGlobalParameter(const std::string& name, float value)` | Set a global parameter. |
+| `Parameter* GetParam(const std::string& name)` | Get a parameter to read or bind. |
 
 **Parameter class:**
 | Method | Description |
@@ -433,23 +433,23 @@ struct Vector3 {
 
 int main() {
   AudioManager audio;
-  audio.init();
+  audio.Init();
 
   // Register and play event
-  audio.loadEventsFromFile("assets/events.json");
-  audio.playEvent("explosion");
+  audio.LoadEventsFromFile("assets/events.json");
+  audio.PlayEvent("explosion");
 
   // Set up 3D listener
-  ListenerID listener = audio.createListener();
-  audio.setListenerPosition(listener, 0, 0, 0);
+  ListenerID listener = audio.CreateListener();
+  audio.SetListenerPosition(listener, 0, 0, 0);
 
   // Main loop
   while (running) {
-    audio.setListenerPosition(listener, playerX, playerY, playerZ);
-    audio.update(deltaTime);
+    audio.SetListenerPosition(listener, playerX, playerY, playerZ);
+    audio.Update(deltaTime);
   }
 
-  audio.shutdown();
+  audio.Shutdown();
   return 0;
 }
 ```

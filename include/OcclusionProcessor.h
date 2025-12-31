@@ -10,46 +10,46 @@
 // calculates obstruction/occlusion values and maps them to DSP parameters.
 class OcclusionProcessor {
 public:
-  OcclusionProcessor() { registerDefaultMaterials(); }
+  OcclusionProcessor() { RegisterDefaultMaterials(); }
 
   // Set the callback for occlusion queries (game provides raycasts)
-  void setQueryCallback(OcclusionQueryCallback callback) {
+  void SetQueryCallback(OcclusionQueryCallback callback) {
     m_QueryCallback = std::move(callback);
   }
 
   // Register a custom material
-  void registerMaterial(const OcclusionMaterial &mat) {
+  void RegisterMaterial(const OcclusionMaterial &mat) {
     m_Materials[mat.name] = mat;
   }
 
   // Configuration
-  void setOcclusionThreshold(float threshold) {
+  void SetOcclusionThreshold(float threshold) {
     m_OcclusionThreshold = std::clamp(threshold, 0.0f, 1.0f);
   }
-  void setSmoothingTime(float seconds) {
+  void SetSmoothingTime(float seconds) {
     m_SmoothingTime = std::max(seconds, 0.01f);
   }
-  void setUpdateRate(float hz) { m_UpdateRate = std::max(hz, 1.0f); }
-  void setEnabled(bool enabled) { m_Enabled = enabled; }
+  void SetUpdateRate(float hz) { m_UpdateRate = std::max(hz, 1.0f); }
+  void SetEnabled(bool enabled) { m_Enabled = enabled; }
 
   // DSP range configuration
-  void setLowPassRange(float minFreq, float maxFreq) {
+  void SetLowPassRange(float minFreq, float maxFreq) {
     m_MinLowPassFreq = std::clamp(minFreq, 100.0f, 22000.0f);
     m_MaxLowPassFreq = std::clamp(maxFreq, m_MinLowPassFreq, 22000.0f);
   }
-  void setVolumeReduction(float maxReduction) {
+  void SetVolumeReduction(float maxReduction) {
     m_MaxVolumeReduction = std::clamp(maxReduction, 0.0f, 1.0f);
   }
 
   // Update occlusion for a voice (called each audio update)
-  void update(Voice &voice, const Vector3 &listenerPos, float dt) {
+  void Update(Voice &voice, const Vector3 &listenerPos, float dt) {
     if (!m_Enabled || !m_QueryCallback) {
       // Reset to unoccluded
       voice.obstruction = 0.0f;
       voice.occlusion = 0.0f;
       voice.targetLowPassFreq = m_MaxLowPassFreq;
       voice.occlusionVolume = 1.0f;
-      smoothValues(voice, dt);
+      SmoothValues(voice, dt);
       return;
     }
 
@@ -57,7 +57,7 @@ public:
     m_TimeSinceLastUpdate += dt;
     if (m_TimeSinceLastUpdate < 1.0f / m_UpdateRate) {
       // Just smooth existing values
-      smoothValues(voice, dt);
+      SmoothValues(voice, dt);
       return;
     }
     m_TimeSinceLastUpdate = 0.0f;
@@ -70,7 +70,7 @@ public:
     float totalOcclusionBias = 0.0f;
 
     for (const auto &hit : hits) {
-      const OcclusionMaterial &mat = getMaterial(hit.materialName);
+      const OcclusionMaterial &mat = GetMaterial(hit.materialName);
       // Scale by thickness (thicker = more obstruction)
       float thicknessFactor = std::min(hit.thickness, 3.0f) / 3.0f;
       totalObstruction += mat.obstruction * (0.5f + 0.5f * thicknessFactor);
@@ -105,11 +105,11 @@ public:
     voice.occlusionVolume = 1.0f - (combined * m_MaxVolumeReduction);
 
     // Smooth values
-    smoothValues(voice, dt);
+    SmoothValues(voice, dt);
   }
 
   // Apply DSP effects to a playing voice
-  void applyDSP(SoLoud::Soloud &engine, Voice &voice) {
+  void ApplyDSP(SoLoud::Soloud &engine, Voice &voice) {
     if (!m_Enabled || voice.handle == 0)
       return;
 
@@ -125,26 +125,26 @@ public:
   }
 
   // Get current state for debugging
-  bool isEnabled() const { return m_Enabled; }
-  float getOcclusionThreshold() const { return m_OcclusionThreshold; }
+  bool IsEnabled() const { return m_Enabled; }
+  float GetOcclusionThreshold() const { return m_OcclusionThreshold; }
 
 private:
-  void registerDefaultMaterials() {
-    registerMaterial(OcclusionMaterials::Glass);
-    registerMaterial(OcclusionMaterials::Fabric);
-    registerMaterial(OcclusionMaterials::Foliage);
-    registerMaterial(OcclusionMaterials::Wood);
-    registerMaterial(OcclusionMaterials::Plaster);
-    registerMaterial(OcclusionMaterials::Metal);
-    registerMaterial(OcclusionMaterials::Brick);
-    registerMaterial(OcclusionMaterials::Concrete);
-    registerMaterial(OcclusionMaterials::Stone);
-    registerMaterial(OcclusionMaterials::Terrain);
-    registerMaterial(OcclusionMaterials::Water);
-    registerMaterial(OcclusionMaterials::Default);
+  void RegisterDefaultMaterials() {
+    RegisterMaterial(OcclusionMaterials::Glass);
+    RegisterMaterial(OcclusionMaterials::Fabric);
+    RegisterMaterial(OcclusionMaterials::Foliage);
+    RegisterMaterial(OcclusionMaterials::Wood);
+    RegisterMaterial(OcclusionMaterials::Plaster);
+    RegisterMaterial(OcclusionMaterials::Metal);
+    RegisterMaterial(OcclusionMaterials::Brick);
+    RegisterMaterial(OcclusionMaterials::Concrete);
+    RegisterMaterial(OcclusionMaterials::Stone);
+    RegisterMaterial(OcclusionMaterials::Terrain);
+    RegisterMaterial(OcclusionMaterials::Water);
+    RegisterMaterial(OcclusionMaterials::Default);
   }
 
-  const OcclusionMaterial &getMaterial(const std::string &name) const {
+  const OcclusionMaterial &GetMaterial(const std::string &name) const {
     auto it = m_Materials.find(name);
     if (it != m_Materials.end()) {
       return it->second;
@@ -154,7 +154,7 @@ private:
     return defaultMat;
   }
 
-  void smoothValues(Voice &voice, float dt) {
+  void SmoothValues(Voice &voice, float dt) {
     // Exponential smoothing for low-pass frequency
     float alpha = 1.0f - std::exp(-dt / m_SmoothingTime);
     voice.currentLowPassFreq +=
