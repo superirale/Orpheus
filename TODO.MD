@@ -27,3 +27,37 @@
 - [ ] Surround/LFE - 5.1/7.1 speaker layouts
 - [ ] Ray-traced Acoustics - Advanced propagation simulation
 - [ ] Audio Codec - Vorbis/Opus compression support
+
+
+
+
+# GoldenLyre Improvements Roadmap
+
+## High Priority
+
+| Area | Current State | Improvement |
+|------|---------------|-------------|
+| **Namespace** | Global namespace | Wrap everything in `namespace GoldenLyre { }` |
+| **Error Handling** | `std::cerr` + return `false` | Proper error codes/`Result<T>` type or exceptions |
+| **Logging** | None | Add logging levels (Debug/Info/Warn/Error) with callbacks |
+| **Unit Tests** | None | Add GoogleTest or Catch2 with CI integration |
+| **Documentation** | Basic API.md | Add Doxygen comments to headers |
+
+## Medium Priority
+
+| Area | Improvement |
+|------|-------------|
+| **Thread Safety** | Audit and document thread-safety guarantees per method |
+| **PIMPL Pattern** | Hide implementation details for ABI stability |
+| **Const Correctness** | Add `[[nodiscard]]` to getters, review `const` usage |
+| **Smart Pointers** | Replace raw pointers with `std::unique_ptr`/`std::shared_ptr` consistently |
+| **Static Analysis** | Integrate clang-tidy, cppcheck into CI |
+
+## Nice to Have
+
+- **Benchmarks** - Performance tests for voice management, DSP
+- **Fuzzing** - Fuzz JSON parsing with AFL/libFuzzer
+- **Code Coverage** - Track with gcov/llvm-cov
+- **GitHub Actions** - CI/CD pipeline for builds + tests
+- **Version Macros** - `ORPHEUS_VERSION_MAJOR`, etc.
+- **Export Macros** - `ORPHEUS_API` for shared library builds
