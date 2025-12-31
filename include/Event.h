@@ -6,7 +6,11 @@
 class AudioEvent {
 public:
   AudioEvent(SoLoud::Soloud &engine, SoundBank &bank)
-      : m_Engine(engine), m_Bank(bank) {}
+      : m_Engine(engine), m_Bank(bank) {
+    // Initialize the shared low-pass filter for occlusion
+    m_OcclusionFilter.setParams(SoLoud::BiquadResonantFilter::LOWPASS, 22000.0f,
+                                0.5f);
+  }
 
   AudioHandle play(const std::string &eventName,
                    const std::string &busName = "Master") {
@@ -24,6 +28,8 @@ public:
     if (ed.stream) {
       auto wavstream = std::make_shared<SoLoud::WavStream>();
       wavstream->load(ed.path.c_str());
+      // Attach occlusion filter (slot 0) for per-voice filtering
+      wavstream->setFilter(0, &m_OcclusionFilter);
       // play through the bus: SoLoud::Soloud::play() accepts a sound object
       AudioHandle h = m_Engine.play(*wavstream);
       m_ActiveSounds.push_back(wavstream); // keep alive
@@ -35,6 +41,8 @@ public:
     } else {
       auto wav = std::make_shared<SoLoud::Wav>();
       wav->load(ed.path.c_str());
+      // Attach occlusion filter (slot 0) for per-voice filtering
+      wav->setFilter(0, &m_OcclusionFilter);
       AudioHandle h = m_Engine.play(*wav);
       m_ActiveSounds.push_back(wav);
       m_Engine.setVolume(h, volume);
@@ -43,6 +51,11 @@ public:
       routeHandleToBus(h, busName);
       return h;
     }
+  }
+
+  // Get the occlusion filter for parameter updates
+  SoLoud::BiquadResonantFilter &getOcclusionFilter() {
+    return m_OcclusionFilter;
   }
 
 private:
@@ -58,4 +71,7 @@ private:
   SoundBank &m_Bank;
   std::vector<std::shared_ptr<SoLoud::AudioSource>>
       m_ActiveSounds; // keep them alive while playing
+
+  // Shared low-pass filter for occlusion effects
+  SoLoud::BiquadResonantFilter m_OcclusionFilter;
 };

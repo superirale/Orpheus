@@ -17,6 +17,7 @@
 
 // SoLoud headers
 #include <soloud.h>
+#include <soloud_biquadresonantfilter.h>
 #include <soloud_bus.h>
 #include <soloud_filter.h>
 #include <soloud_freeverbfilter.h>

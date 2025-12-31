@@ -35,6 +35,14 @@ struct Voice {
   // Updated each frame based on reverb zones
   std::unordered_map<std::string, float> reverbSends;
 
+  // Occlusion state (calculated per update by OcclusionProcessor)
+  float obstruction = 0.0f;            // 0.0-1.0 partial blocking
+  float occlusion = 0.0f;              // 0.0-1.0 full blocking (derived)
+  float occlusionSmoothed = 0.0f;      // Smoothed value for DSP
+  float targetLowPassFreq = 22000.0f;  // Target filter cutoff Hz
+  float currentLowPassFreq = 22000.0f; // Current (smoothed) cutoff Hz
+  float occlusionVolume = 1.0f;        // Volume modifier from occlusion
+
   // Calculate audibility based on listener position
   void updateAudibility(const Vector3 &listenerPos) {
     float dx = position.x - listenerPos.x;

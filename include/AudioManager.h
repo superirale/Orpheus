@@ -5,6 +5,7 @@
 #include "Event.h"
 #include "Listener.h"
 #include "MixZone.h"
+#include "OcclusionProcessor.h"
 #include "Parameter.h"
 #include "ReverbBus.h"
 #include "ReverbZone.h"
@@ -78,6 +79,12 @@ public:
       else if (voice.isVirtual() && voice.handle != 0) {
         m_Engine.stop(voice.handle);
         voice.handle = 0;
+      }
+
+      // Update occlusion for real voices
+      if (voice.isReal() && voice.handle != 0) {
+        m_OcclusionProcessor.update(voice, listenerPos, dt);
+        m_OcclusionProcessor.applyDSP(m_Engine, voice);
       }
     }
 
@@ -431,6 +438,50 @@ public:
     return active;
   }
 
+  // ---------------- Occlusion API ----------------
+
+  // Set the callback for occlusion queries (game provides raycasts)
+  void setOcclusionQueryCallback(OcclusionQueryCallback callback) {
+    m_OcclusionProcessor.setQueryCallback(std::move(callback));
+  }
+
+  // Register a custom occlusion material
+  void registerOcclusionMaterial(const OcclusionMaterial &mat) {
+    m_OcclusionProcessor.registerMaterial(mat);
+  }
+
+  // Enable/disable occlusion processing
+  void setOcclusionEnabled(bool enabled) {
+    m_OcclusionProcessor.setEnabled(enabled);
+  }
+
+  // Set the threshold at which obstruction becomes occlusion
+  void setOcclusionThreshold(float threshold) {
+    m_OcclusionProcessor.setOcclusionThreshold(threshold);
+  }
+
+  // Set smoothing time for occlusion transitions (in seconds)
+  void setOcclusionSmoothingTime(float seconds) {
+    m_OcclusionProcessor.setSmoothingTime(seconds);
+  }
+
+  // Set how often to update occlusion (Hz)
+  void setOcclusionUpdateRate(float hz) {
+    m_OcclusionProcessor.setUpdateRate(hz);
+  }
+
+  // Configure DSP ranges for occlusion
+  void setOcclusionLowPassRange(float minFreq, float maxFreq) {
+    m_OcclusionProcessor.setLowPassRange(minFreq, maxFreq);
+  }
+
+  void setOcclusionVolumeReduction(float maxReduction) {
+    m_OcclusionProcessor.setVolumeReduction(maxReduction);
+  }
+
+  // Get occlusion state for debugging
+  bool isOcclusionEnabled() const { return m_OcclusionProcessor.isEnabled(); }
+
 private:
   SoLoud::Soloud m_Engine;
   SoundBank m_Bank;
@@ -454,6 +505,9 @@ private:
   // Reverb system
   std::unordered_map<std::string, std::shared_ptr<ReverbBus>> m_ReverbBuses;
   std::vector<std::shared_ptr<ReverbZone>> m_ReverbZones;
+
+  // Occlusion system
+  OcclusionProcessor m_OcclusionProcessor;
 
   void updateMixZones(const Vector3 &listenerPos) {
     // Update all mix zones

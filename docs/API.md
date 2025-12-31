@@ -327,6 +327,74 @@ while (running) {
 
 ---
 
+## Occlusion & Obstruction
+
+Simulate how physical geometry affects sound propagation between sources and listeners.
+
+### Core Concepts
+
+- **Obstruction**: Partial blocking (thin walls, doors) → reduced high frequencies
+- **Occlusion**: Full blocking (thick walls, terrain) → strong low-pass + volume reduction
+
+### Core API
+
+| Method | Description |
+|--------|-------------|
+| `void setOcclusionQueryCallback(callback)` | Set callback for game-provided raycasts |
+| `void registerOcclusionMaterial(mat)` | Register a custom material |
+| `void setOcclusionEnabled(bool)` | Enable/disable occlusion processing |
+| `void setOcclusionThreshold(float)` | Set obstruction→occlusion threshold (0-1) |
+| `void setOcclusionSmoothingTime(float)` | Set transition smoothing (seconds) |
+| `void setOcclusionUpdateRate(float hz)` | Set query rate (Hz) |
+| `void setOcclusionLowPassRange(min, max)` | Set filter frequency range |
+| `void setOcclusionVolumeReduction(float)` | Set max volume reduction (0-1) |
+
+### Built-in Materials
+
+| Material | Obstruction | Description |
+|----------|-------------|-------------|
+| Glass | 0.2 | Very light blocking |
+| Wood | 0.3 | Light blocking |
+| Metal | 0.5 | Medium blocking |
+| Concrete | 0.8 | Heavy blocking |
+| Terrain | 1.0 | Full blocking |
+
+### Example Usage
+
+```cpp
+// Set up occlusion query callback (game provides raycasts)
+audio.setOcclusionQueryCallback(
+  [](const Vector3& source, const Vector3& listener) -> std::vector<OcclusionHit> {
+    std::vector<OcclusionHit> hits;
+    
+    // Perform raycast in your physics engine
+    for (auto& hit : physics.raycast(source, listener)) {
+      hits.push_back({hit.materialName, hit.thickness});
+    }
+    return hits;
+  });
+
+// Configure occlusion
+audio.setOcclusionEnabled(true);
+audio.setOcclusionThreshold(0.7f);      // 70% obstruction → occlusion kicks in
+audio.setOcclusionSmoothingTime(0.1f);  // 100ms transitions
+audio.setOcclusionLowPassRange(400.0f, 22000.0f);  // Filter range
+audio.setOcclusionVolumeReduction(0.5f);  // Max 50% volume reduction
+
+// Register custom materials
+audio.registerOcclusionMaterial({"BrickWall", 0.7f, 0.2f});
+```
+
+### DSP Mapping
+
+| Factor | Volume | LowPass Freq |
+|--------|--------|--------------|
+| Unoccluded (0.0) | 100% | 22 kHz |
+| Obstructed (0.5) | 75% | ~4 kHz |
+| Occluded (1.0) | 50% | 400 Hz |
+
+---
+
 ## Parameters
 
 Global parameters that can drive audio behavior.

@@ -116,6 +116,42 @@ int main(int argc, char **argv) {
   std::cout << "  - HallReverb (Hall preset) at position (100, 0, 0)\n";
   std::cout << "  - Reverb wet level fades based on distance to zone center\n";
 
+  // ============ OCCLUSION DEMO ============
+  // Simulate a wall at position 45 that blocks sound
+  const float wallPosition = 45.0f;
+  const float musicSourcePos = 0.0f; // Music source is at origin
+
+  // Set up occlusion query callback (simulates raycast)
+  audio.setOcclusionQueryCallback(
+      [wallPosition,
+       musicSourcePos](const Vector3 &source,
+                       const Vector3 &listener) -> std::vector<OcclusionHit> {
+        std::vector<OcclusionHit> hits;
+
+        // Check if the wall is between source and listener
+        // Wall is at x=45, sound source is at x=0
+        float srcX = source.x;
+        float listenerX = listener.x;
+
+        // If listener is past the wall and source is before the wall
+        // (or vice versa), there's an obstruction
+        if ((srcX < wallPosition && listenerX > wallPosition) ||
+            (srcX > wallPosition && listenerX < wallPosition)) {
+          // Hit a concrete wall!
+          hits.push_back(OcclusionHit{"Concrete", 0.3f});
+        }
+
+        return hits;
+      });
+
+  audio.setOcclusionEnabled(true);
+  audio.setOcclusionThreshold(0.7f);
+  audio.setOcclusionSmoothingTime(0.15f);
+
+  std::cout << "\nOcclusion enabled:\n";
+  std::cout << "  - Simulated concrete wall at x=45\n";
+  std::cout << "  - Music will be muffled when listener crosses the wall\n";
+
   // Set up zone enter/exit callbacks
   audio.setZoneEnterCallback([](const std::string &zone) {
     std::cout << ">>> ENTERED zone: " << zone << "\n";
