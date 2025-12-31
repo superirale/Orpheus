@@ -19,6 +19,7 @@
 #include <soloud.h>
 #include <soloud_bus.h>
 #include <soloud_filter.h>
+#include <soloud_freeverbfilter.h>
 #include <soloud_wav.h>
 #include <soloud_wavstream.h>
 

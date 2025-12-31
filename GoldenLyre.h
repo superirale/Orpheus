@@ -9,6 +9,8 @@
 #include "include/DSPFilters.h"
 #include "include/Event.h"
 #include "include/Parameter.h"
+#include "include/ReverbBus.h"
+#include "include/ReverbZone.h"
 #include "include/SoundBank.h"
 #include "include/Types.h"
 #include "include/VirtualVoiceManager.h"

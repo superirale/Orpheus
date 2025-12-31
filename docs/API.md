@@ -256,6 +256,77 @@ audio.resetEventVolume("music", 0.5f);
 
 ---
 
+## Reverb Buses
+
+Reverb buses provide environment-based spatial coloration without duplicating effects per sound instance. Sounds send signal **to** reverb buses (not play on them), enabling efficient shared DSP.
+
+### Core API
+
+| Method | Description |
+|--------|-------------|
+| `bool createReverbBus(name, roomSize, damp, wet, width)` | Create a reverb bus with custom parameters. |
+| `bool createReverbBus(name, ReverbPreset)` | Create a reverb bus from a preset. |
+| `shared_ptr<ReverbBus> getReverbBus(name)` | Get a reverb bus by name. |
+| `void setReverbParams(name, wet, roomSize, damp, fadeTime)` | Adjust reverb parameters with fade. |
+| `void addReverbZone(name, reverbBusName, pos, inner, outer, priority)` | Add a spatial reverb influence zone. |
+| `void removeReverbZone(name)` | Remove a reverb zone. |
+| `void setSnapshotReverbParams(snapshot, reverbBus, wet, roomSize, damp, width)` | Control reverb via snapshots. |
+
+### Reverb Presets
+
+| Preset | Description |
+|--------|-------------|
+| `ReverbPreset::Room` | Small room - short decay, high damping |
+| `ReverbPreset::Hall` | Concert hall - medium decay |
+| `ReverbPreset::Cave` | Large cave - long decay, low damping |
+| `ReverbPreset::Cathedral` | Cathedral - very long decay, wide stereo |
+| `ReverbPreset::Underwater` | Underwater - heavy wet, high damping |
+
+### Reverb Zones
+
+Reverb zones define spatial regions where reverb influence fades in/out based on listener distance.
+
+- **innerRadius**: Full reverb influence at this distance
+- **outerRadius**: Zero influence beyond this distance
+- **priority**: Higher priority zones take precedence in overlaps
+
+**Example:**
+```cpp
+// Create reverb buses
+audio.createReverbBus("CaveReverb", ReverbPreset::Cave);
+audio.createReverbBus("HallReverb", ReverbPreset::Hall);
+
+// Create reverb zones
+audio.addReverbZone("cave_entrance", "CaveReverb", {50, 0, 0}, 10.0f, 30.0f, 150);
+audio.addReverbZone("arena_hall", "HallReverb", {100, 0, 0}, 15.0f, 40.0f, 100);
+
+// Manual parameter control with fade
+audio.setReverbParams("CaveReverb", 0.8f, 0.9f, 0.3f, 2.0f);  // 2 second fade
+
+// Snapshot-based reverb control
+audio.createSnapshot("Underwater");
+audio.setSnapshotReverbParams("Underwater", "CaveReverb", 0.95f, 0.7f, 0.8f, 0.5f);
+audio.applySnapshot("Underwater", 1.0f);
+
+// Game loop - reverb zones update automatically
+while (running) {
+  audio.setListenerPosition(listener, playerX, playerY, playerZ);
+  audio.update(dt);  // Reverb wet level fades based on zone proximity
+}
+```
+
+### DSP Parameters
+
+| Parameter | Range | Description |
+|-----------|-------|-------------|
+| `wet` | 0.0-1.0 | Wet/dry mix (0 = dry, 1 = fully wet) |
+| `roomSize` | 0.0-1.0 | Room size (larger = longer decay) |
+| `damp` | 0.0-1.0 | High frequency damping (higher = darker sound) |
+| `width` | 0.0-1.0 | Stereo width (0 = mono, 1 = full stereo) |
+| `freeze` | bool | Infinite sustain mode |
+
+---
+
 ## Parameters
 
 Global parameters that can drive audio behavior.

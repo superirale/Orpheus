@@ -31,6 +31,10 @@ struct Voice {
   float playbackTime = 0.0f; // Seconds since start (for resuming virtual)
   float startTime = 0.0f;    // When started (for Oldest stealing)
 
+  // Reverb sends: bus name -> send level (0.0-1.0)
+  // Updated each frame based on reverb zones
+  std::unordered_map<std::string, float> reverbSends;
+
   // Calculate audibility based on listener position
   void updateAudibility(const Vector3 &listenerPos) {
     float dx = position.x - listenerPos.x;

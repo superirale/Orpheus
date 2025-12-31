@@ -6,6 +6,8 @@
 #include "Listener.h"
 #include "MixZone.h"
 #include "Parameter.h"
+#include "ReverbBus.h"
+#include "ReverbZone.h"
 #include "Snapshot.h"
 #include "SoundBank.h"
 #include "Types.h"
@@ -81,6 +83,9 @@ public:
 
     // Update mix zones and apply highest priority active snapshot
     updateMixZones(listenerPos);
+
+    // Update reverb zones (calculate zone influence on reverb buses)
+    updateReverbZones(listenerPos);
 
     m_Engine.update3dAudio();
   }
@@ -334,6 +339,98 @@ public:
 
   SoLoud::Soloud &engine() { return m_Engine; }
 
+  // ---------------- Reverb Bus API ----------------
+
+  // Create a reverb bus with initial parameters
+  bool createReverbBus(const std::string &name, float roomSize = 0.5f,
+                       float damp = 0.5f, float wet = 0.5f,
+                       float width = 1.0f) {
+    if (m_ReverbBuses.count(name) > 0) {
+      return false; // Already exists
+    }
+
+    auto reverbBus = std::make_shared<ReverbBus>(name);
+    reverbBus->setParams(wet, roomSize, damp, width);
+
+    if (!reverbBus->init(m_Engine)) {
+      std::cerr << "Failed to initialize reverb bus: " << name << "\n";
+      return false;
+    }
+
+    m_ReverbBuses[name] = reverbBus;
+    return true;
+  }
+
+  // Create a reverb bus from a preset
+  bool createReverbBus(const std::string &name, ReverbPreset preset) {
+    if (m_ReverbBuses.count(name) > 0) {
+      return false;
+    }
+
+    auto reverbBus = std::make_shared<ReverbBus>(name);
+    reverbBus->applyPreset(preset);
+
+    if (!reverbBus->init(m_Engine)) {
+      std::cerr << "Failed to initialize reverb bus: " << name << "\n";
+      return false;
+    }
+
+    m_ReverbBuses[name] = reverbBus;
+    return true;
+  }
+
+  // Get a reverb bus by name
+  std::shared_ptr<ReverbBus> getReverbBus(const std::string &name) {
+    auto it = m_ReverbBuses.find(name);
+    return (it != m_ReverbBuses.end()) ? it->second : nullptr;
+  }
+
+  // Set reverb bus parameters with fade
+  void setReverbParams(const std::string &name, float wet, float roomSize,
+                       float damp, float fadeTime = 0.0f) {
+    auto bus = getReverbBus(name);
+    if (bus) {
+      bus->setWet(wet, fadeTime);
+      bus->setRoomSize(roomSize, fadeTime);
+      bus->setDamp(damp, fadeTime);
+    }
+  }
+
+  // Add a reverb zone
+  void addReverbZone(const std::string &name, const std::string &reverbBusName,
+                     const Vector3 &pos, float inner, float outer,
+                     uint8_t priority = 128) {
+    m_ReverbZones.emplace_back(std::make_shared<ReverbZone>(
+        name, reverbBusName, pos, inner, outer, priority));
+  }
+
+  // Remove a reverb zone by name
+  void removeReverbZone(const std::string &name) {
+    m_ReverbZones.erase(
+        std::remove_if(m_ReverbZones.begin(), m_ReverbZones.end(),
+                       [&name](const auto &z) { return z->getName() == name; }),
+        m_ReverbZones.end());
+  }
+
+  // Set snapshot reverb parameters
+  void setSnapshotReverbParams(const std::string &snapshotName,
+                               const std::string &reverbBusName, float wet,
+                               float roomSize, float damp, float width = 1.0f) {
+    m_Snapshots[snapshotName].setReverbState(
+        reverbBusName, ReverbBusState{wet, roomSize, damp, width});
+  }
+
+  // Get active reverb zones
+  std::vector<std::string> getActiveReverbZones() const {
+    std::vector<std::string> active;
+    for (const auto &zone : m_ReverbZones) {
+      if (zone->isActive()) {
+        active.push_back(zone->getName());
+      }
+    }
+    return active;
+  }
+
 private:
   SoLoud::Soloud m_Engine;
   SoundBank m_Bank;
@@ -353,6 +450,10 @@ private:
   std::string m_ActiveMixZone; // Currently active zone name
   ZoneEnterCallback m_ZoneEnterCallback;
   ZoneExitCallback m_ZoneExitCallback;
+
+  // Reverb system
+  std::unordered_map<std::string, std::shared_ptr<ReverbBus>> m_ReverbBuses;
+  std::vector<std::shared_ptr<ReverbZone>> m_ReverbZones;
 
   void updateMixZones(const Vector3 &listenerPos) {
     // Update all mix zones
@@ -397,6 +498,36 @@ private:
       float blend = bestZone->getBlendFactor();
       applySnapshot(bestZone->getSnapshotName(),
                     blend * bestZone->getFadeInTime());
+    }
+  }
+
+  // Update reverb zones based on listener position
+  void updateReverbZones(const Vector3 &listenerPos) {
+    // Track total influence per reverb bus
+    std::unordered_map<std::string, float> busInfluence;
+
+    // Update all reverb zones and accumulate influence
+    for (auto &zone : m_ReverbZones) {
+      float influence = zone->update(listenerPos);
+      if (influence > 0.0f) {
+        const std::string &busName = zone->getReverbBusName();
+        // Use max influence (priority-based would be more complex)
+        if (busInfluence.count(busName) == 0 ||
+            influence > busInfluence[busName]) {
+          busInfluence[busName] = influence;
+        }
+      }
+    }
+
+    // Apply accumulated influence to reverb buses
+    for (auto &[busName, bus] : m_ReverbBuses) {
+      float influence = 0.0f;
+      if (busInfluence.count(busName) > 0) {
+        influence = busInfluence[busName];
+      }
+      // Smooth fade the wet level based on zone influence
+      float targetWet = influence * 0.8f; // Max 80% wet when fully in zone
+      bus->setWet(targetWet, 0.1f);       // Small fade time for smoothness
     }
   }
 };

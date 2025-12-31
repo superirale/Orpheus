@@ -9,6 +9,7 @@ A lightweight, FMOD/Wwise-inspired audio engine built on [SoLoud](https://solhsa
 - **Audio Zones** — Spatial audio regions with distance-based volume falloff
 - **Zone-Triggered Snapshots** — Bind snapshots to zones for automatic mix changes
 - **Mix Zones** — Priority-based snapshot regions with smooth transitions
+- **Reverb Buses** — Environment-based spatial coloration with Freeverb DSP
 - **Bus Routing** — Organize audio into Master, SFX, Music channels
 - **Snapshots** — Save/restore mix states with configurable fade times
 - **Voice Pool** — Virtual voices & voice stealing (prevents CPU spikes)

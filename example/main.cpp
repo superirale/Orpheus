@@ -97,6 +97,25 @@ int main(int argc, char **argv) {
   std::cout << "  - Waterfall at (60, 0, 0), range 50-70\n";
   std::cout << "  - Triggers 'Underwater' snapshot on enter\n";
 
+  // ============ REVERB BUSES ============
+  // Create reverb buses for different environments
+  audio.createReverbBus("CaveReverb", ReverbPreset::Cave);
+  audio.createReverbBus("HallReverb", ReverbPreset::Hall);
+
+  // Create reverb zones - these fade in/out reverb based on distance
+  // Cave reverb zone at the cave location
+  audio.addReverbZone("cave_reverb", "CaveReverb", {30.0f, 0.0f, 0.0f}, 5.0f,
+                      20.0f, 150);
+
+  // Hall reverb zone at the arena location
+  audio.addReverbZone("arena_reverb", "HallReverb", {100.0f, 0.0f, 0.0f}, 10.0f,
+                      30.0f, 100);
+
+  std::cout << "\nReverb Buses created:\n";
+  std::cout << "  - CaveReverb (Cave preset) at position (30, 0, 0)\n";
+  std::cout << "  - HallReverb (Hall preset) at position (100, 0, 0)\n";
+  std::cout << "  - Reverb wet level fades based on distance to zone center\n";
+
   // Set up zone enter/exit callbacks
   audio.setZoneEnterCallback([](const std::string &zone) {
     std::cout << ">>> ENTERED zone: " << zone << "\n";
