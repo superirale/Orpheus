@@ -38,11 +38,11 @@ TEST_CASE("VoicePool SetStealBehavior", "[VoicePool]") {
 TEST_CASE("VoicePool AllocateVoice", "[VoicePool]") {
   VoicePool pool(8);
 
-  Voice *v = pool.AllocateVoice("test_event", 128, {0, 0, 0}, 100.0f);
+  Voice *v = pool.AllocateVoice("test_event", 128, {0, 0, 0}, DistanceSettings{.maxDistance = 100.0f});
   REQUIRE(v != nullptr);
   REQUIRE(v->eventName == "test_event");
   REQUIRE(v->priority == 128);
-  REQUIRE(v->maxDistance == 100.0f);
+  REQUIRE(v->distanceSettings.maxDistance == 100.0f);
   REQUIRE(v->state == VoiceState::Virtual);
 }
 
@@ -51,9 +51,9 @@ TEST_CASE("VoicePool voice IDs are unique", "[VoicePool]") {
 
   // Capture IDs immediately to avoid pointer invalidation from vector
   // reallocation
-  VoiceID id1 = pool.AllocateVoice("event1", 128, {0, 0, 0}, 50.0f)->id;
-  VoiceID id2 = pool.AllocateVoice("event2", 128, {0, 0, 0}, 50.0f)->id;
-  VoiceID id3 = pool.AllocateVoice("event3", 128, {0, 0, 0}, 50.0f)->id;
+  VoiceID id1 = pool.AllocateVoice("event1", 128, {0, 0, 0}, DistanceSettings{.maxDistance = 50.0f})->id;
+  VoiceID id2 = pool.AllocateVoice("event2", 128, {0, 0, 0}, DistanceSettings{.maxDistance = 50.0f})->id;
+  VoiceID id3 = pool.AllocateVoice("event3", 128, {0, 0, 0}, DistanceSettings{.maxDistance = 50.0f})->id;
 
   REQUIRE(id1 != id2);
   REQUIRE(id2 != id3);
@@ -63,7 +63,7 @@ TEST_CASE("VoicePool voice IDs are unique", "[VoicePool]") {
 TEST_CASE("VoicePool MakeReal changes state", "[VoicePool]") {
   VoicePool pool(8);
 
-  Voice *v = pool.AllocateVoice("test", 128, {0, 0, 0}, 100.0f);
+  Voice *v = pool.AllocateVoice("test", 128, {0, 0, 0}, DistanceSettings{.maxDistance = 100.0f});
   REQUIRE(v->state == VoiceState::Virtual);
 
   bool success = pool.MakeReal(v);
@@ -74,7 +74,7 @@ TEST_CASE("VoicePool MakeReal changes state", "[VoicePool]") {
 TEST_CASE("VoicePool MakeVirtual changes state", "[VoicePool]") {
   VoicePool pool(8);
 
-  Voice *v = pool.AllocateVoice("test", 128, {0, 0, 0}, 100.0f);
+  Voice *v = pool.AllocateVoice("test", 128, {0, 0, 0}, DistanceSettings{.maxDistance = 100.0f});
   (void)pool.MakeReal(v);
   REQUIRE(v->state == VoiceState::Real);
 
@@ -85,7 +85,7 @@ TEST_CASE("VoicePool MakeVirtual changes state", "[VoicePool]") {
 TEST_CASE("VoicePool StopVoice changes state", "[VoicePool]") {
   VoicePool pool(8);
 
-  Voice *v = pool.AllocateVoice("test", 128, {0, 0, 0}, 100.0f);
+  Voice *v = pool.AllocateVoice("test", 128, {0, 0, 0}, DistanceSettings{.maxDistance = 100.0f});
   (void)pool.MakeReal(v);
 
   pool.StopVoice(v);
@@ -97,8 +97,8 @@ TEST_CASE("VoicePool GetActiveVoiceCount", "[VoicePool]") {
 
   REQUIRE(pool.GetActiveVoiceCount() == 0);
 
-  (void)pool.AllocateVoice("e1", 128, {0, 0, 0}, 50.0f);
-  (void)pool.AllocateVoice("e2", 128, {0, 0, 0}, 50.0f);
+  (void)pool.AllocateVoice("e1", 128, {0, 0, 0}, DistanceSettings{.maxDistance = 50.0f});
+  (void)pool.AllocateVoice("e2", 128, {0, 0, 0}, DistanceSettings{.maxDistance = 50.0f});
 
   REQUIRE(pool.GetActiveVoiceCount() == 2);
 }
@@ -108,8 +108,8 @@ TEST_CASE("VoicePool GetRealVoiceCount and GetVirtualVoiceCount",
   VoicePool pool(8);
 
   // Allocate both voices first
-  (void)pool.AllocateVoice("e1", 128, {0, 0, 0}, 50.0f);
-  (void)pool.AllocateVoice("e2", 128, {0, 0, 0}, 50.0f);
+  (void)pool.AllocateVoice("e1", 128, {0, 0, 0}, DistanceSettings{.maxDistance = 50.0f});
+  (void)pool.AllocateVoice("e2", 128, {0, 0, 0}, DistanceSettings{.maxDistance = 50.0f});
 
   // Get stable pointers via GetVoiceAt()
   REQUIRE(pool.GetVoiceCount() == 2);

@@ -13,7 +13,8 @@ void VoicePool::SetStealBehavior(StealBehavior behavior) {
 StealBehavior VoicePool::GetStealBehavior() const { return m_StealBehavior; }
 
 Voice *VoicePool::AllocateVoice(const std::string &eventName, uint8_t priority,
-                                const Vector3 &position, float maxDistance) {
+                                const Vector3 &position,
+                                const DistanceSettings &distanceSettings) {
   Voice *voice = FindFreeVoice();
   if (!voice) {
     voice = CreateVoice();
@@ -23,7 +24,7 @@ Voice *VoicePool::AllocateVoice(const std::string &eventName, uint8_t priority,
   voice->eventName = eventName;
   voice->priority = priority;
   voice->position = position;
-  voice->maxDistance = maxDistance;
+  voice->distanceSettings = distanceSettings;
   voice->playbackTime = 0.0f;
   voice->startTime = m_CurrentTime;
   voice->state = VoiceState::Virtual;

@@ -64,12 +64,12 @@ public:
    * @param eventName Name of the audio event.
    * @param priority Priority level (0-255).
    * @param position 3D position in world space.
-   * @param maxDistance Maximum audible distance.
+   * @param distanceSettings Distance attenuation settings.
    * @return Pointer to allocated Voice, or nullptr if failed.
    */
   [[nodiscard]] Voice *AllocateVoice(const std::string &eventName,
                                      uint8_t priority, const Vector3 &position,
-                                     float maxDistance);
+                                     const DistanceSettings &distanceSettings);
 
   /**
    * @brief Transition a voice from virtual to real.

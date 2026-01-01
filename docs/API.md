@@ -437,6 +437,49 @@ while (running) {
 
 ---
 
+## Distance Curves
+
+Custom rolloff curves for 3D audio attenuation.
+
+### DistanceCurve Enum
+
+| Curve | Formula | Description |
+|-------|---------|-------------|
+| `Linear` | `1 - dist/max` | Simple linear falloff |
+| `Logarithmic` | `1 - log10(1+9*dist)` | Natural hearing perception |
+| `InverseSquare` | `1 / (1 + dist²)` | Physics-based falloff |
+| `Exponential` | `e^(-dist*3)` | Steep exponential falloff |
+| `Custom` | User function | Full control via callback |
+
+### DistanceSettings Struct
+
+| Parameter | Default | Description |
+|-----------|---------|-------------|
+| `curve` | Linear | Curve type from enum |
+| `minDistance` | 1.0 | Distance where attenuation starts |
+| `maxDistance` | 100.0 | Distance where sound is silent |
+| `rolloffFactor` | 1.0 | Curve steepness multiplier |
+| `customCurve` | - | Custom function (0-1 input, 0-1 output) |
+
+### Example
+
+```cpp
+// Per-voice configuration
+Voice voice;
+voice.distanceSettings.curve = DistanceCurve::Logarithmic;
+voice.distanceSettings.minDistance = 2.0f;   // Full volume at <=2m
+voice.distanceSettings.maxDistance = 50.0f;  // Silent at >=50m
+voice.distanceSettings.rolloffFactor = 1.5f; // Steeper curve
+
+// Custom curve function
+voice.distanceSettings.curve = DistanceCurve::Custom;
+voice.distanceSettings.customCurve = [](float dist) {
+  return 1.0f - std::pow(dist, 0.5f); // Square root falloff
+};
+```
+
+---
+
 ## Parameters
 
 Global parameters that can drive audio behavior.

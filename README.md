@@ -12,6 +12,7 @@ A lightweight, FMOD/Wwise-inspired audio engine built on [SoLoud](https://solhsa
 - **Reverb Buses** — Environment-based spatial coloration with Freeverb DSP
 - **Occlusion & Obstruction** — Physical geometry affects sound (muffling behind walls)
 - **Sidechaining/Ducking** — Automatic volume reduction (music ducks during dialogue)
+- **Distance Curves** — Custom rolloff (linear, logarithmic, inverse square, custom)
 - **Bus Routing** — Organize audio into Master, SFX, Music channels
 - **Snapshots** — Save/restore mix states with configurable fade times
 - **Voice Pool** — Virtual voices & voice stealing (prevents CPU spikes)

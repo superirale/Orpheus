@@ -168,11 +168,16 @@ Result<VoiceID> AudioManager::PlayEvent(const std::string &name,
   }
   const auto &ed = eventResult.Value();
 
+  // Create distance settings from event descriptor
+  DistanceSettings distSettings;
+  distSettings.maxDistance = ed.maxDistance;
+
   // Allocate voice in pool
-  Voice *voice = pImpl->voicePool.AllocateVoice(name, ed.priority, position,
-                                                ed.maxDistance);
-  if (!voice)
+  Voice *voice =
+      pImpl->voicePool.AllocateVoice(name, ed.priority, position, distSettings);
+  if (!voice) {
     return Error(ErrorCode::VoiceAllocationFailed, "Failed to allocate voice");
+  }
 
   voice->volume = ed.volumeMin;
 

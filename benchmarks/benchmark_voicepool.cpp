@@ -12,7 +12,8 @@ static void BM_VoicePool_AllocateVoice(benchmark::State &state) {
   VoicePool pool(static_cast<uint32_t>(state.range(0)));
 
   for (auto _ : state) {
-    Voice *voice = pool.AllocateVoice("test_event", 128, {0, 0, 0}, 100.0f);
+    Voice *voice = pool.AllocateVoice("test_event", 128, {0, 0, 0},
+                                      DistanceSettings{.maxDistance = 100.0f});
     benchmark::DoNotOptimize(voice);
     pool.StopVoice(voice); // Reset for next iteration
   }
@@ -25,7 +26,8 @@ static void BM_VoicePool_AllocateAndMakeReal(benchmark::State &state) {
   VoicePool pool(static_cast<uint32_t>(state.range(0)));
 
   for (auto _ : state) {
-    Voice *voice = pool.AllocateVoice("test_event", 128, {0, 0, 0}, 100.0f);
+    Voice *voice = pool.AllocateVoice("test_event", 128, {0, 0, 0},
+                                      DistanceSettings{.maxDistance = 100.0f});
     bool success = pool.MakeReal(voice);
     benchmark::DoNotOptimize(success);
     pool.StopVoice(voice);
@@ -42,7 +44,8 @@ static void BM_VoicePool_Update(benchmark::State &state) {
   // Pre-allocate voices
   for (int i = 0; i < voiceCount; ++i) {
     Voice *v = pool.AllocateVoice("event_" + std::to_string(i), 128,
-                                  {static_cast<float>(i), 0, 0}, 50.0f);
+                                  {static_cast<float>(i), 0, 0},
+                                  DistanceSettings{.maxDistance = 50.0f});
     pool.MakeReal(v);
   }
 
@@ -66,7 +69,8 @@ static void BM_VoicePool_VoiceStealing(benchmark::State &state) {
   // Fill pool to capacity with real voices
   for (uint32_t i = 0; i < maxVoices; ++i) {
     Voice *v = pool.AllocateVoice("fill_" + std::to_string(i), 64,
-                                  {static_cast<float>(i * 10), 0, 0}, 100.0f);
+                                  {static_cast<float>(i * 10), 0, 0},
+                                  DistanceSettings{.maxDistance = 100.0f});
     v->audibility = 0.1f + (static_cast<float>(i) / maxVoices) * 0.5f;
     pool.MakeReal(v);
   }
@@ -74,7 +78,8 @@ static void BM_VoicePool_VoiceStealing(benchmark::State &state) {
   for (auto _ : state) {
     // Allocate high-priority voice that triggers stealing
     Voice *newVoice =
-        pool.AllocateVoice("high_priority", 255, {0, 0, 0}, 50.0f);
+        pool.AllocateVoice("high_priority", 255, {0, 0, 0},
+                           DistanceSettings{.maxDistance = 50.0f});
     newVoice->audibility = 1.0f;
     bool success = pool.MakeReal(newVoice);
     benchmark::DoNotOptimize(success);
@@ -95,7 +100,7 @@ static void BM_Voice_UpdateAudibility(benchmark::State &state) {
   Voice voice;
   voice.id = 1;
   voice.position = {100.0f, 0.0f, 0.0f};
-  voice.maxDistance = 200.0f;
+  voice.distanceSettings.maxDistance = 200.0f;
   voice.state = VoiceState::Real;
 
   Vector3 listenerPos{0, 0, 0};
@@ -116,7 +121,7 @@ static void BM_Voice_UpdateAudibility_Batch(benchmark::State &state) {
   for (int i = 0; i < count; ++i) {
     voices[i].id = i;
     voices[i].position = {static_cast<float>(i * 10), 0, 0};
-    voices[i].maxDistance = 200.0f;
+    voices[i].distanceSettings.maxDistance = 200.0f;
     voices[i].state = VoiceState::Real;
   }
 
@@ -150,7 +155,8 @@ static void BM_VoicePool_ChurnPattern(benchmark::State &state) {
   for (auto _ : state) {
     // Allocate some voices
     for (int i = 0; i < 8; ++i) {
-      Voice *v = pool.AllocateVoice("churn", 128, {0, 0, 0}, 50.0f);
+      Voice *v = pool.AllocateVoice("churn", 128, {0, 0, 0},
+                                    DistanceSettings{.maxDistance = 50.0f});
       pool.MakeReal(v);
       activeVoices.push_back(v);
     }

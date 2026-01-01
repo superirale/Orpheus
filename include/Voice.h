@@ -13,6 +13,7 @@
 #include <string>
 #include <unordered_map>
 
+#include "DistanceCurve.h"
 #include "Types.h"
 
 namespace Orpheus {
@@ -60,8 +61,8 @@ struct Voice {
 
   /// @name 3D Positioning
   /// @{
-  Vector3 position{0, 0, 0};  ///< Position in world space
-  float maxDistance = 100.0f; ///< Maximum audible distance
+  Vector3 position{0, 0, 0};         ///< Position in world space
+  DistanceSettings distanceSettings; ///< Distance attenuation settings
   /// @}
 
   /// @name Volume and Audibility
@@ -101,12 +102,9 @@ struct Voice {
    * @param listenerPos Listener position in world space.
    */
   void UpdateAudibility(const Vector3 &listenerPos) {
-    float dx = position.x - listenerPos.x;
-    float dy = position.y - listenerPos.y;
-    float dz = position.z - listenerPos.z;
-    float dist = std::sqrt(dx * dx + dy * dy + dz * dz);
-    float distAtten = 1.0f - std::min(dist / maxDistance, 1.0f);
-    audibility = volume * std::max(distAtten, 0.0f);
+    float dist = GetDistance(listenerPos);
+    float distAtten = CalculateAttenuation(dist, distanceSettings);
+    audibility = volume * distAtten;
   }
 
   /**

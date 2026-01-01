@@ -68,13 +68,14 @@ TEST_CASE("Voice state helpers", "[Voice]") {
 TEST_CASE("Voice UpdateAudibility calculation", "[Voice]") {
   Voice v;
   v.position = {10.0f, 0.0f, 0.0f};
-  v.maxDistance = 100.0f;
+  v.distanceSettings.minDistance = 0.0f; // Start attenuation from origin
+  v.distanceSettings.maxDistance = 100.0f;
   v.volume = 1.0f;
 
   Vector3 listener{0.0f, 0.0f, 0.0f};
   v.UpdateAudibility(listener);
 
-  // Distance is 10, maxDistance is 100
+  // Distance is 10, maxDistance is 100, minDistance is 0
   // distAtten = 1.0 - (10/100) = 0.9
   // audibility = 1.0 * 0.9 = 0.9
   REQUIRE(v.audibility == Catch::Approx(0.9f));
@@ -94,7 +95,7 @@ TEST_CASE("Voice GetDistance calculation", "[Voice]") {
 TEST_CASE("Voice audibility at max distance", "[Voice]") {
   Voice v;
   v.position = {100.0f, 0.0f, 0.0f};
-  v.maxDistance = 100.0f;
+  v.distanceSettings.maxDistance = 100.0f;
   v.volume = 1.0f;
 
   Vector3 listener{0.0f, 0.0f, 0.0f};
@@ -106,7 +107,7 @@ TEST_CASE("Voice audibility at max distance", "[Voice]") {
 TEST_CASE("Voice audibility beyond max distance", "[Voice]") {
   Voice v;
   v.position = {150.0f, 0.0f, 0.0f};
-  v.maxDistance = 100.0f;
+  v.distanceSettings.maxDistance = 100.0f;
   v.volume = 1.0f;
 
   Vector3 listener{0.0f, 0.0f, 0.0f};
