@@ -653,3 +653,79 @@ void AnyThread() {
 > [!WARNING]
 > Calling non-thread-safe methods from multiple threads causes **undefined behavior** including crashes, corrupted state, and audio glitches.
 
+---
+
+## Benchmarks
+
+Performance testing for voice management with Google Benchmark.
+
+### Build & Run
+
+```bash
+cmake -B build -DORPHEUS_BUILD_BENCHMARKS=ON -DCMAKE_BUILD_TYPE=Release
+cmake --build build --target orpheus_benchmarks
+./build/orpheus_benchmarks
+```
+
+### Available Benchmarks
+
+| Benchmark | Description |
+|-----------|-------------|
+| `BM_VoicePool_AllocateVoice` | Voice allocation speed |
+| `BM_VoicePool_Update` | Per-frame update with N voices |
+| `BM_VoicePool_VoiceStealing` | Priority-based voice stealing |
+| `BM_Voice_UpdateAudibility` | Distance/audibility calculation |
+| `BM_VoicePool_ChurnPattern` | Rapid allocate/deallocate cycle |
+
+---
+
+## Fuzzing
+
+Fuzz testing for JSON parsing with libFuzzer.
+
+### Build & Run (Clang only)
+
+```bash
+cmake -B build -DORPHEUS_BUILD_FUZZER=ON -DCMAKE_CXX_COMPILER=clang++
+cmake --build build
+./build/fuzz_json_parser fuzz/corpus/ -max_total_time=60
+```
+
+### Fuzz Targets
+
+| Target | Tests |
+|--------|-------|
+| `fuzz_json_parser` | SoundBank JSON parsing robustness |
+
+---
+
+## Code Coverage
+
+Track test coverage with gcov (GCC) or llvm-cov (Clang).
+
+### Prerequisites (Linux)
+
+```bash
+# For GCC coverage
+sudo apt-get install lcov
+
+# For Clang coverage
+sudo apt-get install llvm
+```
+
+### Build & Generate Report
+
+```bash
+# With GCC (requires lcov)
+cmake -B build -DORPHEUS_ENABLE_COVERAGE=ON -DCMAKE_BUILD_TYPE=Debug
+cmake --build build
+./build/orpheus_tests
+cmake --build build --target coverage
+open build/coverage/html/index.html
+
+# With Clang
+cmake -B build -DORPHEUS_ENABLE_COVERAGE=ON -DCMAKE_CXX_COMPILER=clang++
+cmake --build build
+LLVM_PROFILE_FILE="default.profraw" ./build/orpheus_tests
+cmake --build build --target coverage
+```

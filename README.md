@@ -142,6 +142,45 @@ Orpheus/
 
 See [docs/API.md](docs/API.md) for the full API reference.
 
+## Developer Tools
+
+### Benchmarks
+
+Performance testing with Google Benchmark:
+
+```bash
+cmake -B build -DORPHEUS_BUILD_BENCHMARKS=ON -DCMAKE_BUILD_TYPE=Release
+cmake --build build --target orpheus_benchmarks
+./build/orpheus_benchmarks
+```
+
+### Fuzzing
+
+Fuzz JSON parsing with libFuzzer (requires Clang):
+
+```bash
+cmake -B build -DORPHEUS_BUILD_FUZZER=ON -DCMAKE_CXX_COMPILER=clang++
+cmake --build build
+./build/fuzz_json_parser fuzz/corpus/ -max_total_time=60
+```
+
+### Code Coverage
+
+Generate HTML coverage reports:
+
+```bash
+# Linux: install lcov first
+sudo apt-get install lcov
+
+cmake -B build -DORPHEUS_ENABLE_COVERAGE=ON -DCMAKE_BUILD_TYPE=Debug
+cmake --build build
+./build/orpheus_tests
+cmake --build build --target coverage
+open build/coverage/html/index.html
+```
+
 ## License
 
 MIT
+
+

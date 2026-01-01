@@ -57,7 +57,7 @@
 
 - ~~**Benchmarks** - Performance tests for voice management, DSP~~ ✅
 - ~~**Fuzzing** - Fuzz JSON parsing with AFL/libFuzzer~~ ✅
-- **Code Coverage** - Track with gcov/llvm-cov
+- ~~**Code Coverage** - Track with gcov/llvm-cov~~ ✅
 - ~~**GitHub Actions** - CI/CD pipeline for builds + tests~~ ✅
 - **Version Macros** - `ORPHEUS_VERSION_MAJOR`, etc.
 - **Export Macros** - `ORPHEUS_API` for shared library builds

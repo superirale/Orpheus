@@ -422,6 +422,60 @@ if(ORPHEUS_BUILD_FUZZER)
 endif()
 
 # -----------------------------------------------------------------------------
+# Code Coverage (gcov/llvm-cov)
+# -----------------------------------------------------------------------------
+option(ORPHEUS_ENABLE_COVERAGE "Enable code coverage instrumentation" OFF)
+
+if(ORPHEUS_ENABLE_COVERAGE)
+    if(CMAKE_CXX_COMPILER_ID MATCHES "GNU")
+        # GCC: Use gcov
+        set(COVERAGE_FLAGS "--coverage -fprofile-arcs -ftest-coverage")
+        set(COVERAGE_LINK_FLAGS "--coverage")
+    elseif(CMAKE_CXX_COMPILER_ID MATCHES "Clang|AppleClang")
+        # Clang: Use llvm-cov
+        set(COVERAGE_FLAGS "-fprofile-instr-generate -fcoverage-mapping")
+        set(COVERAGE_LINK_FLAGS "-fprofile-instr-generate")
+    else()
+        message(WARNING "Code coverage not supported for ${CMAKE_CXX_COMPILER_ID}")
+        set(COVERAGE_FLAGS "")
+        set(COVERAGE_LINK_FLAGS "")
+    endif()
+
+    if(COVERAGE_FLAGS)
+        # Add coverage flags to library
+        target_compile_options(orpheus PRIVATE ${COVERAGE_FLAGS})
+        target_link_options(orpheus PRIVATE ${COVERAGE_LINK_FLAGS})
+
+        # Add coverage to tests
+        if(ORPHEUS_BUILD_TESTS)
+            target_compile_options(orpheus_tests PRIVATE ${COVERAGE_FLAGS})
+            target_link_options(orpheus_tests PRIVATE ${COVERAGE_LINK_FLAGS})
+        endif()
+
+        # Custom target for coverage report
+        if(CMAKE_CXX_COMPILER_ID MATCHES "GNU")
+            add_custom_target(coverage
+                COMMAND ${CMAKE_COMMAND} -E make_directory ${CMAKE_BINARY_DIR}/coverage
+                COMMAND lcov --capture --directory . --output-file coverage/coverage.info --ignore-errors source
+                COMMAND lcov --remove coverage/coverage.info '/usr/*' '*/build/*' --output-file coverage/coverage.info
+                COMMAND genhtml coverage/coverage.info --output-directory coverage/html
+                WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
+                COMMENT "Generating HTML coverage report in build/coverage/html/"
+            )
+        elseif(CMAKE_CXX_COMPILER_ID MATCHES "Clang|AppleClang")
+            add_custom_target(coverage
+                COMMAND llvm-profdata merge -sparse default.profraw -o coverage.profdata
+                COMMAND llvm-cov show ./orpheus_tests -instr-profile=coverage.profdata -format=html -output-dir=coverage
+                WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
+                COMMENT "Generating HTML coverage report in build/coverage/"
+            )
+        endif()
+
+        message(STATUS "Code coverage enabled. Run tests then: cmake --build build --target coverage")
+    endif()
+endif()
+
+# -----------------------------------------------------------------------------
 # Summary
 # -----------------------------------------------------------------------------
 if(SOLOUD_FETCHED)
@@ -439,5 +493,7 @@ message(STATUS "  Build examples:          ${ORPHEUS_BUILD_EXAMPLES}")
 message(STATUS "  Build tests:             ${ORPHEUS_BUILD_TESTS}")
 message(STATUS "  Build benchmarks:        ${ORPHEUS_BUILD_BENCHMARKS}")
 message(STATUS "  Build fuzzer:            ${ORPHEUS_BUILD_FUZZER}")
+message(STATUS "  Code coverage:           ${ORPHEUS_ENABLE_COVERAGE}")
 message(STATUS "  Use precompiled headers: ${ORPHEUS_USE_PCH}")
 message(STATUS "")
+
