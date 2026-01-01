@@ -570,6 +570,42 @@ Events can have multiple sounds with different playback modes:
 
 ---
 
+## Markers / Cues
+
+Trigger callbacks at specific audio positions for synchronization.
+
+### Core API
+
+| Method | Description |
+|--------|-------------|
+| `void AddMarker(VoiceID id, float time, const string& name, function<void()> callback)` | Add a timed callback |
+| `void RemoveMarker(VoiceID id, const string& name)` | Remove marker by name |
+| `void ClearMarkers(VoiceID id)` | Remove all markers from voice |
+
+### Example
+
+```cpp
+VoiceID music = audio.PlayEvent("background_music", {0, 0, 0});
+
+// Add markers at specific times
+audio.AddMarker(music, 1.5f, "beat1", []{ 
+  std::cout << "Beat 1 hit!" << std::endl;
+});
+audio.AddMarker(music, 3.0f, "drop", []{ 
+  SpawnExplosion(); 
+});
+audio.AddMarker(music, 10.0f, "ending", []{ 
+  StartFadeOut(); 
+});
+
+// Game loop - markers fire automatically
+while (running) {
+  audio.Update(dt);
+}
+```
+
+---
+
 ## Parameters
 
 Global parameters that can drive audio behavior.

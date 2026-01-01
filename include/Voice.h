@@ -10,8 +10,10 @@
 #include <algorithm>
 #include <cmath>
 #include <cstdint>
+#include <functional>
 #include <string>
 #include <unordered_map>
+#include <vector>
 
 #include "DistanceCurve.h"
 #include "Types.h"
@@ -41,6 +43,18 @@ enum class StealBehavior {
  * @brief Unique identifier for voices.
  */
 using VoiceID = uint32_t;
+
+/**
+ * @brief Audio marker for time-based callbacks.
+ *
+ * Markers are triggered when playback reaches their specified time position.
+ */
+struct Marker {
+  float time = 0.0f;              ///< Position in seconds
+  std::string name;               ///< Optional identifier for removal
+  std::function<void()> callback; ///< Callback to invoke
+  bool triggered = false;         ///< Track if already fired this play
+};
 
 /**
  * @brief Represents an active or virtual audio playback instance.
@@ -97,6 +111,11 @@ struct Voice {
   float targetLowPassFreq = 22000.0f;  ///< Target filter cutoff Hz
   float currentLowPassFreq = 22000.0f; ///< Current (smoothed) cutoff Hz
   float occlusionVolume = 1.0f;        ///< Volume modifier from occlusion
+  /// @}
+
+  /// @name Markers
+  /// @{
+  std::vector<Marker> markers; ///< Time-based callback markers
   /// @}
 
   /**

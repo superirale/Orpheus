@@ -629,6 +629,34 @@ public:
 
   /// @}
 
+  /// @name Markers/Cues API
+  /// @{
+
+  /**
+   * @brief Add a marker callback at a specific time position.
+   * @param id Voice ID.
+   * @param time Time in seconds from start of audio.
+   * @param name Optional name for removal.
+   * @param callback Function to call when marker is reached.
+   */
+  void AddMarker(VoiceID id, float time, const std::string &name,
+                 std::function<void()> callback);
+
+  /**
+   * @brief Remove a marker by name.
+   * @param id Voice ID.
+   * @param name Marker name to remove.
+   */
+  void RemoveMarker(VoiceID id, const std::string &name);
+
+  /**
+   * @brief Remove all markers from a voice.
+   * @param id Voice ID.
+   */
+  void ClearMarkers(VoiceID id);
+
+  /// @}
+
   /// @name Engine Access
   /// @{
 

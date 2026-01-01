@@ -10,7 +10,7 @@
 - [x] Distance Curves - Custom rolloff (linear, logarithmic, custom)
 - [x] Doppler Effect - Velocity-based pitch shift for moving 3D sounds
 - [x] Randomization - Random pitch/volume variation, playlist shuffle
-- [ ] Markers/Cues - Trigger callbacks at specific audio positions
+- [x] Markers/Cues - Trigger callbacks at specific audio positions
 
 ## Medium Priority
 - [ ] Interactive Music - Stingers, transitions, beat-synced segments

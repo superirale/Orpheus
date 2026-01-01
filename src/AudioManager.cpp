@@ -188,6 +188,17 @@ void AudioManager::Update(float dt) {
           pImpl->engine.setRelativePlaySpeed(voice->handle, pitch);
         }
       }
+
+      // Process markers
+      double streamTime = pImpl->engine.getStreamTime(voice->handle);
+      for (auto &marker : voice->markers) {
+        if (!marker.triggered && streamTime >= marker.time) {
+          marker.triggered = true;
+          if (marker.callback) {
+            marker.callback();
+          }
+        }
+      }
     }
   }
 
@@ -710,6 +721,48 @@ void AudioManager::SetSpeedOfSound(float speed) {
 
 void AudioManager::SetDopplerFactor(float factor) {
   pImpl->dopplerFactor = std::max(0.0f, factor);
+}
+
+// =============================================================================
+// Markers/Cues API
+// =============================================================================
+
+void AudioManager::AddMarker(VoiceID id, float time, const std::string &name,
+                             std::function<void()> callback) {
+  for (size_t i = 0; i < pImpl->voicePool.GetVoiceCount(); ++i) {
+    Voice *voice = pImpl->voicePool.GetVoiceAt(i);
+    if (voice && voice->id == id) {
+      Marker marker;
+      marker.time = time;
+      marker.name = name;
+      marker.callback = std::move(callback);
+      voice->markers.push_back(marker);
+      return;
+    }
+  }
+}
+
+void AudioManager::RemoveMarker(VoiceID id, const std::string &name) {
+  for (size_t i = 0; i < pImpl->voicePool.GetVoiceCount(); ++i) {
+    Voice *voice = pImpl->voicePool.GetVoiceAt(i);
+    if (voice && voice->id == id) {
+      voice->markers.erase(
+          std::remove_if(voice->markers.begin(), voice->markers.end(),
+                         [&name](const Marker &m) { return m.name == name; }),
+          voice->markers.end());
+      return;
+    }
+  }
+}
+
+void AudioManager::ClearMarkers(VoiceID id) {
+  for (size_t i = 0; i < pImpl->voicePool.GetVoiceCount(); ++i) {
+    Voice *voice = pImpl->voicePool.GetVoiceAt(i);
+    if (voice && voice->id == id) {
+      voice->markers.clear();
+      return;
+    }
+  }
 }
 
 } // namespace Orpheus
