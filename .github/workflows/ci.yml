@@ -14,7 +14,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, macos-latest]
+        os: [ubuntu-latest, macos-latest, windows-latest]
         include:
           - os: ubuntu-latest
             install_deps: |
@@ -22,6 +22,8 @@ jobs:
               sudo apt-get install -y libasound2-dev libpulse-dev
           - os: macos-latest
             install_deps: echo "No extra deps needed on macOS"
+          - os: windows-latest
+            install_deps: echo "No extra deps needed on Windows"
 
     steps:
       - name: Checkout code
@@ -37,15 +39,31 @@ jobs:
         run: cmake --build build --parallel
 
       - name: Run tests
-        run: ./build/orpheus_tests --reporter console
+        shell: bash
+        run: |
+          if [ "$RUNNER_OS" == "Windows" ]; then
+            ./build/Release/orpheus_tests.exe --reporter console
+          else
+            ./build/orpheus_tests --reporter console
+          fi
 
       - name: Verify example builds
+        shell: bash
         run: |
-          if [ -f "./build/orpheus_example" ]; then
-            echo "Example binary built successfully"
+          if [ "$RUNNER_OS" == "Windows" ]; then
+            if [ -f "./build/Release/orpheus_example.exe" ]; then
+              echo "Example binary built successfully"
+            else
+              echo "Error: Example binary not found"
+              exit 1
+            fi
           else
-            echo "Error: Example binary not found"
-            exit 1
+            if [ -f "./build/orpheus_example" ]; then
+              echo "Example binary built successfully"
+            else
+              echo "Error: Example binary not found"
+              exit 1
+            fi
           fi
 
   static-analysis:
