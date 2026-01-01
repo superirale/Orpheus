@@ -9,6 +9,7 @@
 
 #include <string>
 #include <variant>
+#include <optional>
 
 namespace Orpheus {
 

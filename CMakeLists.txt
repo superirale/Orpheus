@@ -354,6 +354,40 @@ if(ORPHEUS_BUILD_TESTS)
 endif()
 
 # -----------------------------------------------------------------------------
+# Performance Benchmarks (Google Benchmark)
+# -----------------------------------------------------------------------------
+option(ORPHEUS_BUILD_BENCHMARKS "Build performance benchmarks" OFF)
+
+if(ORPHEUS_BUILD_BENCHMARKS)
+    FetchContent_Declare(
+        benchmark
+        GIT_REPOSITORY https://github.com/google/benchmark.git
+        GIT_TAG v1.8.3
+        GIT_SHALLOW TRUE
+    )
+    set(BENCHMARK_ENABLE_TESTING OFF CACHE BOOL "" FORCE)
+    set(BENCHMARK_ENABLE_GTEST_TESTS OFF CACHE BOOL "" FORCE)
+    FetchContent_MakeAvailable(benchmark)
+
+    # Benchmark sources
+    file(GLOB ORPHEUS_BENCHMARK_SOURCES "benchmarks/*.cpp")
+
+    add_executable(orpheus_benchmarks ${ORPHEUS_BENCHMARK_SOURCES})
+    target_link_libraries(orpheus_benchmarks PRIVATE orpheus benchmark::benchmark)
+    target_include_directories(orpheus_benchmarks PRIVATE 
+        ${CMAKE_CURRENT_SOURCE_DIR}
+        ${JSON_INCLUDE_DIR}
+    )
+
+    # Optimize benchmarks
+    if(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang|AppleClang")
+        target_compile_options(orpheus_benchmarks PRIVATE -O3 -march=native)
+    elseif(MSVC)
+        target_compile_options(orpheus_benchmarks PRIVATE /O2)
+    endif()
+endif()
+
+# -----------------------------------------------------------------------------
 # Summary
 # -----------------------------------------------------------------------------
 if(SOLOUD_FETCHED)
@@ -369,5 +403,7 @@ message(STATUS "Orpheus ${PROJECT_VERSION}")
 message(STATUS "  SoLoud:                  ${SOLOUD_SOURCE}")
 message(STATUS "  Build examples:          ${ORPHEUS_BUILD_EXAMPLES}")
 message(STATUS "  Build tests:             ${ORPHEUS_BUILD_TESTS}")
+message(STATUS "  Build benchmarks:        ${ORPHEUS_BUILD_BENCHMARKS}")
 message(STATUS "  Use precompiled headers: ${ORPHEUS_USE_PCH}")
 message(STATUS "")
+
