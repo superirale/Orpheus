@@ -137,6 +137,29 @@ public:
   [[nodiscard]] const Vector3 &GetPosition() const;
 
   /**
+   * @brief Set the zone position (for dynamic zones).
+   * @param pos New center position.
+   */
+  void SetPosition(const Vector3 &pos);
+
+  /**
+   * @brief Get the inner radius.
+   */
+  [[nodiscard]] float GetInnerRadius() const;
+
+  /**
+   * @brief Get the outer radius.
+   */
+  [[nodiscard]] float GetOuterRadius() const;
+
+  /**
+   * @brief Set the zone radii (for dynamic zones).
+   * @param inner Inner radius (full volume).
+   * @param outer Outer radius (zero volume).
+   */
+  void SetRadii(float inner, float outer);
+
+  /**
    * @brief Compute volume based on listener position without applying.
    * @param listenerPos Current listener position.
    * @return Computed volume (0.0 - 1.0).

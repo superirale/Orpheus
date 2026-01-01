@@ -21,6 +21,7 @@ A lightweight, FMOD/Wwise-inspired audio engine built on [SoLoud](https://solhsa
 - **Profiler** — Voice count, CPU usage, memory stats
 - **Zone Shapes** — Box and polygon zones (not just spheres)
 - **Zone Crossfading** — Normalize volume when zones overlap
+- **Dynamic Zones** — Move or scale zones during gameplay
 - **Bus Routing** — Organize audio into Master, SFX, Music channels
 - **Snapshots** — Save/restore mix states with configurable fade times
 - **Voice Pool** — Virtual voices & voice stealing (prevents CPU spikes)

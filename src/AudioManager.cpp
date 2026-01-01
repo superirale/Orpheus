@@ -955,4 +955,31 @@ bool AudioManager::IsZoneCrossfadeEnabled() const {
   return pImpl->zoneCrossfadeEnabled;
 }
 
+// =============================================================================
+// Dynamic Zones API
+// =============================================================================
+
+AudioZone *AudioManager::GetZone(const std::string &eventName) {
+  for (auto &zone : pImpl->zones) {
+    if (zone->GetEventName() == eventName) {
+      return zone.get();
+    }
+  }
+  return nullptr;
+}
+
+void AudioManager::SetZonePosition(const std::string &eventName,
+                                   const Vector3 &pos) {
+  if (AudioZone *zone = GetZone(eventName)) {
+    zone->SetPosition(pos);
+  }
+}
+
+void AudioManager::SetZoneRadii(const std::string &eventName, float inner,
+                                float outer) {
+  if (AudioZone *zone = GetZone(eventName)) {
+    zone->SetRadii(inner, outer);
+  }
+}
+
 } // namespace Orpheus

@@ -66,6 +66,16 @@ const std::string &AudioZone::GetSnapshotName() const { return m_SnapshotName; }
 const std::string &AudioZone::GetEventName() const { return m_EventName; }
 const Vector3 &AudioZone::GetPosition() const { return m_Position; }
 
+void AudioZone::SetPosition(const Vector3 &pos) { m_Position = pos; }
+
+float AudioZone::GetInnerRadius() const { return m_InnerRadius; }
+float AudioZone::GetOuterRadius() const { return m_OuterRadius; }
+
+void AudioZone::SetRadii(float inner, float outer) {
+  m_InnerRadius = inner;
+  m_OuterRadius = outer;
+}
+
 float AudioZone::GetComputedVolume(const Vector3 &listenerPos) const {
   float dist = Distance(listenerPos, m_Position);
   return ComputeVolumeFromDist(dist);

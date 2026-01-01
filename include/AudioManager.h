@@ -14,6 +14,7 @@
 #include <string>
 #include <vector>
 
+#include "AudioZone.h"
 #include "Error.h"
 #include "Listener.h"
 #include "MusicManager.h"
@@ -278,6 +279,28 @@ public:
    * @return true if crossfading is enabled.
    */
   [[nodiscard]] bool IsZoneCrossfadeEnabled() const;
+
+  /**
+   * @brief Get a zone by event name for direct manipulation.
+   * @param eventName Event name used when creating the zone.
+   * @return Pointer to the zone, or nullptr if not found.
+   */
+  [[nodiscard]] AudioZone *GetZone(const std::string &eventName);
+
+  /**
+   * @brief Set the position of a zone.
+   * @param eventName Event name of the zone.
+   * @param pos New position.
+   */
+  void SetZonePosition(const std::string &eventName, const Vector3 &pos);
+
+  /**
+   * @brief Set the radii of a zone.
+   * @param eventName Event name of the zone.
+   * @param inner New inner radius.
+   * @param outer New outer radius.
+   */
+  void SetZoneRadii(const std::string &eventName, float inner, float outer);
 
   /// @}
 

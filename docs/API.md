@@ -184,6 +184,31 @@ Crossfading is **enabled by default**. When enabled:
 - If total > 1.0, each volume is scaled proportionally
 - Example: Zone A = 0.8, Zone B = 0.6 → normalized to A = 0.57, B = 0.43
 
+### Dynamic Zones
+
+Zones can be moved or scaled during gameplay:
+
+| Method | Description |
+|--------|-------------|
+| `AudioZone* GetZone(const std::string& eventName)` | Get a zone by event name |
+| `void SetZonePosition(eventName, pos)` | Move a zone to a new position |
+| `void SetZoneRadii(eventName, inner, outer)` | Change zone radii |
+
+**Example:**
+```cpp
+// Move a zone (e.g., following a moving sound source)
+audio.SetZonePosition("waterfall", {newX, newY, newZ});
+
+// Scale a zone (e.g., growing/shrinking ambient area)
+audio.SetZoneRadii("campfire", 5.0f, 20.0f);
+
+// Or access directly
+if (AudioZone* zone = audio.GetZone("ambient")) {
+  zone->SetPosition(pos);
+  zone->SetRadii(10.0f, 40.0f);
+}
+```
+
 **Basic Example:**
 ```cpp
 // Register the event first
