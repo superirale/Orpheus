@@ -25,6 +25,7 @@
 #include "SoundBank.h"
 #include "Types.h"
 #include "Voice.h"
+#include "ZoneShape.h"
 
 namespace Orpheus {
 
@@ -239,6 +240,28 @@ public:
   void AddAudioZone(const std::string &eventName, const Vector3 &pos,
                     float inner, float outer, const std::string &snapshotName,
                     float fadeIn = 0.5f, float fadeOut = 0.5f);
+
+  /**
+   * @brief Add a box-shaped audio zone.
+   * @param eventName Event to play in the zone.
+   * @param min Minimum corner of the box.
+   * @param max Maximum corner of the box.
+   * @param fadeDistance Distance for volume fade at edges.
+   */
+  void AddBoxZone(const std::string &eventName, const Vector3 &min,
+                  const Vector3 &max, float fadeDistance = 5.0f);
+
+  /**
+   * @brief Add a polygon-shaped audio zone.
+   * @param eventName Event to play in the zone.
+   * @param points 2D polygon vertices (x, z plane).
+   * @param minY Minimum height.
+   * @param maxY Maximum height.
+   * @param fadeDistance Distance for volume fade at edges.
+   */
+  void AddPolygonZone(const std::string &eventName,
+                      const std::vector<Vector2> &points, float minY,
+                      float maxY, float fadeDistance = 5.0f);
 
   /// @}
 

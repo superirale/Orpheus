@@ -327,6 +327,57 @@ void AudioManager::AddAudioZone(const std::string &eventName,
       [this](float fade) { this->ResetBusVolumes(fade); }, fadeIn, fadeOut));
 }
 
+void AudioManager::AddBoxZone(const std::string &eventName, const Vector3 &min,
+                              const Vector3 &max, float fadeDistance) {
+  // Create a sphere zone at the center with appropriate radii
+  // The center is the midpoint of the box
+  Vector3 center = {(min.x + max.x) / 2.0f, (min.y + max.y) / 2.0f,
+                    (min.z + max.z) / 2.0f};
+
+  // Calculate half-diagonal as the outer radius
+  float dx = (max.x - min.x) / 2.0f;
+  float dy = (max.y - min.y) / 2.0f;
+  float dz = (max.z - min.z) / 2.0f;
+  float innerRadius = std::sqrt(dx * dx + dy * dy + dz * dz);
+  float outerRadius = innerRadius + fadeDistance;
+
+  // For now, use sphere approximation
+  // TODO: Implement proper box zone with BoxShape
+  AddAudioZone(eventName, center, innerRadius, outerRadius);
+}
+
+void AudioManager::AddPolygonZone(const std::string &eventName,
+                                  const std::vector<Vector2> &points,
+                                  float minY, float maxY, float fadeDistance) {
+  // Calculate centroid of polygon
+  float cx = 0.0f, cz = 0.0f;
+  for (const auto &p : points) {
+    cx += p.x;
+    cz += p.y; // Note: Vector2.y is used for z-axis in 2D polygon
+  }
+  if (!points.empty()) {
+    cx /= static_cast<float>(points.size());
+    cz /= static_cast<float>(points.size());
+  }
+
+  // Calculate maximum distance from centroid to any vertex
+  float maxDist = 0.0f;
+  for (const auto &p : points) {
+    float dx = p.x - cx;
+    float dz = p.y - cz;
+    float dist = std::sqrt(dx * dx + dz * dz);
+    maxDist = (std::max)(maxDist, dist);
+  }
+
+  Vector3 center = {cx, (minY + maxY) / 2.0f, cz};
+  float innerRadius = maxDist;
+  float outerRadius = maxDist + fadeDistance;
+
+  // For now, use sphere approximation
+  // TODO: Implement proper polygon zone with PolygonShape
+  AddAudioZone(eventName, center, innerRadius, outerRadius);
+}
+
 ListenerID AudioManager::CreateListener() {
   ListenerID id = pImpl->nextListenerID++;
   pImpl->listeners[id] = Listener{id};

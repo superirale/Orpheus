@@ -158,8 +158,10 @@ Spatial audio regions that trigger events based on listener distance. Zones use 
 
 | Method | Description |
 |--------|-------------|
-| `void AddAudioZone(eventName, pos, inner, outer)` | Add a zone using an event. |
-| `void AddAudioZone(eventName, pos, inner, outer, snapshotName, fadeIn, fadeOut)` | Add a zone with snapshot binding. |
+| `void AddAudioZone(eventName, pos, inner, outer)` | Add a sphere zone using an event. |
+| `void AddAudioZone(eventName, pos, inner, outer, snapshotName, fadeIn, fadeOut)` | Add a sphere zone with snapshot binding. |
+| `void AddBoxZone(eventName, min, max, fadeDistance)` | Add an axis-aligned box zone. |
+| `void AddPolygonZone(eventName, points, minY, maxY, fadeDistance)` | Add a 2D polygon zone with height range. |
 
 - **eventName**: Name of a registered event (not a file path)
 - **innerRadius**: Full volume distance
