@@ -52,56 +52,56 @@ public:
    * @brief Get the current influence factor.
    * @return Influence (0.0 = outside, 1.0 = fully inside).
    */
-  float GetInfluence() const;
+  [[nodiscard]] float GetInfluence() const;
 
   /**
    * @brief Check if the zone is currently active.
    * @return true if influence is greater than 0.
    */
-  bool IsActive() const;
+  [[nodiscard]] bool IsActive() const;
 
   /**
    * @brief Get the zone name.
    * @return Reference to the zone name.
    */
-  const std::string &GetName() const;
+  [[nodiscard]] const std::string &GetName() const;
 
   /**
    * @brief Get the reverb bus name.
    * @return Reference to the reverb bus name.
    */
-  const std::string &GetReverbBusName() const;
+  [[nodiscard]] const std::string &GetReverbBusName() const;
 
   /**
    * @brief Get the zone position.
    * @return Reference to the position.
    */
-  const Vector3 &GetPosition() const;
+  [[nodiscard]] const Vector3 &GetPosition() const;
 
   /**
    * @brief Get the inner radius.
    * @return Inner radius in world units.
    */
-  float GetInnerRadius() const;
+  [[nodiscard]] float GetInnerRadius() const;
 
   /**
    * @brief Get the outer radius.
    * @return Outer radius in world units.
    */
-  float GetOuterRadius() const;
+  [[nodiscard]] float GetOuterRadius() const;
 
   /**
    * @brief Get the zone priority.
    * @return Priority value (0-255).
    */
-  uint8_t GetPriority() const;
+  [[nodiscard]] uint8_t GetPriority() const;
 
   /**
    * @brief Get distance from zone center to listener.
    * @param listenerPos Listener position.
    * @return Distance in world units.
    */
-  float GetDistance(const Vector3 &listenerPos) const;
+  [[nodiscard]] float GetDistance(const Vector3 &listenerPos) const;
 
 private:
   float Distance(const Vector3 &a, const Vector3 &b) const;

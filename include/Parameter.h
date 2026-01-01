@@ -38,7 +38,7 @@ public:
    * @brief Get the current value.
    * @return Current parameter value.
    */
-  float Get() const { return value; }
+  [[nodiscard]] float Get() const { return value; }
 
   /**
    * @brief Set the parameter value and notify listeners.

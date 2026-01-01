@@ -60,14 +60,14 @@ public:
    * @param busName Name of the bus to route to (default: "Master").
    * @return Handle to the playing audio, or 0 on failure.
    */
-  AudioHandle Play(const std::string &eventName,
-                   const std::string &busName = "Master");
+  [[nodiscard]] AudioHandle Play(const std::string &eventName,
+                                 const std::string &busName = "Master");
 
   /**
    * @brief Get the occlusion filter for external configuration.
    * @return Reference to the biquad filter used for occlusion.
    */
-  SoLoud::BiquadResonantFilter &GetOcclusionFilter();
+  [[nodiscard]] SoLoud::BiquadResonantFilter &GetOcclusionFilter();
 
 private:
   void RouteHandleToBus(AudioHandle h, const std::string &busName);

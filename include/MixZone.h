@@ -56,62 +56,62 @@ public:
    * @brief Check if the zone is currently active.
    * @return true if listener is within outer radius.
    */
-  bool IsActive() const;
+  [[nodiscard]] bool IsActive() const;
 
   /**
    * @brief Get the current blend factor.
    * @return Blend factor (0.0 = outside, 1.0 = fully inside).
    */
-  float GetBlendFactor() const;
+  [[nodiscard]] float GetBlendFactor() const;
 
   /**
    * @brief Get the zone name.
    * @return Reference to the zone name.
    */
-  const std::string &GetName() const;
+  [[nodiscard]] const std::string &GetName() const;
 
   /**
    * @brief Get the snapshot name.
    * @return Reference to the snapshot name.
    */
-  const std::string &GetSnapshotName() const;
+  [[nodiscard]] const std::string &GetSnapshotName() const;
 
   /**
    * @brief Get the zone priority.
    * @return Priority value (0-255).
    */
-  uint8_t GetPriority() const;
+  [[nodiscard]] uint8_t GetPriority() const;
 
   /**
    * @brief Get the fade-in time.
    * @return Fade-in duration in seconds.
    */
-  float GetFadeInTime() const;
+  [[nodiscard]] float GetFadeInTime() const;
 
   /**
    * @brief Get the fade-out time.
    * @return Fade-out duration in seconds.
    */
-  float GetFadeOutTime() const;
+  [[nodiscard]] float GetFadeOutTime() const;
 
   /**
    * @brief Check if the listener just entered this frame.
    * @return true if just entered.
    */
-  bool JustEntered() const;
+  [[nodiscard]] bool JustEntered() const;
 
   /**
    * @brief Check if the listener just exited this frame.
    * @return true if just exited.
    */
-  bool JustExited() const;
+  [[nodiscard]] bool JustExited() const;
 
   /**
    * @brief Get distance from zone center to listener.
    * @param listenerPos Listener position.
    * @return Distance in world units.
    */
-  float GetDistance(const Vector3 &listenerPos) const;
+  [[nodiscard]] float GetDistance(const Vector3 &listenerPos) const;
 
 private:
   float Distance(const Vector3 &a, const Vector3 &b) const;

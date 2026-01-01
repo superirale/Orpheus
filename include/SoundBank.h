@@ -90,7 +90,7 @@ public:
    * @param name The event name to look up.
    * @return Result containing the EventDescriptor or an error.
    */
-  Result<EventDescriptor> FindEvent(const std::string &name);
+  [[nodiscard]] Result<EventDescriptor> FindEvent(const std::string &name);
 
 private:
   std::unordered_map<std::string, EventDescriptor> events;

@@ -165,7 +165,7 @@ public:
    * @param name Parameter name.
    * @return Pointer to parameter, or nullptr if not found.
    */
-  Parameter *GetParam(const std::string &name);
+  [[nodiscard]] Parameter *GetParam(const std::string &name);
 
   /// @}
 
@@ -261,7 +261,7 @@ public:
    * @param name Bus name.
    * @return Result containing shared_ptr to Bus or error.
    */
-  Result<std::shared_ptr<Bus>> GetBus(const std::string &name);
+  [[nodiscard]] Result<std::shared_ptr<Bus>> GetBus(const std::string &name);
 
   /// @}
 
@@ -319,7 +319,7 @@ public:
    * @brief Get maximum concurrent voices.
    * @return Maximum voice count.
    */
-  uint32_t GetMaxVoices() const;
+  [[nodiscard]] uint32_t GetMaxVoices() const;
 
   /**
    * @brief Set voice stealing behavior.
@@ -331,25 +331,25 @@ public:
    * @brief Get current steal behavior.
    * @return Current StealBehavior.
    */
-  StealBehavior GetStealBehavior() const;
+  [[nodiscard]] StealBehavior GetStealBehavior() const;
 
   /**
    * @brief Get count of all active voices.
    * @return Active voice count (real + virtual).
    */
-  uint32_t GetActiveVoiceCount() const;
+  [[nodiscard]] uint32_t GetActiveVoiceCount() const;
 
   /**
    * @brief Get count of real (playing) voices.
    * @return Real voice count.
    */
-  uint32_t GetRealVoiceCount() const;
+  [[nodiscard]] uint32_t GetRealVoiceCount() const;
 
   /**
    * @brief Get count of virtual voices.
    * @return Virtual voice count.
    */
-  uint32_t GetVirtualVoiceCount() const;
+  [[nodiscard]] uint32_t GetVirtualVoiceCount() const;
 
   /// @}
 
@@ -394,7 +394,7 @@ public:
    * @brief Get the currently active mix zone.
    * @return Reference to zone name (empty if none).
    */
-  const std::string &GetActiveMixZone() const;
+  [[nodiscard]] const std::string &GetActiveMixZone() const;
 
   /// @}
 
@@ -427,7 +427,8 @@ public:
    * @param name Bus name.
    * @return Result containing shared_ptr to ReverbBus or error.
    */
-  Result<std::shared_ptr<ReverbBus>> GetReverbBus(const std::string &name);
+  [[nodiscard]] Result<std::shared_ptr<ReverbBus>>
+  GetReverbBus(const std::string &name);
 
   /**
    * @brief Set reverb parameters with optional fade.
@@ -476,7 +477,7 @@ public:
    * @brief Get names of all active reverb zones.
    * @return Vector of active zone names.
    */
-  std::vector<std::string> GetActiveReverbZones() const;
+  [[nodiscard]] std::vector<std::string> GetActiveReverbZones() const;
 
   /// @}
 
@@ -538,7 +539,7 @@ public:
    * @brief Check if occlusion is enabled.
    * @return true if enabled.
    */
-  bool IsOcclusionEnabled() const;
+  [[nodiscard]] bool IsOcclusionEnabled() const;
 
   /// @}
 
@@ -549,7 +550,7 @@ public:
    * @brief Get direct access to the SoLoud engine.
    * @return Reference to the SoLoud::Soloud instance.
    */
-  SoLoud::Soloud &Engine();
+  [[nodiscard]] SoLoud::Soloud &Engine();
 
   /// @}
 

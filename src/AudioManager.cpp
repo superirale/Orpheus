@@ -56,26 +56,27 @@ void AudioManager::Update(float dt) {
   m_VoicePool.Update(dt, listenerPos);
 
   // Process voice state changes
-  for (auto &voice : m_VoicePool.GetVoices()) {
-    if (voice.IsStopped())
+  for (size_t i = 0; i < m_VoicePool.GetVoiceCount(); ++i) {
+    Voice *voice = m_VoicePool.GetVoiceAt(i);
+    if (!voice || voice->IsStopped())
       continue;
 
     // Handle voices that need to start playing
-    if (voice.IsReal() && voice.handle == 0) {
+    if (voice->IsReal() && voice->handle == 0) {
       // m_Event.Play() automatically routes to the correct bus via SetBusRouter
       // callback
-      voice.handle = m_Event.Play(voice.eventName);
+      voice->handle = m_Event.Play(voice->eventName);
     }
     // Handle voices that became virtual
-    else if (voice.IsVirtual() && voice.handle != 0) {
-      m_Engine.stop(voice.handle);
-      voice.handle = 0;
+    else if (voice->IsVirtual() && voice->handle != 0) {
+      m_Engine.stop(voice->handle);
+      voice->handle = 0;
     }
 
     // Update occlusion for real voices
-    if (voice.IsReal() && voice.handle != 0) {
-      m_OcclusionProcessor.Update(voice, listenerPos, dt);
-      m_OcclusionProcessor.ApplyDSP(m_Engine, voice);
+    if (voice->IsReal() && voice->handle != 0) {
+      m_OcclusionProcessor.Update(*voice, listenerPos, dt);
+      m_OcclusionProcessor.ApplyDSP(m_Engine, *voice);
     }
   }
 

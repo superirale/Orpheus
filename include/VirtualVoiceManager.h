@@ -36,7 +36,7 @@ public:
    * @brief Check if a new voice can be played.
    * @return true if under the voice limit.
    */
-  bool canPlay() const { return mActiveHandles.size() < mLimit; }
+  [[nodiscard]] bool canPlay() const { return mActiveHandles.size() < mLimit; }
 
   /**
    * @brief Register an active audio handle.

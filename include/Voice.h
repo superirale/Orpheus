@@ -114,7 +114,7 @@ struct Voice {
    * @param listenerPos Listener position in world space.
    * @return Distance in world units.
    */
-  float GetDistance(const Vector3 &listenerPos) const {
+  [[nodiscard]] float GetDistance(const Vector3 &listenerPos) const {
     float dx = position.x - listenerPos.x;
     float dy = position.y - listenerPos.y;
     float dz = position.z - listenerPos.z;
@@ -125,19 +125,19 @@ struct Voice {
    * @brief Check if voice is real (playing on hardware).
    * @return true if state is Real.
    */
-  bool IsReal() const { return state == VoiceState::Real; }
+  [[nodiscard]] bool IsReal() const { return state == VoiceState::Real; }
 
   /**
    * @brief Check if voice is virtual (tracked but not playing).
    * @return true if state is Virtual.
    */
-  bool IsVirtual() const { return state == VoiceState::Virtual; }
+  [[nodiscard]] bool IsVirtual() const { return state == VoiceState::Virtual; }
 
   /**
    * @brief Check if voice is stopped.
    * @return true if state is Stopped.
    */
-  bool IsStopped() const { return state == VoiceState::Stopped; }
+  [[nodiscard]] bool IsStopped() const { return state == VoiceState::Stopped; }
 };
 
 } // namespace Orpheus

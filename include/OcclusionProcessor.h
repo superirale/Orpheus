@@ -133,13 +133,13 @@ public:
    * @brief Check if occlusion is enabled.
    * @return true if enabled.
    */
-  bool IsEnabled() const;
+  [[nodiscard]] bool IsEnabled() const;
 
   /**
    * @brief Get the occlusion threshold.
    * @return Current threshold value.
    */
-  float GetOcclusionThreshold() const;
+  [[nodiscard]] float GetOcclusionThreshold() const;
 
   /// @}
 

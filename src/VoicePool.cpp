@@ -69,52 +69,68 @@ void VoicePool::StopVoice(Voice *voice) {
 void VoicePool::Update(float dt, const Vector3 &listenerPos) {
   m_CurrentTime += dt;
 
-  for (auto &voice : m_Voices) {
-    if (voice.IsStopped())
+  for (auto &voicePtr : m_Voices) {
+    if (voicePtr->IsStopped())
       continue;
 
-    voice.playbackTime += dt;
-    voice.UpdateAudibility(listenerPos);
+    voicePtr->playbackTime += dt;
+    voicePtr->UpdateAudibility(listenerPos);
   }
 
   PromoteVirtualVoices();
 }
 
 uint32_t VoicePool::GetRealVoiceCount() const {
-  return std::count_if(m_Voices.begin(), m_Voices.end(),
-                       [](const Voice &v) { return v.IsReal(); });
+  return std::count_if(
+      m_Voices.begin(), m_Voices.end(),
+      [](const std::unique_ptr<Voice> &v) { return v->IsReal(); });
 }
 
 uint32_t VoicePool::GetVirtualVoiceCount() const {
-  return std::count_if(m_Voices.begin(), m_Voices.end(),
-                       [](const Voice &v) { return v.IsVirtual(); });
+  return std::count_if(
+      m_Voices.begin(), m_Voices.end(),
+      [](const std::unique_ptr<Voice> &v) { return v->IsVirtual(); });
 }
 
 uint32_t VoicePool::GetActiveVoiceCount() const {
   return GetRealVoiceCount() + GetVirtualVoiceCount();
 }
 
-std::vector<Voice> &VoicePool::GetVoices() { return m_Voices; }
-const std::vector<Voice> &VoicePool::GetVoices() const { return m_Voices; }
+Voice *VoicePool::GetVoiceAt(size_t index) {
+  if (index < m_Voices.size()) {
+    return m_Voices[index].get();
+  }
+  return nullptr;
+}
+
+const Voice *VoicePool::GetVoiceAt(size_t index) const {
+  if (index < m_Voices.size()) {
+    return m_Voices[index].get();
+  }
+  return nullptr;
+}
+
+size_t VoicePool::GetVoiceCount() const { return m_Voices.size(); }
 
 Voice *VoicePool::FindFreeVoice() {
-  for (auto &v : m_Voices) {
-    if (v.IsStopped())
-      return &v;
+  for (auto &voicePtr : m_Voices) {
+    if (voicePtr->IsStopped())
+      return voicePtr.get();
   }
   return nullptr;
 }
 
 Voice *VoicePool::CreateVoice() {
-  m_Voices.emplace_back();
-  return &m_Voices.back();
+  m_Voices.push_back(std::make_unique<Voice>());
+  return m_Voices.back().get();
 }
 
 Voice *VoicePool::FindVoiceToSteal(uint8_t newPriority, float newAudibility) {
   Voice *victim = nullptr;
   float victimScore = std::numeric_limits<float>::max();
 
-  for (auto &v : m_Voices) {
+  for (auto &voicePtr : m_Voices) {
+    Voice &v = *voicePtr;
     if (!v.IsReal())
       continue;
     if (v.priority > newPriority)
@@ -147,9 +163,9 @@ Voice *VoicePool::FindVoiceToSteal(uint8_t newPriority, float newAudibility) {
 
 void VoicePool::PromoteVirtualVoices() {
   std::vector<Voice *> virtualVoices;
-  for (auto &v : m_Voices) {
-    if (v.IsVirtual())
-      virtualVoices.push_back(&v);
+  for (auto &voicePtr : m_Voices) {
+    if (voicePtr->IsVirtual())
+      virtualVoices.push_back(voicePtr.get());
   }
 
   std::sort(virtualVoices.begin(), virtualVoices.end(),

@@ -110,31 +110,31 @@ public:
    * @brief Check if the zone is currently active.
    * @return true if listener is within outer radius.
    */
-  bool IsActive() const;
+  [[nodiscard]] bool IsActive() const;
 
   /**
    * @brief Check if this zone has a snapshot attached.
    * @return true if a snapshot is configured.
    */
-  bool HasSnapshot() const;
+  [[nodiscard]] bool HasSnapshot() const;
 
   /**
    * @brief Get the snapshot name.
    * @return Reference to the snapshot name (empty if none).
    */
-  const std::string &GetSnapshotName() const;
+  [[nodiscard]] const std::string &GetSnapshotName() const;
 
   /**
    * @brief Get the event name.
    * @return Reference to the event name.
    */
-  const std::string &GetEventName() const;
+  [[nodiscard]] const std::string &GetEventName() const;
 
   /**
    * @brief Get the zone position.
    * @return Reference to the position.
    */
-  const Vector3 &GetPosition() const;
+  [[nodiscard]] const Vector3 &GetPosition() const;
 
 private:
   float Distance(const Vector3 &a, const Vector3 &b);

@@ -78,25 +78,25 @@ public:
    * @brief Get the current volume.
    * @return Current volume level.
    */
-  float GetVolume() const;
+  [[nodiscard]] float GetVolume() const;
 
   /**
    * @brief Get the target volume.
    * @return Target volume level.
    */
-  float GetTargetVolume() const;
+  [[nodiscard]] float GetTargetVolume() const;
 
   /**
    * @brief Get the bus name.
    * @return Reference to the bus name.
    */
-  const std::string &GetName() const;
+  [[nodiscard]] const std::string &GetName() const;
 
   /**
    * @brief Get raw SoLoud bus pointer for advanced usage.
    * @return Pointer to the underlying SoLoud::Bus.
    */
-  SoLoud::Bus *Raw();
+  [[nodiscard]] SoLoud::Bus *Raw();
 
 private:
   std::unique_ptr<SoLoud::Bus> m_Bus;

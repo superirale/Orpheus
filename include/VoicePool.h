@@ -10,6 +10,7 @@
 #include <algorithm>
 #include <cstdint>
 #include <limits>
+#include <memory>
 #include <string>
 #include <vector>
 
@@ -44,7 +45,7 @@ public:
    * @brief Get the maximum number of real voices.
    * @return Maximum voice count.
    */
-  uint32_t GetMaxVoices() const;
+  [[nodiscard]] uint32_t GetMaxVoices() const;
 
   /**
    * @brief Set the behavior when voice limit is exceeded.
@@ -56,7 +57,7 @@ public:
    * @brief Get the current steal behavior.
    * @return Current StealBehavior.
    */
-  StealBehavior GetStealBehavior() const;
+  [[nodiscard]] StealBehavior GetStealBehavior() const;
 
   /**
    * @brief Allocate a new voice for an event.
@@ -66,15 +67,16 @@ public:
    * @param maxDistance Maximum audible distance.
    * @return Pointer to allocated Voice, or nullptr if failed.
    */
-  Voice *AllocateVoice(const std::string &eventName, uint8_t priority,
-                       const Vector3 &position, float maxDistance);
+  [[nodiscard]] Voice *AllocateVoice(const std::string &eventName,
+                                     uint8_t priority, const Vector3 &position,
+                                     float maxDistance);
 
   /**
    * @brief Transition a voice from virtual to real.
    * @param voice Pointer to the voice.
    * @return true if successfully made real.
    */
-  bool MakeReal(Voice *voice);
+  [[nodiscard]] bool MakeReal(Voice *voice);
 
   /**
    * @brief Transition a voice from real to virtual.
@@ -99,31 +101,39 @@ public:
    * @brief Get count of currently playing real voices.
    * @return Number of real voices.
    */
-  uint32_t GetRealVoiceCount() const;
+  [[nodiscard]] uint32_t GetRealVoiceCount() const;
 
   /**
    * @brief Get count of virtual voices.
    * @return Number of virtual voices.
    */
-  uint32_t GetVirtualVoiceCount() const;
+  [[nodiscard]] uint32_t GetVirtualVoiceCount() const;
 
   /**
    * @brief Get count of all active voices (real + virtual).
    * @return Total active voice count.
    */
-  uint32_t GetActiveVoiceCount() const;
+  [[nodiscard]] uint32_t GetActiveVoiceCount() const;
 
   /**
-   * @brief Get mutable reference to voice collection.
-   * @return Reference to voice vector.
+   * @brief Get voice by index for iteration.
+   * @param index Voice index.
+   * @return Pointer to voice, or nullptr if out of range.
    */
-  std::vector<Voice> &GetVoices();
+  [[nodiscard]] Voice *GetVoiceAt(size_t index);
 
   /**
-   * @brief Get const reference to voice collection.
-   * @return Const reference to voice vector.
+   * @brief Get voice by index for iteration (const).
+   * @param index Voice index.
+   * @return Const pointer to voice, or nullptr if out of range.
    */
-  const std::vector<Voice> &GetVoices() const;
+  [[nodiscard]] const Voice *GetVoiceAt(size_t index) const;
+
+  /**
+   * @brief Get total number of voice slots.
+   * @return Number of voices in pool.
+   */
+  [[nodiscard]] size_t GetVoiceCount() const;
 
 private:
   Voice *FindFreeVoice();
@@ -131,7 +141,7 @@ private:
   Voice *FindVoiceToSteal(uint8_t newPriority, float newAudibility);
   void PromoteVirtualVoices();
 
-  std::vector<Voice> m_Voices;
+  std::vector<std::unique_ptr<Voice>> m_Voices;
   uint32_t m_MaxRealVoices = 32;
   uint32_t m_NextVoiceID = 1;
   float m_CurrentTime = 0.0f;

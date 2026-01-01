@@ -62,7 +62,8 @@ public:
    * @brief Get all bus states in this snapshot.
    * @return Const reference to the bus state map.
    */
-  const std::unordered_map<std::string, BusState> &GetStates() const {
+  [[nodiscard]] const std::unordered_map<std::string, BusState> &
+  GetStates() const {
     return busStates;
   }
 
@@ -80,7 +81,7 @@ public:
    * @brief Get all reverb states in this snapshot.
    * @return Const reference to the reverb state map.
    */
-  const std::unordered_map<std::string, ReverbBusState> &
+  [[nodiscard]] const std::unordered_map<std::string, ReverbBusState> &
   GetReverbStates() const {
     return reverbStates;
   }
@@ -90,7 +91,7 @@ public:
    * @param reverbBusName Name of the reverb bus.
    * @return true if state exists for the bus.
    */
-  bool HasReverbState(const std::string &reverbBusName) const {
+  [[nodiscard]] bool HasReverbState(const std::string &reverbBusName) const {
     return reverbStates.count(reverbBusName) > 0;
   }
 

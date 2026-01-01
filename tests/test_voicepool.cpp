@@ -75,7 +75,7 @@ TEST_CASE("VoicePool MakeVirtual changes state", "[VoicePool]") {
   VoicePool pool(8);
 
   Voice *v = pool.AllocateVoice("test", 128, {0, 0, 0}, 100.0f);
-  pool.MakeReal(v);
+  (void)pool.MakeReal(v);
   REQUIRE(v->state == VoiceState::Real);
 
   pool.MakeVirtual(v);
@@ -86,7 +86,7 @@ TEST_CASE("VoicePool StopVoice changes state", "[VoicePool]") {
   VoicePool pool(8);
 
   Voice *v = pool.AllocateVoice("test", 128, {0, 0, 0}, 100.0f);
-  pool.MakeReal(v);
+  (void)pool.MakeReal(v);
 
   pool.StopVoice(v);
   REQUIRE(v->state == VoiceState::Stopped);
@@ -97,8 +97,8 @@ TEST_CASE("VoicePool GetActiveVoiceCount", "[VoicePool]") {
 
   REQUIRE(pool.GetActiveVoiceCount() == 0);
 
-  pool.AllocateVoice("e1", 128, {0, 0, 0}, 50.0f);
-  pool.AllocateVoice("e2", 128, {0, 0, 0}, 50.0f);
+  (void)pool.AllocateVoice("e1", 128, {0, 0, 0}, 50.0f);
+  (void)pool.AllocateVoice("e2", 128, {0, 0, 0}, 50.0f);
 
   REQUIRE(pool.GetActiveVoiceCount() == 2);
 }
@@ -107,20 +107,23 @@ TEST_CASE("VoicePool GetRealVoiceCount and GetVirtualVoiceCount",
           "[VoicePool]") {
   VoicePool pool(8);
 
-  // Allocate both voices first, then get fresh pointers from the vector
-  pool.AllocateVoice("e1", 128, {0, 0, 0}, 50.0f);
-  pool.AllocateVoice("e2", 128, {0, 0, 0}, 50.0f);
+  // Allocate both voices first
+  (void)pool.AllocateVoice("e1", 128, {0, 0, 0}, 50.0f);
+  (void)pool.AllocateVoice("e2", 128, {0, 0, 0}, 50.0f);
 
-  // Get stable references via GetVoices()
-  auto &voices = pool.GetVoices();
-  REQUIRE(voices.size() == 2);
+  // Get stable pointers via GetVoiceAt()
+  REQUIRE(pool.GetVoiceCount() == 2);
+  Voice *voice0 = pool.GetVoiceAt(0);
+  Voice *voice1 = pool.GetVoiceAt(1);
+  REQUIRE(voice0 != nullptr);
+  REQUIRE(voice1 != nullptr);
 
-  pool.MakeReal(&voices[0]);
+  (void)pool.MakeReal(voice0);
 
   REQUIRE(pool.GetRealVoiceCount() == 1);
   REQUIRE(pool.GetVirtualVoiceCount() == 1);
 
-  pool.MakeReal(&voices[1]);
+  (void)pool.MakeReal(voice1);
   REQUIRE(pool.GetRealVoiceCount() == 2);
   REQUIRE(pool.GetVirtualVoiceCount() == 0);
 }

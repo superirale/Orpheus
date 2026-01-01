@@ -58,7 +58,7 @@ public:
    * @param engine Reference to the SoLoud engine.
    * @return true if initialization succeeded.
    */
-  bool Init(SoLoud::Soloud &engine);
+  [[nodiscard]] bool Init(SoLoud::Soloud &engine);
 
   /**
    * @brief Apply a reverb preset.
@@ -111,26 +111,26 @@ public:
 
   /// @name Getters
   /// @{
-  float GetWet() const;
-  float GetRoomSize() const;
-  float GetDamp() const;
-  float GetWidth() const;
-  bool IsFreeze() const;
-  bool IsActive() const;
-  const std::string &GetName() const;
+  [[nodiscard]] float GetWet() const;
+  [[nodiscard]] float GetRoomSize() const;
+  [[nodiscard]] float GetDamp() const;
+  [[nodiscard]] float GetWidth() const;
+  [[nodiscard]] bool IsFreeze() const;
+  [[nodiscard]] bool IsActive() const;
+  [[nodiscard]] const std::string &GetName() const;
   /// @}
 
   /**
    * @brief Get the underlying SoLoud bus.
    * @return Reference to the bus.
    */
-  SoLoud::Bus &GetBus();
+  [[nodiscard]] SoLoud::Bus &GetBus();
 
   /**
    * @brief Get the bus handle.
    * @return SoLoud handle for the bus.
    */
-  SoLoud::handle GetBusHandle() const;
+  [[nodiscard]] SoLoud::handle GetBusHandle() const;
 
   /**
    * @brief Send audio to this reverb bus.
