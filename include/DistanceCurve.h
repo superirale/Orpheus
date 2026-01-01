@@ -64,7 +64,7 @@ inline float CalculateAttenuation(float distance,
 
   // Apply rolloff factor
   normalizedDist *= settings.rolloffFactor;
-  normalizedDist = std::min(normalizedDist, 1.0f);
+  normalizedDist = (std::min)(normalizedDist, 1.0f);
 
   float attenuation = 0.0f;
 
@@ -100,7 +100,7 @@ inline float CalculateAttenuation(float distance,
     break;
   }
 
-  return std::max(0.0f, std::min(1.0f, attenuation));
+  return (std::max)(0.0f, (std::min)(1.0f, attenuation));
 }
 
 } // namespace Orpheus
