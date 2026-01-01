@@ -1,3 +1,10 @@
+/**
+ * @file Voice.h
+ * @brief Voice management for audio playback instances.
+ *
+ * Defines voice state, steal behavior, and the Voice struct for
+ * managing active and virtual audio instances.
+ */
 #pragma once
 
 #include <algorithm>
@@ -10,48 +17,89 @@
 
 namespace Orpheus {
 
-// Voice state for virtual voice system
-enum class VoiceState { Real, Virtual, Stopped };
+/**
+ * @brief Voice state for virtual voice system.
+ */
+enum class VoiceState {
+  Real,    ///< Playing on hardware
+  Virtual, ///< Tracked but not playing (out of voice limit)
+  Stopped  ///< Finished or stopped
+};
 
-// Behavior when stealing voices
-enum class StealBehavior { Oldest, Furthest, Quietest, None };
+/**
+ * @brief Behavior when stealing voices due to voice limit.
+ */
+enum class StealBehavior {
+  Oldest,   ///< Steal the oldest playing voice
+  Furthest, ///< Steal the furthest voice from listener
+  Quietest, ///< Steal the quietest voice
+  None      ///< Don't steal, fail allocation instead
+};
 
+/**
+ * @brief Unique identifier for voices.
+ */
 using VoiceID = uint32_t;
 
+/**
+ * @brief Represents an active or virtual audio playback instance.
+ *
+ * Tracks all information needed to manage a playing sound, including
+ * its 3D position, priority, occlusion state, and reverb sends.
+ */
 struct Voice {
-  VoiceID id = 0;
-  std::string eventName;
-  AudioHandle handle = 0; // SoLoud handle (0 if virtual)
-  VoiceState state = VoiceState::Stopped;
+  VoiceID id = 0;                         ///< Unique voice identifier
+  std::string eventName;                  ///< Name of the event being played
+  AudioHandle handle = 0;                 ///< SoLoud handle (0 if virtual)
+  VoiceState state = VoiceState::Stopped; ///< Current voice state
 
-  // Priority (0-255, higher = more important, never stolen by lower)
-  uint8_t priority = 128;
+  /// @name Priority
+  /// @{
+  uint8_t priority = 128; ///< Priority (0-255, higher = more important)
+  /// @}
 
-  // 3D positioning
-  Vector3 position{0, 0, 0};
-  float maxDistance = 100.0f;
+  /// @name 3D Positioning
+  /// @{
+  Vector3 position{0, 0, 0};  ///< Position in world space
+  float maxDistance = 100.0f; ///< Maximum audible distance
+  /// @}
 
-  // Volume and audibility
-  float volume = 1.0f;
-  float audibility = 1.0f; // Calculated: volume * distance attenuation
+  /// @name Volume and Audibility
+  /// @{
+  float volume = 1.0f;     ///< Base volume
+  float audibility = 1.0f; ///< Calculated: volume * distance attenuation
+  /// @}
 
-  // Time tracking
-  float playbackTime = 0.0f; // Seconds since start (for resuming virtual)
-  float startTime = 0.0f;    // When started (for Oldest stealing)
+  /// @name Time Tracking
+  /// @{
+  float playbackTime = 0.0f; ///< Seconds since start (for resuming virtual)
+  float startTime = 0.0f;    ///< When started (for Oldest stealing)
+  /// @}
 
-  // Reverb sends: bus name -> send level (0.0-1.0)
-  // Updated each frame based on reverb zones
+  /// @name Reverb
+  /// @{
+  /**
+   * @brief Reverb sends: bus name -> send level (0.0-1.0).
+   *
+   * Updated each frame based on reverb zones.
+   */
   std::unordered_map<std::string, float> reverbSends;
+  /// @}
 
-  // Occlusion state (calculated per update by OcclusionProcessor)
-  float obstruction = 0.0f;            // 0.0-1.0 partial blocking
-  float occlusion = 0.0f;              // 0.0-1.0 full blocking (derived)
-  float occlusionSmoothed = 0.0f;      // Smoothed value for DSP
-  float targetLowPassFreq = 22000.0f;  // Target filter cutoff Hz
-  float currentLowPassFreq = 22000.0f; // Current (smoothed) cutoff Hz
-  float occlusionVolume = 1.0f;        // Volume modifier from occlusion
+  /// @name Occlusion
+  /// @{
+  float obstruction = 0.0f;            ///< 0.0-1.0 partial blocking
+  float occlusion = 0.0f;              ///< 0.0-1.0 full blocking (derived)
+  float occlusionSmoothed = 0.0f;      ///< Smoothed value for DSP
+  float targetLowPassFreq = 22000.0f;  ///< Target filter cutoff Hz
+  float currentLowPassFreq = 22000.0f; ///< Current (smoothed) cutoff Hz
+  float occlusionVolume = 1.0f;        ///< Volume modifier from occlusion
+  /// @}
 
-  // Calculate audibility based on listener position
+  /**
+   * @brief Calculate audibility based on listener position.
+   * @param listenerPos Listener position in world space.
+   */
   void UpdateAudibility(const Vector3 &listenerPos) {
     float dx = position.x - listenerPos.x;
     float dy = position.y - listenerPos.y;
@@ -61,7 +109,11 @@ struct Voice {
     audibility = volume * std::max(distAtten, 0.0f);
   }
 
-  // Get distance to listener
+  /**
+   * @brief Get distance to listener.
+   * @param listenerPos Listener position in world space.
+   * @return Distance in world units.
+   */
   float GetDistance(const Vector3 &listenerPos) const {
     float dx = position.x - listenerPos.x;
     float dy = position.y - listenerPos.y;
@@ -69,8 +121,22 @@ struct Voice {
     return std::sqrt(dx * dx + dy * dy + dz * dz);
   }
 
+  /**
+   * @brief Check if voice is real (playing on hardware).
+   * @return true if state is Real.
+   */
   bool IsReal() const { return state == VoiceState::Real; }
+
+  /**
+   * @brief Check if voice is virtual (tracked but not playing).
+   * @return true if state is Virtual.
+   */
   bool IsVirtual() const { return state == VoiceState::Virtual; }
+
+  /**
+   * @brief Check if voice is stopped.
+   * @return true if state is Stopped.
+   */
   bool IsStopped() const { return state == VoiceState::Stopped; }
 };
 

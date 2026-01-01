@@ -1,3 +1,10 @@
+/**
+ * @file pch.h
+ * @brief Precompiled header for the Orpheus Audio Engine.
+ *
+ * This header contains commonly used standard library and third-party
+ * includes that are precompiled to improve build times.
+ */
 #pragma once
 
 // STL Headers

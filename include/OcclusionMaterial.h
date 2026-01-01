@@ -1,43 +1,83 @@
+/**
+ * @file OcclusionMaterial.h
+ * @brief Material definitions for audio occlusion.
+ *
+ * Defines materials with acoustic properties that affect how
+ * sound propagates through obstacles.
+ */
 #pragma once
 
 #include <string>
 
 namespace Orpheus {
 
-// Defines how a material affects sound propagation
+/**
+ * @brief Defines acoustic properties of a material.
+ *
+ * Used by the occlusion system to determine how much a material
+ * blocks or attenuates sound passing through it.
+ */
 struct OcclusionMaterial {
-  std::string name;
-  float obstruction = 0.5f;   // 0.0-1.0 how much it blocks (partial)
-  float occlusionBias = 0.0f; // Additional bias towards full occlusion
+  std::string name;           ///< Material name for lookup
+  float obstruction = 0.5f;   ///< How much it blocks sound (0.0-1.0)
+  float occlusionBias = 0.0f; ///< Additional bias towards full occlusion
 
+  /**
+   * @brief Default constructor.
+   */
   OcclusionMaterial() = default;
+
+  /**
+   * @brief Construct a material with properties.
+   * @param n Material name.
+   * @param obs Obstruction amount (0.0-1.0).
+   * @param bias Occlusion bias (default: 0.0).
+   */
   OcclusionMaterial(const std::string &n, float obs, float bias = 0.0f)
       : name(n), obstruction(obs), occlusionBias(bias) {}
 };
 
-// Built-in material presets
+/**
+ * @brief Built-in material presets.
+ *
+ * Provides commonly used materials with tuned acoustic properties.
+ */
 namespace OcclusionMaterials {
-// Thin/light materials - low obstruction
+
+/// @name Thin/Light Materials
+/// @brief Low obstruction, sound passes through easily
+/// @{
 inline const OcclusionMaterial Glass{"Glass", 0.2f, -0.2f};
 inline const OcclusionMaterial Fabric{"Fabric", 0.1f, -0.3f};
 inline const OcclusionMaterial Foliage{"Foliage", 0.15f, -0.2f};
+/// @}
 
-// Medium materials
+/// @name Medium Materials
+/// @brief Moderate obstruction
+/// @{
 inline const OcclusionMaterial Wood{"Wood", 0.3f, 0.0f};
 inline const OcclusionMaterial Plaster{"Plaster", 0.4f, 0.1f};
 inline const OcclusionMaterial Metal{"Metal", 0.5f, 0.1f};
+/// @}
 
-// Heavy materials - high obstruction
+/// @name Heavy Materials
+/// @brief High obstruction, significant sound blocking
+/// @{
 inline const OcclusionMaterial Brick{"Brick", 0.6f, 0.2f};
 inline const OcclusionMaterial Concrete{"Concrete", 0.8f, 0.3f};
 inline const OcclusionMaterial Stone{"Stone", 0.85f, 0.35f};
+/// @}
 
-// Full blockers
+/// @name Full Blockers
+/// @brief Near-complete sound blocking
+/// @{
 inline const OcclusionMaterial Terrain{"Terrain", 1.0f, 0.5f};
 inline const OcclusionMaterial Water{"Water", 0.9f, 0.4f};
+/// @}
 
-// Default fallback
+/// @brief Default fallback material
 inline const OcclusionMaterial Default{"Default", 0.5f, 0.0f};
+
 } // namespace OcclusionMaterials
 
 } // namespace Orpheus
