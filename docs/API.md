@@ -606,6 +606,57 @@ while (running) {
 
 ---
 
+## Interactive Music
+
+Beat-synchronized segment changes, stingers, and crossfades.
+
+### Core API (via MusicManager)
+
+```cpp
+MusicManager& music = audio.GetMusicManager();
+```
+
+| Method | Description |
+|--------|-------------|
+| `void SetBPM(float bpm)` | Set beats per minute (default: 120) |
+| `void SetBeatsPerBar(int beats)` | Set beats per bar (default: 4) |
+| `void PlaySegment(const string& segment, float fadeTime)` | Play segment with crossfade |
+| `void QueueSegment(const string& segment, TransitionSync sync, float fadeTime)` | Queue segment for next beat/bar |
+| `void PlayStinger(const string& stinger, float volume)` | Play one-shot overlay |
+| `void Stop(float fadeTime)` | Stop music with fade |
+| `void SetBeatCallback(function<void(int)> cb)` | Callback on each beat |
+
+### TransitionSync Options
+
+| Mode | Description |
+|------|-------------|
+| `Immediate` | Transition now |
+| `NextBeat` | Wait for next beat |
+| `NextBar` | Wait for next bar |
+
+### Example
+
+```cpp
+auto& music = audio.GetMusicManager();
+music.SetBPM(120.0f);
+
+// Play exploration music
+music.PlaySegment("exploration", 0.5f);
+
+// Queue combat music for next bar
+music.QueueSegment("combat", TransitionSync::NextBar, 1.0f);
+
+// Play victory stinger over music
+music.PlayStinger("victory_fanfare", 0.8f);
+
+// Beat callback
+music.SetBeatCallback([](int beat) {
+  std::cout << "Beat: " << beat << std::endl;
+});
+```
+
+---
+
 ## Parameters
 
 Global parameters that can drive audio behavior.

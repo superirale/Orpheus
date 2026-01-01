@@ -54,7 +54,12 @@ public:
   float speedOfSound = 343.0f; // m/s at 20°C
   float dopplerFactor = 1.0f;  // Exaggeration factor
 
-  Impl() : event(engine, bank) {}
+  // Music manager
+  std::unique_ptr<MusicManager> musicManager;
+
+  Impl() : event(engine, bank) {
+    musicManager = std::make_unique<MusicManager>(engine, bank);
+  }
 };
 
 // =============================================================================
@@ -220,6 +225,9 @@ void AudioManager::Update(float dt) {
     // This is a simplified check - in practice you'd track voice count per bus
     return pImpl->engine.getActiveVoiceCount() > 0;
   });
+
+  // Update interactive music
+  pImpl->musicManager->Update(dt);
 
   pImpl->engine.update3dAudio();
 }
@@ -764,5 +772,11 @@ void AudioManager::ClearMarkers(VoiceID id) {
     }
   }
 }
+
+// =============================================================================
+// Interactive Music API
+// =============================================================================
+
+MusicManager &AudioManager::GetMusicManager() { return *pImpl->musicManager; }
 
 } // namespace Orpheus

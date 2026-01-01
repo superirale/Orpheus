@@ -16,6 +16,7 @@
 
 #include "Error.h"
 #include "Listener.h"
+#include "MusicManager.h"
 #include "OcclusionMaterial.h"
 #include "OcclusionQuery.h"
 #include "ReverbBus.h"
@@ -654,6 +655,17 @@ public:
    * @param id Voice ID.
    */
   void ClearMarkers(VoiceID id);
+
+  /// @}
+
+  /// @name Interactive Music API
+  /// @{
+
+  /**
+   * @brief Get the music manager for interactive music control.
+   * @return Reference to the MusicManager instance.
+   */
+  [[nodiscard]] MusicManager &GetMusicManager();
 
   /// @}
 
