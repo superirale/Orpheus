@@ -1,0 +1,9 @@
+{
+    "name": "footstep",
+    "path": "audio/footstep.wav",
+    "bus": "SFX",
+    "volumeMin": 0.8,
+    "volumeMax": 1.0,
+    "pitchMin": 0.9,
+    "pitchMax": 1.1
+}

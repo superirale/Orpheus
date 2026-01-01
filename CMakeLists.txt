@@ -388,6 +388,40 @@ if(ORPHEUS_BUILD_BENCHMARKS)
 endif()
 
 # -----------------------------------------------------------------------------
+# Fuzzing (libFuzzer)
+# -----------------------------------------------------------------------------
+option(ORPHEUS_BUILD_FUZZER "Build fuzz tests (requires Clang)" OFF)
+
+if(ORPHEUS_BUILD_FUZZER)
+    if(NOT CMAKE_CXX_COMPILER_ID MATCHES "Clang|AppleClang")
+        message(FATAL_ERROR "Fuzzing requires Clang compiler. Use -DCMAKE_CXX_COMPILER=clang++")
+    endif()
+
+    # Fuzz sources
+    file(GLOB ORPHEUS_FUZZ_SOURCES "fuzz/*.cpp")
+
+    foreach(fuzz_source ${ORPHEUS_FUZZ_SOURCES})
+        get_filename_component(fuzz_name ${fuzz_source} NAME_WE)
+        add_executable(${fuzz_name} ${fuzz_source})
+        target_link_libraries(${fuzz_name} PRIVATE orpheus)
+        target_include_directories(${fuzz_name} PRIVATE 
+            ${CMAKE_CURRENT_SOURCE_DIR}
+            ${JSON_INCLUDE_DIR}
+        )
+        target_compile_options(${fuzz_name} PRIVATE 
+            -fsanitize=fuzzer,address,undefined
+            -fno-omit-frame-pointer
+            -g
+        )
+        target_link_options(${fuzz_name} PRIVATE 
+            -fsanitize=fuzzer,address,undefined
+        )
+    endforeach()
+
+    message(STATUS "Fuzz targets created. Run with: ./fuzz_json_parser fuzz/corpus/")
+endif()
+
+# -----------------------------------------------------------------------------
 # Summary
 # -----------------------------------------------------------------------------
 if(SOLOUD_FETCHED)
@@ -404,6 +438,6 @@ message(STATUS "  SoLoud:                  ${SOLOUD_SOURCE}")
 message(STATUS "  Build examples:          ${ORPHEUS_BUILD_EXAMPLES}")
 message(STATUS "  Build tests:             ${ORPHEUS_BUILD_TESTS}")
 message(STATUS "  Build benchmarks:        ${ORPHEUS_BUILD_BENCHMARKS}")
+message(STATUS "  Build fuzzer:            ${ORPHEUS_BUILD_FUZZER}")
 message(STATUS "  Use precompiled headers: ${ORPHEUS_USE_PCH}")
 message(STATUS "")
-

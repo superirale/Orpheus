@@ -1,0 +1,22 @@
+{
+    "events": [
+        {
+            "name": "music",
+            "path": "audio/music.ogg",
+            "bus": "Music",
+            "stream": true,
+            "priority": 200,
+            "maxDistance": 500.0
+        },
+        {
+            "name": "explosion",
+            "path": "audio/explosion.wav",
+            "bus": "SFX",
+            "volumeMin": 0.9,
+            "volumeMax": 1.0,
+            "parameters": {
+                "intensity": "volume"
+            }
+        }
+    ]
+}
