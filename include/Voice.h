@@ -62,7 +62,9 @@ struct Voice {
   /// @name 3D Positioning
   /// @{
   Vector3 position{0, 0, 0};         ///< Position in world space
+  Vector3 velocity{0, 0, 0};         ///< Velocity in world space (for Doppler)
   DistanceSettings distanceSettings; ///< Distance attenuation settings
+  float dopplerPitch = 1.0f;         ///< Calculated Doppler pitch multiplier
   /// @}
 
   /// @name Volume and Audibility

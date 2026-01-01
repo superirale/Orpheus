@@ -8,7 +8,7 @@
 ## High Priority 🔥
 - [x] Sidechaining/Ducking - Music ducks when dialogue plays
 - [x] Distance Curves - Custom rolloff (linear, logarithmic, custom)
-- [ ] Doppler Effect - Velocity-based pitch shift for moving 3D sounds
+- [x] Doppler Effect - Velocity-based pitch shift for moving 3D sounds
 - [ ] Randomization - Random pitch/volume variation, playlist shuffle
 - [ ] Markers/Cues - Trigger callbacks at specific audio positions
 

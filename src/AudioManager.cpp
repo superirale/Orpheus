@@ -49,6 +49,11 @@ public:
 
   Ducker ducker;
 
+  // Doppler settings
+  bool dopplerEnabled = true;
+  float speedOfSound = 343.0f; // m/s at 20°C
+  float dopplerFactor = 1.0f;  // Exaggeration factor
+
   Impl() : event(engine, bank) {}
 };
 
@@ -135,6 +140,54 @@ void AudioManager::Update(float dt) {
     if (voice->IsReal() && voice->handle != 0) {
       pImpl->occlusionProcessor.Update(*voice, listenerPos, dt);
       pImpl->occlusionProcessor.ApplyDSP(pImpl->engine, *voice);
+
+      // Calculate and apply Doppler effect
+      if (pImpl->dopplerEnabled) {
+        // Get listener velocity
+        Vector3 listenerVel{0, 0, 0};
+        for (auto &[lid, l] : pImpl->listeners) {
+          if (l.active) {
+            listenerVel = {l.velX, l.velY, l.velZ};
+            break;
+          }
+        }
+
+        // Calculate direction from listener to source
+        float dx = voice->position.x - listenerPos.x;
+        float dy = voice->position.y - listenerPos.y;
+        float dz = voice->position.z - listenerPos.z;
+        float dist = std::sqrt(dx * dx + dy * dy + dz * dz);
+
+        if (dist > 0.001f) {
+          // Normalize direction
+          float dirX = dx / dist;
+          float dirY = dy / dist;
+          float dirZ = dz / dist;
+
+          // Calculate relative velocities along the direction
+          float sourceVelTowards = voice->velocity.x * dirX +
+                                   voice->velocity.y * dirY +
+                                   voice->velocity.z * dirZ;
+          float listenerVelTowards = listenerVel.x * dirX +
+                                     listenerVel.y * dirY +
+                                     listenerVel.z * dirZ;
+
+          // Relative velocity (positive = receding, negative = approaching)
+          float relativeVel =
+              (sourceVelTowards - listenerVelTowards) * pImpl->dopplerFactor;
+
+          // Doppler formula: pitch = speedOfSound / (speedOfSound + relVel)
+          float pitch =
+              pImpl->speedOfSound / (pImpl->speedOfSound + relativeVel);
+
+          // Clamp to reasonable range
+          pitch = std::max(0.5f, std::min(2.0f, pitch));
+          voice->dopplerPitch = pitch;
+
+          // Apply pitch via SoLoud
+          pImpl->engine.setRelativePlaySpeed(voice->handle, pitch);
+        }
+      }
     }
   }
 
@@ -631,6 +684,32 @@ void AudioManager::UpdateReverbZones(const Vector3 &listenerPos) {
     float targetWet = influence * 0.8f; // Max 80% wet when fully in zone
     bus->SetWet(targetWet, 0.1f);       // Small fade time for smoothness
   }
+}
+
+// =============================================================================
+// Doppler API
+// =============================================================================
+
+void AudioManager::SetVoiceVelocity(VoiceID id, const Vector3 &velocity) {
+  for (size_t i = 0; i < pImpl->voicePool.GetVoiceCount(); ++i) {
+    Voice *voice = pImpl->voicePool.GetVoiceAt(i);
+    if (voice && voice->id == id) {
+      voice->velocity = velocity;
+      return;
+    }
+  }
+}
+
+void AudioManager::SetDopplerEnabled(bool enabled) {
+  pImpl->dopplerEnabled = enabled;
+}
+
+void AudioManager::SetSpeedOfSound(float speed) {
+  pImpl->speedOfSound = std::max(1.0f, speed);
+}
+
+void AudioManager::SetDopplerFactor(float factor) {
+  pImpl->dopplerFactor = std::max(0.0f, factor);
 }
 
 } // namespace Orpheus

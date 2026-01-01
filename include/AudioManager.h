@@ -598,6 +598,37 @@ public:
 
   /// @}
 
+  /// @name Doppler API
+  /// @{
+
+  /**
+   * @brief Set velocity for a playing voice (for Doppler calculation).
+   * @param id Voice ID.
+   * @param velocity Velocity vector in world units per second.
+   */
+  void SetVoiceVelocity(VoiceID id, const Vector3 &velocity);
+
+  /**
+   * @brief Enable or disable Doppler effect globally.
+   * @param enabled True to enable Doppler processing.
+   */
+  void SetDopplerEnabled(bool enabled);
+
+  /**
+   * @brief Set the speed of sound for Doppler calculations.
+   * @param speed Speed of sound in world units per second (default: 343 m/s).
+   */
+  void SetSpeedOfSound(float speed);
+
+  /**
+   * @brief Set the Doppler exaggeration factor.
+   * @param factor Multiplier for Doppler effect (1.0 = realistic, >1 =
+   * exaggerated).
+   */
+  void SetDopplerFactor(float factor);
+
+  /// @}
+
   /// @name Engine Access
   /// @{
 

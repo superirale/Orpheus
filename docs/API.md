@@ -480,6 +480,50 @@ voice.distanceSettings.customCurve = [](float dist) {
 
 ---
 
+## Doppler Effect
+
+Velocity-based pitch shift for moving 3D sounds.
+
+### Core API
+
+| Method | Description |
+|--------|-------------|
+| `void SetVoiceVelocity(VoiceID id, const Vector3& vel)` | Set voice velocity for Doppler calculation |
+| `void SetDopplerEnabled(bool enabled)` | Enable/disable Doppler processing globally |
+| `void SetSpeedOfSound(float speed)` | Set speed of sound in world units/sec (default: 343) |
+| `void SetDopplerFactor(float factor)` | Exaggeration factor (1.0 = realistic, >1 = exaggerated) |
+
+### How It Works
+
+- Sounds approaching the listener have higher pitch
+- Sounds receding from the listener have lower pitch
+- Formula: `pitch = speedOfSound / (speedOfSound + relativeVelocity)`
+- Pitch clamped to 0.5x – 2.0x range
+
+### Example
+
+```cpp
+// Enable Doppler (on by default)
+audio.SetDopplerEnabled(true);
+audio.SetSpeedOfSound(343.0f);  // Speed of sound in m/s
+audio.SetDopplerFactor(1.0f);   // Realistic
+
+// Play a moving sound
+VoiceID car = audio.PlayEvent("car_engine", {0, 0, 0});
+
+// Game loop
+while (running) {
+  // Update sound position and velocity
+  carPos.x += carVelocity.x * dt;
+  audio.SetVoicePosition(car, carPos);
+  audio.SetVoiceVelocity(car, carVelocity);
+  
+  audio.Update(dt); // Doppler pitch calculated automatically
+}
+```
+
+---
+
 ## Parameters
 
 Global parameters that can drive audio behavior.
