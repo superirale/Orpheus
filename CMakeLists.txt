@@ -213,9 +213,15 @@ set(ORPHEUS_HEADERS
     include/VirtualVoiceManager.h
 )
 
+
 # Create the library
 add_library(orpheus ${ORPHEUS_SOURCES} ${ORPHEUS_HEADERS})
 add_library(Orpheus::orpheus ALIAS orpheus)
+
+# Prevent min/max macro conflicts on Windows
+if(WIN32)
+    target_compile_definitions(orpheus PRIVATE NOMINMAX)
+endif()
 
 # Include directories
 target_include_directories(orpheus 
