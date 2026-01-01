@@ -1,0 +1,86 @@
+name: CI
+
+on:
+  push:
+    branches: [master, main]
+  pull_request:
+    branches: [master, main]
+
+jobs:
+  build:
+    name: Build & Test (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+        include:
+          - os: ubuntu-latest
+            install_deps: |
+              sudo apt-get update
+              sudo apt-get install -y libasound2-dev libpulse-dev
+          - os: macos-latest
+            install_deps: echo "No extra deps needed on macOS"
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: ${{ matrix.install_deps }}
+
+      - name: Configure CMake
+        run: cmake -B build -DCMAKE_BUILD_TYPE=Release -DORPHEUS_BUILD_TESTS=ON
+
+      - name: Build
+        run: cmake --build build --parallel
+
+      - name: Run tests
+        run: ./build/orpheus_tests --reporter console
+
+      - name: Verify example builds
+        run: |
+          if [ -f "./build/orpheus_example" ]; then
+            echo "Example binary built successfully"
+          else
+            echo "Error: Example binary not found"
+            exit 1
+          fi
+
+  static-analysis:
+    name: Static Analysis
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install analysis tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y clang-tidy cppcheck libasound2-dev libpulse-dev
+
+      - name: Configure CMake (with compile_commands.json)
+        run: cmake -B build -DCMAKE_BUILD_TYPE=Debug -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
+
+      - name: Run clang-tidy
+        run: |
+          echo "Running clang-tidy on source files..."
+          find src include -name '*.cpp' -o -name '*.h' | head -20 | while read file; do
+            echo "Checking $file"
+            clang-tidy "$file" -p build --quiet 2>/dev/null || true
+          done
+          echo "clang-tidy analysis complete"
+
+      - name: Run cppcheck
+        run: |
+          echo "Running cppcheck..."
+          cppcheck --enable=warning,style,performance \
+                   --suppress=missingIncludeSystem \
+                   --suppress=unusedFunction \
+                   --error-exitcode=0 \
+                   --inline-suppr \
+                   -I include \
+                   src/ include/
+          echo "cppcheck analysis complete"

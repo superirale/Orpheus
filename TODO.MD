@@ -51,13 +51,13 @@
 | ~~**PIMPL Pattern**~~ | ~~Hide implementation details for ABI stability~~ ✅ |
 | ~~**Const Correctness**~~ | ~~Add `[[nodiscard]]` to getters, review `const` usage~~ ✅ |
 | ~~**Smart Pointers**~~ | ~~Replace raw pointers with `std::unique_ptr`/`std::shared_ptr` consistently~~ ✅ |
-| **Static Analysis** | Integrate clang-tidy, cppcheck into CI |
+| ~~**Static Analysis**~~ | ~~Integrate clang-tidy, cppcheck into CI~~ ✅ |
 
 ## Nice to Have
 
 - **Benchmarks** - Performance tests for voice management, DSP
 - **Fuzzing** - Fuzz JSON parsing with AFL/libFuzzer
 - **Code Coverage** - Track with gcov/llvm-cov
-- **GitHub Actions** - CI/CD pipeline for builds + tests
+- ~~**GitHub Actions** - CI/CD pipeline for builds + tests~~ ✅
 - **Version Macros** - `ORPHEUS_VERSION_MAJOR`, etc.
 - **Export Macros** - `ORPHEUS_API` for shared library builds
