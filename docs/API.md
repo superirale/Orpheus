@@ -719,6 +719,41 @@ audio.SetGlobalParameter("engine_rpm", 0.75f);  // ~1.6 pitch
 
 ---
 
+## Profiler
+
+Query real-time audio engine statistics.
+
+### AudioStats Struct
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `activeVoices` | `uint32_t` | Currently playing (real) voices |
+| `virtualVoices` | `uint32_t` | Virtualized voices |
+| `totalVoices` | `uint32_t` | Total tracked voices |
+| `maxVoices` | `uint32_t` | Maximum voice limit |
+| `cpuUsage` | `float` | Estimated CPU usage (0-100%) |
+| `memoryUsed` | `size_t` | Estimated memory in bytes |
+| `sampleRate` | `uint32_t` | Engine sample rate |
+| `bufferSize` | `uint32_t` | Buffer size in samples |
+| `channels` | `uint32_t` | Output channels |
+
+### API
+
+| Method | Description |
+|--------|-------------|
+| `AudioStats GetStats() const` | Get current engine statistics |
+
+### Example
+
+```cpp
+AudioStats stats = audio.GetStats();
+std::cout << "Active: " << stats.activeVoices << "/" << stats.maxVoices << "\n";
+std::cout << "CPU: " << stats.cpuUsage << "%\n";
+std::cout << "Sample rate: " << stats.sampleRate << " Hz\n";
+```
+
+---
+
 ## Types
 
 ```cpp
