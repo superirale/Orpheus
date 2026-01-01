@@ -675,6 +675,50 @@ Global parameters that can drive audio behavior.
 
 ---
 
+## RTPC Curves
+
+Map parameter values to effect outputs through interpolated curves.
+
+### CurvePoint Struct
+
+```cpp
+struct CurvePoint { float x, y; };  // Input → Output
+```
+
+### RTPCCurve Class
+
+| Method | Description |
+|--------|-------------|
+| `void AddPoint(float x, float y)` | Add control point |
+| `float Evaluate(float input) const` | Get interpolated output |
+| `void Clear()` | Remove all points |
+
+### API
+
+| Method | Description |
+|--------|-------------|
+| `void BindRTPC(const string& param, const RTPCCurve& curve, function<void(float)> cb)` | Bind parameter to curve |
+| `void UnbindRTPC(const string& param)` | Remove RTPC binding |
+
+### Example
+
+```cpp
+// Map engine RPM (normalized 0-1) to pitch (0.8-2.0)
+RTPCCurve enginePitch;
+enginePitch.AddPoint(0.0f, 0.8f);   // Idle: low pitch
+enginePitch.AddPoint(0.5f, 1.2f);   // Mid: normal
+enginePitch.AddPoint(1.0f, 2.0f);   // Max: high pitch
+
+audio.BindRTPC("engine_rpm", enginePitch, [&](float pitch) {
+  audio.Engine().setRelativePlaySpeed(engineHandle, pitch);
+});
+
+// Update parameter → curve evaluates → callback fires
+audio.SetGlobalParameter("engine_rpm", 0.75f);  // ~1.6 pitch
+```
+
+---
+
 ## Types
 
 ```cpp

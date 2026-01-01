@@ -19,6 +19,7 @@
 #include "MusicManager.h"
 #include "OcclusionMaterial.h"
 #include "OcclusionQuery.h"
+#include "RTPCCurve.h"
 #include "ReverbBus.h"
 #include "SoundBank.h"
 #include "Types.h"
@@ -184,6 +185,30 @@ public:
    * @return Pointer to parameter, or nullptr if not found.
    */
   [[nodiscard]] Parameter *GetParam(const std::string &name);
+
+  /// @}
+
+  /// @name RTPC Curves
+  /// @{
+
+  /**
+   * @brief Bind a parameter to a curve-modified effect callback.
+   *
+   * When the parameter changes, the curve evaluates the new value
+   * and calls the callback with the interpolated output.
+   *
+   * @param paramName Parameter name to bind.
+   * @param curve RTPC curve defining input-output mapping.
+   * @param callback Function called with curve output when parameter changes.
+   */
+  void BindRTPC(const std::string &paramName, const RTPCCurve &curve,
+                std::function<void(float)> callback);
+
+  /**
+   * @brief Remove all RTPC bindings for a parameter.
+   * @param paramName Parameter name to unbind.
+   */
+  void UnbindRTPC(const std::string &paramName);
 
   /// @}
 

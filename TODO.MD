@@ -14,7 +14,7 @@
 
 ## Medium Priority
 - [x] Interactive Music - Stingers, transitions, beat-synced segments
-- [ ] RTPC Curves - Parameter-to-effect automation curves
+- [x] RTPC Curves - Parameter-to-effect automation curves
 - [ ] Profiler - Voice count, CPU usage, memory stats
 - [ ] Zone Shapes - Replace simple spheres with boxes or polygons
 - [ ] Crossfading - Normalize volume when multiple zones overlap

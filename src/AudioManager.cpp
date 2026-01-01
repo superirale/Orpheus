@@ -57,6 +57,9 @@ public:
   // Music manager
   std::unique_ptr<MusicManager> musicManager;
 
+  // RTPC bindings
+  std::vector<RTPCBinding> rtpcBindings;
+
   Impl() : event(engine, bank) {
     musicManager = std::make_unique<MusicManager>(engine, bank);
   }
@@ -778,5 +781,45 @@ void AudioManager::ClearMarkers(VoiceID id) {
 // =============================================================================
 
 MusicManager &AudioManager::GetMusicManager() { return *pImpl->musicManager; }
+
+// =============================================================================
+// RTPC Curves API
+// =============================================================================
+
+void AudioManager::BindRTPC(const std::string &paramName,
+                            const RTPCCurve &curve,
+                            std::function<void(float)> callback) {
+  // Create binding
+  RTPCBinding binding;
+  binding.parameterName = paramName;
+  binding.curve = curve;
+  binding.callback = std::move(callback);
+  pImpl->rtpcBindings.push_back(binding);
+
+  // Get or create parameter and bind to it
+  Parameter *param = GetParam(paramName);
+  if (param) {
+    // Capture the binding index
+    size_t bindingIndex = pImpl->rtpcBindings.size() - 1;
+    param->Bind([this, bindingIndex](float value) {
+      if (bindingIndex < pImpl->rtpcBindings.size()) {
+        auto &b = pImpl->rtpcBindings[bindingIndex];
+        float output = b.curve.Evaluate(value);
+        if (b.callback) {
+          b.callback(output);
+        }
+      }
+    });
+  }
+}
+
+void AudioManager::UnbindRTPC(const std::string &paramName) {
+  pImpl->rtpcBindings.erase(
+      std::remove_if(pImpl->rtpcBindings.begin(), pImpl->rtpcBindings.end(),
+                     [&paramName](const RTPCBinding &b) {
+                       return b.parameterName == paramName;
+                     }),
+      pImpl->rtpcBindings.end());
+}
 
 } // namespace Orpheus
