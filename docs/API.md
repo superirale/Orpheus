@@ -170,6 +170,20 @@ Spatial audio regions that trigger events based on listener distance. Zones use 
 - **fadeIn**: Fade time (seconds) when entering zone (default: 0.5)
 - **fadeOut**: Fade time (seconds) when exiting zone (default: 0.5)
 
+### Zone Crossfading
+
+When multiple zones overlap, volumes can be normalized to prevent clipping:
+
+| Method | Description |
+|--------|-------------|
+| `void SetZoneCrossfadeEnabled(bool enabled)` | Enable/disable volume normalization |
+| `bool IsZoneCrossfadeEnabled() const` | Check if crossfading is enabled |
+
+Crossfading is **enabled by default**. When enabled:
+- Zone volumes are summed
+- If total > 1.0, each volume is scaled proportionally
+- Example: Zone A = 0.8, Zone B = 0.6 → normalized to A = 0.57, B = 0.43
+
 **Basic Example:**
 ```cpp
 // Register the event first

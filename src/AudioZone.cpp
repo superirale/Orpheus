@@ -66,7 +66,41 @@ const std::string &AudioZone::GetSnapshotName() const { return m_SnapshotName; }
 const std::string &AudioZone::GetEventName() const { return m_EventName; }
 const Vector3 &AudioZone::GetPosition() const { return m_Position; }
 
-float AudioZone::Distance(const Vector3 &a, const Vector3 &b) {
+float AudioZone::GetComputedVolume(const Vector3 &listenerPos) const {
+  float dist = Distance(listenerPos, m_Position);
+  return ComputeVolumeFromDist(dist);
+}
+
+void AudioZone::ApplyVolume(float volume) {
+  if (m_Handle != 0 && m_IsValid(m_Handle)) {
+    m_SetVolume(m_Handle, volume);
+  }
+}
+
+void AudioZone::EnsurePlaying() {
+  if (m_Handle == 0 || !m_IsValid(m_Handle)) {
+    m_Handle = m_PlayEvent(m_EventName);
+  }
+
+  if (!m_WasActive && HasSnapshot()) {
+    m_ApplySnapshot(m_SnapshotName, m_FadeInTime);
+  }
+  m_WasActive = true;
+}
+
+void AudioZone::StopPlaying() {
+  if (m_Handle != 0 && m_IsValid(m_Handle)) {
+    m_Stop(m_Handle);
+    m_Handle = 0;
+  }
+
+  if (m_WasActive && HasSnapshot()) {
+    m_RevertSnapshot(m_FadeOutTime);
+  }
+  m_WasActive = false;
+}
+
+float AudioZone::Distance(const Vector3 &a, const Vector3 &b) const {
   float dx = a.x - b.x;
   float dy = a.y - b.y;
   float dz = a.z - b.z;
@@ -74,6 +108,10 @@ float AudioZone::Distance(const Vector3 &a, const Vector3 &b) {
 }
 
 float AudioZone::ComputeVolume(float dist) {
+  return ComputeVolumeFromDist(dist);
+}
+
+float AudioZone::ComputeVolumeFromDist(float dist) const {
   if (dist < m_InnerRadius)
     return 1.0f;
   if (dist > m_OuterRadius)

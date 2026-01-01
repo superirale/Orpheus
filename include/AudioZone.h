@@ -136,9 +136,33 @@ public:
    */
   [[nodiscard]] const Vector3 &GetPosition() const;
 
+  /**
+   * @brief Compute volume based on listener position without applying.
+   * @param listenerPos Current listener position.
+   * @return Computed volume (0.0 - 1.0).
+   */
+  [[nodiscard]] float GetComputedVolume(const Vector3 &listenerPos) const;
+
+  /**
+   * @brief Apply a normalized volume to the zone.
+   * @param volume Normalized volume to apply.
+   */
+  void ApplyVolume(float volume);
+
+  /**
+   * @brief Ensure the zone is playing (start if not already).
+   */
+  void EnsurePlaying();
+
+  /**
+   * @brief Stop the zone playback.
+   */
+  void StopPlaying();
+
 private:
-  float Distance(const Vector3 &a, const Vector3 &b);
+  float Distance(const Vector3 &a, const Vector3 &b) const;
   float ComputeVolume(float dist);
+  float ComputeVolumeFromDist(float dist) const;
 
   std::string m_EventName;
   Vector3 m_Position;

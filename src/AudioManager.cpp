@@ -60,6 +60,9 @@ public:
   // RTPC bindings
   std::vector<RTPCBinding> rtpcBindings;
 
+  // Zone crossfading
+  bool zoneCrossfadeEnabled = true;
+
   Impl() : event(engine, bank) {
     musicManager = std::make_unique<MusicManager>(engine, bank);
   }
@@ -120,8 +123,41 @@ void AudioManager::Update(float dt) {
         listener.posX, listener.posY, listener.posZ, listener.velX,
         listener.velY, listener.velZ, listener.forwardX, listener.forwardY,
         listener.forwardZ, listener.upX, listener.upY, listener.upZ);
-    for (auto &zone : pImpl->zones) {
-      zone->Update(listenerPos);
+    // Update zones with optional crossfading
+    if (pImpl->zoneCrossfadeEnabled) {
+      // Collect volumes for all zones
+      std::vector<std::pair<AudioZone *, float>> activeZones;
+      float totalVolume = 0.0f;
+
+      for (auto &zone : pImpl->zones) {
+        float vol = zone->GetComputedVolume(listenerPos);
+        if (vol > 0.0f) {
+          activeZones.push_back({zone.get(), vol});
+          totalVolume += vol;
+        }
+      }
+
+      // Normalize if total exceeds 1.0
+      float normalizer = (totalVolume > 1.0f) ? 1.0f / totalVolume : 1.0f;
+
+      // Apply normalized volumes
+      for (auto &[zone, vol] : activeZones) {
+        zone->EnsurePlaying();
+        zone->ApplyVolume(vol * normalizer);
+      }
+
+      // Stop zones that are no longer active
+      for (auto &zone : pImpl->zones) {
+        float vol = zone->GetComputedVolume(listenerPos);
+        if (vol <= 0.0f) {
+          zone->StopPlaying();
+        }
+      }
+    } else {
+      // Original behavior: independent zone volumes
+      for (auto &zone : pImpl->zones) {
+        zone->Update(listenerPos);
+      }
     }
   }
 
@@ -905,6 +941,18 @@ AudioStats AudioManager::GetStats() const {
   stats.memoryUsed = stats.activeVoices * 65536;
 
   return stats;
+}
+
+// =============================================================================
+// Zone Crossfading API
+// =============================================================================
+
+void AudioManager::SetZoneCrossfadeEnabled(bool enabled) {
+  pImpl->zoneCrossfadeEnabled = enabled;
+}
+
+bool AudioManager::IsZoneCrossfadeEnabled() const {
+  return pImpl->zoneCrossfadeEnabled;
 }
 
 } // namespace Orpheus

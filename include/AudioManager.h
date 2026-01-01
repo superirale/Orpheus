@@ -263,6 +263,22 @@ public:
                       const std::vector<Vector2> &points, float minY,
                       float maxY, float fadeDistance = 5.0f);
 
+  /**
+   * @brief Enable/disable volume normalization for overlapping zones.
+   *
+   * When enabled, zone volumes are normalized so they sum to 1.0 max,
+   * preventing clipping when multiple zones overlap.
+   *
+   * @param enabled true to enable crossfading, false for independent volumes.
+   */
+  void SetZoneCrossfadeEnabled(bool enabled);
+
+  /**
+   * @brief Check if zone crossfading is enabled.
+   * @return true if crossfading is enabled.
+   */
+  [[nodiscard]] bool IsZoneCrossfadeEnabled() const;
+
   /// @}
 
   /// @name Listener Management
