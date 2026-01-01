@@ -36,13 +36,17 @@ jobs:
         run: cmake -B build -DCMAKE_BUILD_TYPE=Release -DORPHEUS_BUILD_TESTS=ON
 
       - name: Build
-        run: cmake --build build --parallel
+        run: cmake --build build --parallel --config Release
 
       - name: Run tests
         shell: bash
         run: |
           if [ "$RUNNER_OS" == "Windows" ]; then
-            ./build/Release/orpheus_tests.exe --reporter console
+            if [ -f "./build/Release/orpheus_tests.exe" ]; then
+              ./build/Release/orpheus_tests.exe --reporter console
+            else
+              ./build/Debug/orpheus_tests.exe --reporter console
+            fi
           else
             ./build/orpheus_tests --reporter console
           fi
@@ -51,7 +55,7 @@ jobs:
         shell: bash
         run: |
           if [ "$RUNNER_OS" == "Windows" ]; then
-            if [ -f "./build/Release/orpheus_example.exe" ]; then
+            if [ -f "./build/Release/orpheus_example.exe" ] || [ -f "./build/Debug/orpheus_example.exe" ]; then
               echo "Example binary built successfully"
             else
               echo "Error: Example binary not found"
