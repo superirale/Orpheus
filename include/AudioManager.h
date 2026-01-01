@@ -74,6 +74,15 @@ using ZoneExitCallback = std::function<void(const std::string &)>;
  * @note Call Init() before any other operations.
  * @note Call Update() each frame to process audio state.
  * @note Call Shutdown() before destruction.
+ *
+ * @par Thread Safety:
+ * Most methods must be called from the main thread (the thread that called
+ * Init()). The following methods are thread-safe:
+ * - SetGlobalParameter() - Protected by m_ParamMutex
+ * - GetParam() - Protected by m_ParamMutex
+ *
+ * @warning Calling non-thread-safe methods from multiple threads causes
+ *          undefined behavior.
  */
 class AudioManager {
 public:

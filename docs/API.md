@@ -590,3 +590,66 @@ cmake --build .
 | SoundBank, EventDescriptor | `test_soundbank.cpp` |
 | VoicePool | `test_voicepool.cpp` |
 | Logger | `test_log.cpp` |
+
+---
+
+## Thread Safety
+
+Orpheus follows a **single-threaded ownership** model for most APIs, with explicit thread-safe entry points where needed.
+
+### Threading Model
+
+| Category | Thread Safety | Notes |
+|----------|---------------|-------|
+| **SoLoud Engine** | ✅ Internal locks | Audio mixing runs on a separate thread; SoLoud handles synchronization |
+| **Logger** | ✅ Thread-safe | All logging methods protected by `m_Mutex` |
+| **Parameters** | ✅ Thread-safe | `SetGlobalParameter`/`GetParam` protected by `m_ParamMutex` |
+| **All other APIs** | ❌ Main thread only | Must be called from the same thread that called `Init()` |
+
+### Per-Class Guarantees
+
+#### AudioManager
+| Method | Thread Safe | Notes |
+|--------|-------------|-------|
+| `Init()`, `Shutdown()` | ❌ | Call from main thread only |
+| `Update(dt)` | ❌ | Call once per frame from main thread |
+| `SetGlobalParameter()` | ✅ | Protected by mutex |
+| `GetParam()` | ✅ | Protected by mutex |
+| All other methods | ❌ | Not thread-safe |
+
+#### Logger
+| Method | Thread Safe | Notes |
+|--------|-------------|-------|
+| `Log()` | ✅ | All levels use mutex |
+| `SetMinLevel()` | ✅ | Protected by mutex |
+| `SetCallback()` | ✅ | Protected by mutex |
+
+#### VoicePool, Bus, Zones, Snapshots
+All methods are **NOT thread-safe**. Access only from the main thread.
+
+### Recommended Usage Pattern
+
+```cpp
+// Main thread only - all audio operations
+void GameLoop() {
+    audio.Update(dt);
+    audio.PlayEvent("explosion", pos);
+    audio.SetListenerPosition(listener, pos);
+}
+
+// Safe from any thread - logging and parameters
+void AnyThread() {
+    ORPHEUS_INFO("Event triggered");
+    audio.SetGlobalParameter("intensity", 0.8f);
+}
+```
+
+### Why Not Full Thread Safety?
+
+1. **Performance**: Mutexes on hot paths (playback, voice pool) would hurt performance
+2. **Simplicity**: Audio typically runs on a single game thread
+3. **SoLoud Design**: Underlying engine uses internal locks for audio thread, expects API calls from one thread
+
+> [!WARNING]
+> Calling non-thread-safe methods from multiple threads causes **undefined behavior** including crashes, corrupted state, and audio glitches.
+
