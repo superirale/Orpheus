@@ -822,4 +822,38 @@ void AudioManager::UnbindRTPC(const std::string &paramName) {
       pImpl->rtpcBindings.end());
 }
 
+// =============================================================================
+// Profiler API
+// =============================================================================
+
+AudioStats AudioManager::GetStats() const {
+  AudioStats stats;
+
+  // Voice counts from VoicePool
+  stats.activeVoices = pImpl->voicePool.GetRealVoiceCount();
+  stats.virtualVoices = pImpl->voicePool.GetVirtualVoiceCount();
+  stats.totalVoices = pImpl->voicePool.GetActiveVoiceCount();
+  stats.maxVoices = pImpl->voicePool.GetMaxVoices();
+
+  // Engine stats
+  stats.sampleRate =
+      static_cast<uint32_t>(pImpl->engine.getBackendSamplerate());
+  stats.bufferSize =
+      static_cast<uint32_t>(pImpl->engine.getBackendBufferSize());
+  stats.channels = static_cast<uint32_t>(pImpl->engine.getBackendChannels());
+
+  // CPU usage estimate (based on active voice ratio)
+  // This is a rough estimate; real CPU measurement would need platform-specific
+  // code
+  if (stats.maxVoices > 0) {
+    stats.cpuUsage =
+        (static_cast<float>(stats.activeVoices) / stats.maxVoices) * 100.0f;
+  }
+
+  // Memory estimate (rough: ~64KB per active voice for typical audio buffers)
+  stats.memoryUsed = stats.activeVoices * 65536;
+
+  return stats;
+}
+
 } // namespace Orpheus

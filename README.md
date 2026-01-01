@@ -18,6 +18,7 @@ A lightweight, FMOD/Wwise-inspired audio engine built on [SoLoud](https://solhsa
 - **Markers/Cues** — Trigger callbacks at specific audio positions
 - **Interactive Music** — Stingers, transitions, beat-synced segments
 - **RTPC Curves** — Parameter-to-effect automation curves
+- **Profiler** — Voice count, CPU usage, memory stats
 - **Bus Routing** — Organize audio into Master, SFX, Music channels
 - **Snapshots** — Save/restore mix states with configurable fade times
 - **Voice Pool** — Virtual voices & voice stealing (prevents CPU spikes)

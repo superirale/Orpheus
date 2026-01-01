@@ -19,6 +19,7 @@
 #include "MusicManager.h"
 #include "OcclusionMaterial.h"
 #include "OcclusionQuery.h"
+#include "Profiler.h"
 #include "RTPCCurve.h"
 #include "ReverbBus.h"
 #include "SoundBank.h"
@@ -691,6 +692,20 @@ public:
    * @return Reference to the MusicManager instance.
    */
   [[nodiscard]] MusicManager &GetMusicManager();
+
+  /// @}
+
+  /// @name Profiler
+  /// @{
+
+  /**
+   * @brief Get current audio engine statistics.
+   *
+   * Returns voice counts, CPU usage, memory usage, and engine settings.
+   *
+   * @return AudioStats struct with current engine state.
+   */
+  [[nodiscard]] AudioStats GetStats() const;
 
   /// @}
 

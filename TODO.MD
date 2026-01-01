@@ -15,7 +15,7 @@
 ## Medium Priority
 - [x] Interactive Music - Stingers, transitions, beat-synced segments
 - [x] RTPC Curves - Parameter-to-effect automation curves
-- [ ] Profiler - Voice count, CPU usage, memory stats
+- [x] Profiler - Voice count, CPU usage, memory stats
 - [ ] Zone Shapes - Replace simple spheres with boxes or polygons
 - [ ] Crossfading - Normalize volume when multiple zones overlap
 - [ ] Dynamic Zones - Move or scale zones during gameplay
@@ -31,7 +31,7 @@
 
 
 
-# GoldenLyre Improvements Roadmap
+# Orpheus Improvements Roadmap
 
 ## High Priority
 
