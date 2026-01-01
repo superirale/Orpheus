@@ -14,6 +14,7 @@ A lightweight, FMOD/Wwise-inspired audio engine built on [SoLoud](https://solhsa
 - **Sidechaining/Ducking** — Automatic volume reduction (music ducks during dialogue)
 - **Distance Curves** — Custom rolloff (linear, logarithmic, inverse square, custom)
 - **Doppler Effect** — Velocity-based pitch shift for moving 3D sounds
+- **Randomization** — Random pitch/volume variation, playlist shuffle
 - **Bus Routing** — Organize audio into Master, SFX, Music channels
 - **Snapshots** — Save/restore mix states with configurable fade times
 - **Voice Pool** — Virtual voices & voice stealing (prevents CPU spikes)

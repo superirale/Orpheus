@@ -524,6 +524,52 @@ while (running) {
 
 ---
 
+## Randomization
+
+Random pitch/volume variation and playlist support for audio variety.
+
+### Volume/Pitch Variation
+
+Events defined in JSON or programmatically can specify min/max ranges:
+
+```json
+{
+  "name": "footstep",
+  "path": "audio/footstep.wav",
+  "volumeMin": 0.8,
+  "volumeMax": 1.0,
+  "pitchMin": 0.9,
+  "pitchMax": 1.1
+}
+```
+
+Each time the event plays, a random value within the range is selected.
+
+### Playlist Mode
+
+Events can have multiple sounds with different playback modes:
+
+| Mode | Description |
+|------|-------------|
+| `Single` | Default - plays the single `path` sound |
+| `Sequential` | Plays sounds in order, loops back |
+| `Shuffle` | Randomizes order, plays each once, reshuffles |
+| `Random` | Picks a random sound each time |
+
+```json
+{
+  "name": "gunshot",
+  "sounds": ["gun1.wav", "gun2.wav", "gun3.wav"],
+  "playlistMode": "Shuffle",
+  "volumeMin": 0.9,
+  "volumeMax": 1.0,
+  "pitchMin": 0.95,
+  "pitchMax": 1.05
+}
+```
+
+---
+
 ## Parameters
 
 Global parameters that can drive audio behavior.

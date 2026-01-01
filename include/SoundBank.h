@@ -12,12 +12,23 @@
 #include <optional>
 #include <string>
 #include <unordered_map>
+#include <vector>
 
 #include <nlohmann/json.hpp>
 
 #include "Error.h"
 
 namespace Orpheus {
+
+/**
+ * @brief Playlist playback mode for multi-sound events.
+ */
+enum class PlaylistMode {
+  Single,     ///< Only plays 'path' (default single sound)
+  Sequential, ///< Play sounds in order, then loop
+  Shuffle,    ///< Randomize order, play each once, then reshuffle
+  Random      ///< Pick a random sound each time
+};
 
 /**
  * @brief Descriptor for an audio event.
@@ -27,7 +38,7 @@ namespace Orpheus {
  */
 struct EventDescriptor {
   std::string name;           ///< Unique event name
-  std::string path;           ///< Path to audio file
+  std::string path;           ///< Path to audio file (for single-sound events)
   std::string bus;            ///< Target bus name
   float volumeMin = 1.0f;     ///< Minimum volume (randomization)
   float volumeMax = 1.0f;     ///< Maximum volume (randomization)
@@ -38,6 +49,10 @@ struct EventDescriptor {
   float maxDistance = 100.0f; ///< Maximum audible distance
   std::unordered_map<std::string, std::string>
       parameters; ///< Custom parameters
+
+  // Playlist fields
+  std::vector<std::string> sounds; ///< Multiple sound paths for playlists
+  PlaylistMode playlistMode = PlaylistMode::Single; ///< Playlist playback mode
 };
 
 /**

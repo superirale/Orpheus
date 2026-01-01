@@ -1,7 +1,20 @@
 #include "../include/Event.h"
 #include "../include/Log.h"
 
+#include <random>
+
 namespace Orpheus {
+
+// Thread-local random engine for randomization
+static thread_local std::mt19937 s_RandomEngine{std::random_device{}()};
+
+static float RandomFloat(float min, float max) {
+  if (min >= max) {
+    return min;
+  }
+  std::uniform_real_distribution<float> dist(min, max);
+  return dist(s_RandomEngine);
+}
 
 AudioEvent::AudioEvent(SoLoud::Soloud &engine, SoundBank &bank)
     : m_Engine(engine), m_Bank(bank) {
@@ -18,8 +31,9 @@ AudioHandle AudioEvent::Play(const std::string &eventName,
   }
   const auto &ed = eventResult.Value();
 
-  float volume = ed.volumeMin;
-  float pitch = ed.pitchMin;
+  // Apply randomization within the specified ranges
+  float volume = RandomFloat(ed.volumeMin, ed.volumeMax);
+  float pitch = RandomFloat(ed.pitchMin, ed.pitchMax);
 
   if (ed.stream) {
     auto wavstream = std::make_shared<SoLoud::WavStream>();
@@ -28,8 +42,7 @@ AudioHandle AudioEvent::Play(const std::string &eventName,
     AudioHandle h = m_Engine.play(*wavstream);
     m_ActiveSounds.push_back(wavstream);
     m_Engine.setVolume(h, volume);
-    m_Engine.setSamplerate(
-        h, (unsigned int)(m_Engine.getBackendSamplerate() * pitch));
+    m_Engine.setRelativePlaySpeed(h, pitch);
     RouteHandleToBus(h, busName);
     return h;
   } else {
@@ -39,8 +52,7 @@ AudioHandle AudioEvent::Play(const std::string &eventName,
     AudioHandle h = m_Engine.play(*wav);
     m_ActiveSounds.push_back(wav);
     m_Engine.setVolume(h, volume);
-    m_Engine.setSamplerate(
-        h, (unsigned int)(m_Engine.getBackendSamplerate() * pitch));
+    m_Engine.setRelativePlaySpeed(h, pitch);
     RouteHandleToBus(h, busName);
     return h;
   }

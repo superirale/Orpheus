@@ -9,7 +9,7 @@
 - [x] Sidechaining/Ducking - Music ducks when dialogue plays
 - [x] Distance Curves - Custom rolloff (linear, logarithmic, custom)
 - [x] Doppler Effect - Velocity-based pitch shift for moving 3D sounds
-- [ ] Randomization - Random pitch/volume variation, playlist shuffle
+- [x] Randomization - Random pitch/volume variation, playlist shuffle
 - [ ] Markers/Cues - Trigger callbacks at specific audio positions
 
 ## Medium Priority
@@ -37,11 +37,11 @@
 
 | Area | Current State | Improvement |
 |------|---------------|-------------|
-| ~~**Namespace** | Global namespace | Wrap everything in `namespace Orpheus { }`~~ ✅ |
-| ~~**Error Handling** | `std::cerr` + return `false` | Proper error codes/`Result<T>` type or exceptions~~ ✅ |
-| ~~**Logging** | None | Add logging levels (Debug/Info/Warn/Error) with callbacks~~ ✅ |
-| ~~**Unit Tests** | None | Add GoogleTest or Catch2 with CI integration~~ ✅ |
-| ~~**Documentation** | Basic API.md | Add Doxygen comments to headers~~ ✅ |
+| ~~**Namespace**~~ | ~~Global namespace~~ | ~~Wrap everything in `namespace Orpheus { }`~~ ✅ |
+| ~~**Error Handling**~~ | ~~`std::cerr` + return `false`~~ | ~~Proper error codes/`Result<T>` type or exceptions~~ ✅ |
+| ~~**Logging**~~ | ~~None~~ | ~~Add logging levels (Debug/Info/Warn/Error) with callbacks~~ ✅ |
+| ~~**Unit Tests**~~ | ~~None~~ | ~~Add GoogleTest or Catch2 with CI integration~~ ✅ |
+| ~~**Documentation**~~ | ~~Basic API.md~~ | ~~Add Doxygen comments to headers~~ ✅ |
 
 ## Medium Priority
 
