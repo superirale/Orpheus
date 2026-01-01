@@ -200,6 +200,7 @@ set(ORPHEUS_SOURCES
     src/SoundBank.cpp
     src/Event.cpp
     src/AudioZone.cpp
+    src/Ducker.cpp
 )
 
 set(ORPHEUS_HEADERS

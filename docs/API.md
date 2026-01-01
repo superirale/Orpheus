@@ -395,6 +395,48 @@ audio.RegisterOcclusionMaterial({"BrickWall", 0.7f, 0.2f});
 
 ---
 
+## Sidechaining / Ducking
+
+Automatically reduce the volume of one bus when audio is playing on another (e.g., music ducks during dialogue).
+
+### Core API
+
+| Method | Description |
+|--------|-------------|
+| `void AddDuckingRule(target, sidechain, duckLevel, attack, release, hold)` | Add a ducking rule |
+| `void RemoveDuckingRule(target, sidechain)` | Remove a ducking rule |
+| `bool IsDucking(targetBus)` | Check if a bus is currently being ducked |
+
+### DuckingRule Parameters
+
+| Parameter | Default | Description |
+|-----------|---------|-------------|
+| `targetBus` | - | Bus to duck (e.g., "Music") |
+| `sidechainBus` | - | Bus that triggers ducking (e.g., "Dialogue") |
+| `duckLevel` | 0.3 | Target volume when ducked (0.0-1.0) |
+| `attackTime` | 0.1s | Fade down time |
+| `releaseTime` | 0.5s | Fade up time |
+| `holdTime` | 0.1s | Hold ducked level after sidechain stops |
+
+### Example
+
+```cpp
+// Duck music when dialogue plays
+audio.AddDuckingRule("Music", "Dialogue", 0.3f, 0.1f, 0.5f, 0.1f);
+
+// Check if music is being ducked
+if (audio.IsDucking("Music")) {
+  // Show "dialogue playing" indicator
+}
+
+// Game loop - ducking updates automatically
+while (running) {
+  audio.Update(dt);
+}
+```
+
+---
+
 ## Parameters
 
 Global parameters that can drive audio behavior.

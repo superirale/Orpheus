@@ -1,6 +1,7 @@
 #include "../include/AudioManager.h"
 #include "../include/AudioZone.h"
 #include "../include/Bus.h"
+#include "../include/Ducker.h"
 #include "../include/Event.h"
 #include "../include/Listener.h"
 #include "../include/Log.h"
@@ -45,6 +46,8 @@ public:
   std::vector<std::shared_ptr<ReverbZone>> reverbZones;
 
   OcclusionProcessor occlusionProcessor;
+
+  Ducker ducker;
 
   Impl() : event(engine, bank) {}
 };
@@ -140,6 +143,19 @@ void AudioManager::Update(float dt) {
 
   // Update reverb zones (calculate zone influence on reverb buses)
   UpdateReverbZones(listenerPos);
+
+  // Update ducking (sidechaining)
+  pImpl->ducker.Update(dt, pImpl->buses, [this](const std::string &busName) {
+    // Check if any voices are active on this bus
+    // For now, check if bus has any active handles
+    auto it = pImpl->buses.find(busName);
+    if (it == pImpl->buses.end()) {
+      return false;
+    }
+    // Check if engine has any active voices for this bus
+    // This is a simplified check - in practice you'd track voice count per bus
+    return pImpl->engine.getActiveVoiceCount() > 0;
+  });
 
   pImpl->engine.update3dAudio();
 }
@@ -512,6 +528,29 @@ void AudioManager::SetOcclusionVolumeReduction(float maxReduction) {
 
 bool AudioManager::IsOcclusionEnabled() const {
   return pImpl->occlusionProcessor.IsEnabled();
+}
+
+void AudioManager::AddDuckingRule(const std::string &targetBus,
+                                  const std::string &sidechainBus,
+                                  float duckLevel, float attackTime,
+                                  float releaseTime, float holdTime) {
+  DuckingRule rule;
+  rule.targetBus = targetBus;
+  rule.sidechainBus = sidechainBus;
+  rule.duckLevel = duckLevel;
+  rule.attackTime = attackTime;
+  rule.releaseTime = releaseTime;
+  rule.holdTime = holdTime;
+  pImpl->ducker.AddRule(rule);
+}
+
+void AudioManager::RemoveDuckingRule(const std::string &targetBus,
+                                     const std::string &sidechainBus) {
+  pImpl->ducker.RemoveRule(targetBus, sidechainBus);
+}
+
+bool AudioManager::IsDucking(const std::string &targetBus) const {
+  return pImpl->ducker.IsDucking(targetBus);
 }
 
 void AudioManager::UpdateMixZones(const Vector3 &listenerPos) {

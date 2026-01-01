@@ -560,6 +560,44 @@ public:
 
   /// @}
 
+  /// @name Ducking API
+  /// @{
+
+  /**
+   * @brief Add a ducking rule for automatic volume control.
+   *
+   * When audio plays on the sidechain bus, the target bus volume
+   * is automatically reduced.
+   *
+   * @param targetBus Bus to duck (e.g., "Music").
+   * @param sidechainBus Bus that triggers ducking (e.g., "Dialogue").
+   * @param duckLevel Volume when ducked (0.0-1.0, default: 0.3).
+   * @param attackTime Fade down time in seconds (default: 0.1).
+   * @param releaseTime Fade up time in seconds (default: 0.5).
+   * @param holdTime Hold ducked level after sidechain stops (default: 0.1).
+   */
+  void AddDuckingRule(const std::string &targetBus,
+                      const std::string &sidechainBus, float duckLevel = 0.3f,
+                      float attackTime = 0.1f, float releaseTime = 0.5f,
+                      float holdTime = 0.1f);
+
+  /**
+   * @brief Remove a ducking rule.
+   * @param targetBus Target bus name.
+   * @param sidechainBus Sidechain bus name.
+   */
+  void RemoveDuckingRule(const std::string &targetBus,
+                         const std::string &sidechainBus);
+
+  /**
+   * @brief Check if a bus is currently being ducked.
+   * @param targetBus Bus name to check.
+   * @return true if the bus is being ducked.
+   */
+  [[nodiscard]] bool IsDucking(const std::string &targetBus) const;
+
+  /// @}
+
   /// @name Engine Access
   /// @{
 

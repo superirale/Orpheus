@@ -6,7 +6,7 @@
 - [x] Per-sound DSP chains - BiquadResonantFilter attached to audio sources
 
 ## High Priority 🔥
-- [ ] Sidechaining/Ducking - Music ducks when dialogue plays
+- [x] Sidechaining/Ducking - Music ducks when dialogue plays
 - [ ] Distance Curves - Custom rolloff (linear, logarithmic, custom)
 - [ ] Doppler Effect - Velocity-based pitch shift for moving 3D sounds
 - [ ] Randomization - Random pitch/volume variation, playlist shuffle
