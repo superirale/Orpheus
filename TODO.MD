@@ -48,7 +48,7 @@
 | Area | Improvement |
 |------|-------------|
 | ~~**Thread Safety**~~ | ~~Audit and document thread-safety guarantees per method~~ ✅ |
-| **PIMPL Pattern** | Hide implementation details for ABI stability |
+| ~~**PIMPL Pattern**~~ | ~~Hide implementation details for ABI stability~~ ✅ |
 | ~~**Const Correctness**~~ | ~~Add `[[nodiscard]]` to getters, review `const` usage~~ ✅ |
 | ~~**Smart Pointers**~~ | ~~Replace raw pointers with `std::unique_ptr`/`std::shared_ptr` consistently~~ ✅ |
 | **Static Analysis** | Integrate clang-tidy, cppcheck into CI |

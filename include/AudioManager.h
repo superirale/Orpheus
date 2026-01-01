@@ -11,27 +11,23 @@
 
 #include <functional>
 #include <memory>
-#include <mutex>
 #include <string>
-#include <unordered_map>
 #include <vector>
 
-#include "AudioZone.h"
-#include "Bus.h"
 #include "Error.h"
-#include "Event.h"
 #include "Listener.h"
-#include "MixZone.h"
-#include "OcclusionProcessor.h"
-#include "Parameter.h"
+#include "OcclusionMaterial.h"
+#include "OcclusionQuery.h"
 #include "ReverbBus.h"
-#include "ReverbZone.h"
-#include "Snapshot.h"
 #include "SoundBank.h"
 #include "Types.h"
-#include "VoicePool.h"
+#include "Voice.h"
 
 namespace Orpheus {
+
+// Forward declarations for types used in API
+class Bus;
+class Parameter;
 
 /**
  * @brief Callback for zone entry events.
@@ -78,11 +74,15 @@ using ZoneExitCallback = std::function<void(const std::string &)>;
  * @par Thread Safety:
  * Most methods must be called from the main thread (the thread that called
  * Init()). The following methods are thread-safe:
- * - SetGlobalParameter() - Protected by m_ParamMutex
- * - GetParam() - Protected by m_ParamMutex
+ * - SetGlobalParameter() - Protected by internal mutex
+ * - GetParam() - Protected by internal mutex
  *
  * @warning Calling non-thread-safe methods from multiple threads causes
  *          undefined behavior.
+ *
+ * @par ABI Stability:
+ * This class uses the PIMPL idiom. Implementation details are hidden,
+ * allowing internal changes without breaking binary compatibility.
  */
 class AudioManager {
 public:
@@ -95,6 +95,14 @@ public:
    * @brief Destructor (calls Shutdown if needed).
    */
   ~AudioManager();
+
+  // Non-copyable
+  AudioManager(const AudioManager &) = delete;
+  AudioManager &operator=(const AudioManager &) = delete;
+
+  // Movable
+  AudioManager(AudioManager &&) noexcept;
+  AudioManager &operator=(AudioManager &&) noexcept;
 
   /// @name Core Lifecycle
   /// @{
@@ -567,28 +575,8 @@ private:
   void UpdateMixZones(const Vector3 &listenerPos);
   void UpdateReverbZones(const Vector3 &listenerPos);
 
-  SoLoud::Soloud m_Engine;
-  SoundBank m_Bank;
-  AudioEvent m_Event;
-  VoicePool m_VoicePool;
-  std::unordered_map<std::string, std::shared_ptr<Bus>> m_Buses;
-  std::vector<std::shared_ptr<AudioZone>> m_Zones;
-  std::unordered_map<ListenerID, Listener> m_Listeners;
-  ListenerID m_NextListenerID = 1;
-  std::unordered_map<std::string, Parameter> m_Parameters;
-  std::mutex m_ParamMutex;
-
-  std::unordered_map<std::string, Snapshot> m_Snapshots;
-
-  std::vector<std::shared_ptr<MixZone>> m_MixZones;
-  std::string m_ActiveMixZone;
-  ZoneEnterCallback m_ZoneEnterCallback;
-  ZoneExitCallback m_ZoneExitCallback;
-
-  std::unordered_map<std::string, std::shared_ptr<ReverbBus>> m_ReverbBuses;
-  std::vector<std::shared_ptr<ReverbZone>> m_ReverbZones;
-
-  OcclusionProcessor m_OcclusionProcessor;
+  class Impl;
+  std::unique_ptr<Impl> pImpl;
 };
 
 } // namespace Orpheus
