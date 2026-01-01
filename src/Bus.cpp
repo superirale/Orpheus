@@ -6,7 +6,9 @@ Bus::Bus(const std::string &name) : m_Name(name) {
   m_Bus.reset(new SoLoud::Bus());
 }
 
-void Bus::AddFilter(std::shared_ptr<SoLoud::Filter> f) { filters.push_back(f); }
+void Bus::AddFilter(std::shared_ptr<SoLoud::Filter> f) {
+  m_Filters.push_back(f);
+}
 
 void Bus::AddHandle(SoLoud::Soloud &engine, SoLoud::handle h) {
   m_Engine = &engine;
@@ -55,5 +57,24 @@ float Bus::GetTargetVolume() const { return m_TargetVolume; }
 const std::string &Bus::GetName() const { return m_Name; }
 
 SoLoud::Bus *Bus::Raw() { return m_Bus.get(); }
+
+// Compressor methods
+void Bus::SetCompressor(const CompressorSettings &settings) {
+  m_Compressor.SetSettings(settings);
+}
+
+void Bus::SetCompressorEnabled(bool enabled) {
+  m_Compressor.SetEnabled(enabled);
+}
+
+bool Bus::IsCompressorEnabled() const { return m_Compressor.IsEnabled(); }
+
+const CompressorSettings &Bus::GetCompressorSettings() const {
+  return m_Compressor.GetSettings();
+}
+
+float Bus::GetCompressorGainReduction() const {
+  return m_Compressor.GetGainReduction();
+}
 
 } // namespace Orpheus

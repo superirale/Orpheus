@@ -19,7 +19,7 @@
 - [x] Zone Shapes - Replace simple spheres with boxes or polygons
 - [x] Crossfading - Normalize volume when multiple zones overlap
 - [x] Dynamic Zones - Move or scale zones during gameplay
-- [ ] Compressor/Limiter - Dynamic range control on buses
+- [x] Compressor/Limiter - Dynamic range control on buses
 
 ## Low Priority
 - [ ] Convolution Reverb - Impulse response based (realistic spaces)

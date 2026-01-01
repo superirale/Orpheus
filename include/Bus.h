@@ -14,6 +14,8 @@
 #include <soloud.h>
 #include <soloud_bus.h>
 
+#include "Compressor.h"
+
 namespace Orpheus {
 
 /**
@@ -98,6 +100,33 @@ public:
    */
   [[nodiscard]] SoLoud::Bus *Raw();
 
+  /**
+   * @brief Set compressor settings for this bus.
+   * @param settings Compressor configuration.
+   */
+  void SetCompressor(const CompressorSettings &settings);
+
+  /**
+   * @brief Enable/disable the compressor.
+   * @param enabled true to enable compression.
+   */
+  void SetCompressorEnabled(bool enabled);
+
+  /**
+   * @brief Check if compressor is enabled.
+   */
+  [[nodiscard]] bool IsCompressorEnabled() const;
+
+  /**
+   * @brief Get the current compressor settings.
+   */
+  [[nodiscard]] const CompressorSettings &GetCompressorSettings() const;
+
+  /**
+   * @brief Get the current gain reduction in dB.
+   */
+  [[nodiscard]] float GetCompressorGainReduction() const;
+
 private:
   std::unique_ptr<SoLoud::Bus> m_Bus;
   std::string m_Name;
@@ -105,9 +134,10 @@ private:
   float m_TargetVolume = 1.0f;
   float m_StartVolume = 1.0f;
   float m_FadeTime = 0.0f;
-  std::vector<std::shared_ptr<SoLoud::Filter>> filters;
+  std::vector<std::shared_ptr<SoLoud::Filter>> m_Filters;
   std::vector<SoLoud::handle> m_Handles;
   SoLoud::Soloud *m_Engine = nullptr;
+  Compressor m_Compressor;
 };
 
 } // namespace Orpheus

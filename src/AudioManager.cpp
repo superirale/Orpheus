@@ -982,4 +982,38 @@ void AudioManager::SetZoneRadii(const std::string &eventName, float inner,
   }
 }
 
+// =============================================================================
+// Bus Compressor API
+// =============================================================================
+
+void AudioManager::SetBusCompressor(const std::string &busName,
+                                    const CompressorSettings &settings) {
+  auto busResult = GetBus(busName);
+  if (busResult) {
+    busResult.Value()->SetCompressor(settings);
+  }
+}
+
+void AudioManager::SetBusCompressorEnabled(const std::string &busName,
+                                           bool enabled) {
+  auto busResult = GetBus(busName);
+  if (busResult) {
+    busResult.Value()->SetCompressorEnabled(enabled);
+  }
+}
+
+void AudioManager::SetBusLimiter(const std::string &busName,
+                                 float thresholdDb) {
+  auto busResult = GetBus(busName);
+  if (busResult) {
+    CompressorSettings settings;
+    settings.threshold = thresholdDb;
+    settings.limiterMode = true;
+    settings.attackMs = 1.0f;   // Fast attack for limiting
+    settings.releaseMs = 50.0f; // Moderate release
+    busResult.Value()->SetCompressor(settings);
+    busResult.Value()->SetCompressorEnabled(true);
+  }
+}
+
 } // namespace Orpheus

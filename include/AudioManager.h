@@ -15,6 +15,7 @@
 #include <vector>
 
 #include "AudioZone.h"
+#include "Compressor.h"
 #include "Error.h"
 #include "Listener.h"
 #include "MusicManager.h"
@@ -368,6 +369,28 @@ public:
    * @return Result containing shared_ptr to Bus or error.
    */
   [[nodiscard]] Result<std::shared_ptr<Bus>> GetBus(const std::string &name);
+
+  /**
+   * @brief Set compressor settings for a bus.
+   * @param busName Bus name.
+   * @param settings Compressor configuration.
+   */
+  void SetBusCompressor(const std::string &busName,
+                        const CompressorSettings &settings);
+
+  /**
+   * @brief Enable/disable the compressor on a bus.
+   * @param busName Bus name.
+   * @param enabled true to enable compression.
+   */
+  void SetBusCompressorEnabled(const std::string &busName, bool enabled);
+
+  /**
+   * @brief Set a hard limiter on a bus.
+   * @param busName Bus name.
+   * @param thresholdDb Limiting threshold in dB.
+   */
+  void SetBusLimiter(const std::string &busName, float thresholdDb);
 
   /// @}
 
