@@ -71,6 +71,9 @@ public:
   HDRMixer hdrMixer;
   std::unique_ptr<HDRFilter> hdrFilter;
 
+  // Ray-traced Acoustics
+  AcousticRayTracer rayTracer;
+
   Impl() : event(engine, bank) {
     musicManager = std::make_unique<MusicManager>(engine, bank);
     hdrFilter = std::make_unique<HDRFilter>(&hdrMixer);
@@ -1133,5 +1136,27 @@ void AudioManager::SetVoiceCenterBias(AudioHandle handle, float centerBias) {
   // Note: Center bias is applied through SurroundPanner::ApplyCenterBias
   // before calling SetVoiceSurroundGains
 }
+
+// =============================================================================
+// Ray-traced Acoustics API
+// =============================================================================
+
+void AudioManager::SetRayTracingEnabled(bool enabled) {
+  pImpl->rayTracer.SetEnabled(enabled);
+}
+
+bool AudioManager::IsRayTracingEnabled() const {
+  return pImpl->rayTracer.IsEnabled();
+}
+
+void AudioManager::SetRayCount(int count) {
+  pImpl->rayTracer.SetRayCount(count);
+}
+
+void AudioManager::SetGeometryCallback(GeometryCallback callback) {
+  pImpl->rayTracer.SetGeometryCallback(std::move(callback));
+}
+
+AcousticRayTracer &AudioManager::GetRayTracer() { return pImpl->rayTracer; }
 
 } // namespace Orpheus

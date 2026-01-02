@@ -26,6 +26,7 @@ A lightweight, FMOD/Wwise-inspired audio engine built on [SoLoud](https://solhsa
 - **Convolution Reverb** — Impulse response based realistic reverb
 - **HDR Audio** — LUFS loudness normalization (ITU-R BS.1770)
 - **Surround Audio** — 5.1/7.1 speaker layouts with VBAP panning
+- **Ray-traced Acoustics** — Advanced propagation simulation with reflections
 - **Bus Routing** — Organize audio into Master, SFX, Music channels
 - **Snapshots** — Save/restore mix states with configurable fade times
 - **Voice Pool** — Virtual voices & voice stealing (prevents CPU spikes)

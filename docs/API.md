@@ -338,6 +338,40 @@ audio.SetVoiceSurroundGains(handle, gains);
 
 ---
 
+## Ray-traced Acoustics
+
+Advanced propagation simulation with reflections and material absorption.
+
+| Method | Description |
+|--------|-------------|
+| `void SetRayTracingEnabled(bool)` | Enable/disable ray tracing. |
+| `bool IsRayTracingEnabled() const` | Check if enabled. |
+| `void SetRayCount(int)` | Set rays per source (8-1024). |
+| `void SetGeometryCallback(GeometryCallback)` | Set scene intersection callback. |
+| `AcousticRayTracer& GetRayTracer()` | Access ray tracer directly. |
+
+```cpp
+// Enable ray tracing
+audio.SetRayTracingEnabled(true);
+audio.SetRayCount(64);
+
+// Provide scene geometry callback
+audio.SetGeometryCallback([](const AcousticVector& origin,
+                             const AcousticVector& dir,
+                             float maxDist) -> RayHit {
+  RayHit hit;
+  // Test intersection with your geometry...
+  return hit;
+});
+
+// Trace paths
+AcousticRayTracer& tracer = audio.GetRayTracer();
+PropagationResult result = tracer.Trace(sourcePos, listenerPos);
+PropagationEffect effect = PropagationEffect::FromResult(result);
+```
+
+---
+
 ## Snapshots
 
 Save and restore bus mix states with smooth fade transitions.

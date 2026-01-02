@@ -26,6 +26,7 @@
 #include "Parameter.h"
 #include "Profiler.h"
 #include "RTPCCurve.h"
+#include "RaytracedAcoustics.h"
 #include "ReverbBus.h"
 #include "SoundBank.h"
 #include "SurroundAudio.h"
@@ -504,6 +505,38 @@ public:
    * @param centerBias Center emphasis (0.0-1.0).
    */
   void SetVoiceCenterBias(AudioHandle handle, float centerBias);
+
+  /// @}
+
+  /// @name Ray-traced Acoustics
+  /// @{
+
+  /**
+   * @brief Enable/disable ray-traced acoustics.
+   */
+  void SetRayTracingEnabled(bool enabled);
+
+  /**
+   * @brief Check if ray tracing is enabled.
+   */
+  [[nodiscard]] bool IsRayTracingEnabled() const;
+
+  /**
+   * @brief Set number of rays per source.
+   * @param count Ray count (8-1024).
+   */
+  void SetRayCount(int count);
+
+  /**
+   * @brief Set geometry intersection callback for ray tracing.
+   * @param callback Function that tests ray-scene intersections.
+   */
+  void SetGeometryCallback(GeometryCallback callback);
+
+  /**
+   * @brief Get the ray tracer instance.
+   */
+  [[nodiscard]] AcousticRayTracer &GetRayTracer();
 
   /// @}
 

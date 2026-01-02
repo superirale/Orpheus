@@ -25,7 +25,7 @@
 - [x] Convolution Reverb - Impulse response based (realistic spaces)
 - [x] HDR Audio - Loudness normalization
 - [x] Surround/LFE - 5.1/7.1 speaker layouts
-- [ ] Ray-traced Acoustics - Advanced propagation simulation
+- [x] Ray-traced Acoustics - Advanced propagation simulation
 - [ ] Audio Codec - Vorbis/Opus compression support
 
 
