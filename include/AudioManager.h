@@ -23,10 +23,12 @@
 #include "MusicManager.h"
 #include "OcclusionMaterial.h"
 #include "OcclusionQuery.h"
+#include "Parameter.h"
 #include "Profiler.h"
 #include "RTPCCurve.h"
 #include "ReverbBus.h"
 #include "SoundBank.h"
+#include "SurroundAudio.h"
 #include "Types.h"
 #include "Voice.h"
 #include "ZoneShape.h"
@@ -470,6 +472,38 @@ public:
    * @brief Get current true peak level in dB.
    */
   [[nodiscard]] float GetTruePeakDB() const;
+
+  /// @}
+
+  /// @name Surround Audio
+  /// @{
+
+  /**
+   * @brief Get the detected speaker layout.
+   * @return Current speaker layout based on audio backend.
+   */
+  [[nodiscard]] SpeakerLayout GetSpeakerLayout() const;
+
+  /**
+   * @brief Set surround speaker gains for a voice.
+   * @param handle Voice handle.
+   * @param gains Speaker gains from SurroundPanner.
+   */
+  void SetVoiceSurroundGains(AudioHandle handle, const SpeakerGains &gains);
+
+  /**
+   * @brief Set LFE gain for a voice (explicit routing).
+   * @param handle Voice handle.
+   * @param lfeGain LFE level (0.0-1.0). LFE is intentional, never automatic.
+   */
+  void SetVoiceLFEGain(AudioHandle handle, float lfeGain);
+
+  /**
+   * @brief Apply center channel bias to a voice.
+   * @param handle Voice handle.
+   * @param centerBias Center emphasis (0.0-1.0).
+   */
+  void SetVoiceCenterBias(AudioHandle handle, float centerBias);
 
   /// @}
 

@@ -30,6 +30,11 @@ int main(int argc, char **argv) {
   audio.SetHDREnabled(true);
   std::cout << "HDR Audio enabled at -14 LUFS (streaming standard)\n";
 
+  // ============ SURROUND AUDIO (7.1) ============
+  SpeakerLayout layout = audio.GetSpeakerLayout();
+  std::cout << "Detected speaker layout: " << GetChannelCount(layout)
+            << " channels\n";
+
   // Register music event
   EventDescriptor musicEvent;
   musicEvent.name = "music";
@@ -63,9 +68,22 @@ int main(int argc, char **argv) {
   ListenerID listener = audio.CreateListener();
   audio.SetListenerPosition(listener, 0.0f, 0.0f, 0.0f);
 
-  // Play background music
-  audio.PlayEvent("music");
-  std::cout << "Playing music...\n";
+  // Play background music with surround panning
+  auto musicResult = audio.PlayEvent("music");
+  AudioHandle musicHandle = musicResult.Value();
+
+  // Apply surround gains - music coming from front-center
+  SpeakerGains musicGains =
+      SurroundPanner::CalculateGains(0.0f,  // Center (L-R)
+                                     -0.5f, // Slightly front
+                                     0.0f,  // No vertical
+                                     SpeakerLayout::Surround71);
+
+  // Add subtle LFE for warmth
+  LFERouter::ApplyLFE(musicGains, 0.3f, SpeakerLayout::Surround71);
+
+  audio.SetVoiceSurroundGains(musicHandle, musicGains);
+  std::cout << "Playing music with 7.1 surround panning...\n";
 
   // ============ CREATE SNAPSHOTS ============
   // Cave snapshot - quieter music

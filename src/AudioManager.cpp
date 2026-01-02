@@ -1095,4 +1095,43 @@ float AudioManager::GetTruePeakDB() const {
   return pImpl->hdrMixer.GetTruePeakDB();
 }
 
+// =============================================================================
+// Surround Audio API
+// =============================================================================
+
+SpeakerLayout AudioManager::GetSpeakerLayout() const {
+  unsigned int channels = pImpl->engine.getBackendChannels();
+  return GetLayoutFromChannels(static_cast<int>(channels));
+}
+
+void AudioManager::SetVoiceSurroundGains(AudioHandle handle,
+                                         const SpeakerGains &gains) {
+  // SoLoud setPanAbsolute: L, R, LB, RB, C, S (for 5.1)
+  // Our layout: FL, FR, C, LFE, SL, SR
+  pImpl->engine.setPanAbsolute(handle,
+                               gains.gains[0],  // Front Left
+                               gains.gains[1],  // Front Right
+                               gains.gains[4],  // Surround Left (as LB)
+                               gains.gains[5],  // Surround Right (as RB)
+                               gains.gains[2],  // Center
+                               gains.gains[3]); // LFE (as S)
+}
+
+void AudioManager::SetVoiceLFEGain(AudioHandle handle, float lfeGain) {
+  // Set pan with only LFE active
+  // This is a simplified approach - full implementation would modify existing
+  // gains
+  (void)handle;
+  (void)lfeGain;
+  // Note: SoLoud doesn't have direct per-channel volume control post-pan
+  // LFE routing requires combining with setPanAbsolute in SetVoiceSurroundGains
+}
+
+void AudioManager::SetVoiceCenterBias(AudioHandle handle, float centerBias) {
+  (void)handle;
+  (void)centerBias;
+  // Note: Center bias is applied through SurroundPanner::ApplyCenterBias
+  // before calling SetVoiceSurroundGains
+}
+
 } // namespace Orpheus

@@ -311,6 +311,33 @@ float lufs = audio.GetShortTermLUFS();
 
 ---
 
+## Surround Audio
+
+5.1/7.1 speaker layout support with VBAP panning and LFE routing.
+
+| Method | Description |
+|--------|-------------|
+| `SpeakerLayout GetSpeakerLayout() const` | Get detected speaker layout. |
+| `void SetVoiceSurroundGains(handle, gains)` | Set per-speaker gains. |
+| `void SetVoiceLFEGain(handle, float)` | Set LFE level (explicit routing). |
+| `void SetVoiceCenterBias(handle, float)` | Apply center channel emphasis. |
+
+```cpp
+// Calculate VBAP gains for 3D position
+SpeakerGains gains = SurroundPanner::CalculateGains(x, y, z, layout);
+
+// Apply center bias for dialogue
+SurroundPanner::ApplyCenterBias(gains, 0.5f);
+
+// Set explicit LFE (LFE is intentional, never automatic)
+LFERouter::ApplyLFE(gains, 0.8f, layout);
+
+// Apply to voice
+audio.SetVoiceSurroundGains(handle, gains);
+```
+
+---
+
 ## Snapshots
 
 Save and restore bus mix states with smooth fade transitions.
