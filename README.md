@@ -24,6 +24,7 @@ A lightweight, FMOD/Wwise-inspired audio engine built on [SoLoud](https://solhsa
 - **Dynamic Zones** — Move or scale zones during gameplay
 - **Compressor/Limiter** — Dynamic range control on buses
 - **Convolution Reverb** — Impulse response based realistic reverb
+- **HDR Audio** — LUFS loudness normalization (ITU-R BS.1770)
 - **Bus Routing** — Organize audio into Master, SFX, Music channels
 - **Snapshots** — Save/restore mix states with configurable fade times
 - **Voice Pool** — Virtual voices & voice stealing (prevents CPU spikes)

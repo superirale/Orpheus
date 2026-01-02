@@ -18,6 +18,7 @@
 #include "Compressor.h"
 #include "ConvolutionReverb.h"
 #include "Error.h"
+#include "HDRAudio.h"
 #include "Listener.h"
 #include "MusicManager.h"
 #include "OcclusionMaterial.h"
@@ -428,6 +429,47 @@ public:
    */
   [[nodiscard]] ConvolutionReverb *
   GetConvolutionReverb(const std::string &name);
+
+  /// @}
+
+  /// @name HDR Audio
+  /// @{
+
+  /**
+   * @brief Set target loudness for HDR processing.
+   * @param lufs Target loudness in LUFS (-14 for streaming, -23 for broadcast).
+   */
+  void SetTargetLoudness(float lufs);
+
+  /**
+   * @brief Get target loudness.
+   */
+  [[nodiscard]] float GetTargetLoudness() const;
+
+  /**
+   * @brief Enable/disable HDR audio processing.
+   */
+  void SetHDREnabled(bool enabled);
+
+  /**
+   * @brief Check if HDR is enabled.
+   */
+  [[nodiscard]] bool IsHDREnabled() const;
+
+  /**
+   * @brief Get current momentary loudness (400ms window).
+   */
+  [[nodiscard]] float GetMomentaryLUFS() const;
+
+  /**
+   * @brief Get current short-term loudness (3 second window).
+   */
+  [[nodiscard]] float GetShortTermLUFS() const;
+
+  /**
+   * @brief Get current true peak level in dB.
+   */
+  [[nodiscard]] float GetTruePeakDB() const;
 
   /// @}
 

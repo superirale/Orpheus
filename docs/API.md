@@ -286,6 +286,31 @@ struct CompressorSettings {
 
 ---
 
+## HDR Audio
+
+Loudness normalization using LUFS measurement (ITU-R BS.1770).
+
+| Method | Description |
+|--------|-------------|
+| `void SetTargetLoudness(float lufs)` | Set target loudness (-14 streaming, -23 broadcast). |
+| `float GetTargetLoudness() const` | Get current target. |
+| `void SetHDREnabled(bool enabled)` | Enable/disable HDR processing. |
+| `bool IsHDREnabled() const` | Check if HDR is enabled. |
+| `float GetMomentaryLUFS() const` | Get 400ms loudness. |
+| `float GetShortTermLUFS() const` | Get 3-second loudness. |
+| `float GetTruePeakDB() const` | Get true peak level in dB. |
+
+```cpp
+// Enable HDR for streaming platforms
+audio.SetTargetLoudness(-14.0f);  // Spotify/YouTube
+audio.SetHDREnabled(true);
+
+// Monitor loudness
+float lufs = audio.GetShortTermLUFS();
+```
+
+---
+
 ## Snapshots
 
 Save and restore bus mix states with smooth fade transitions.

@@ -67,6 +67,9 @@ public:
   std::unordered_map<std::string, std::unique_ptr<ConvolutionReverb>>
       convolutionReverbs;
 
+  // HDR Audio
+  HDRMixer hdrMixer;
+
   Impl() : event(engine, bank) {
     musicManager = std::make_unique<MusicManager>(engine, bank);
   }
@@ -1055,6 +1058,36 @@ ConvolutionReverb *AudioManager::GetConvolutionReverb(const std::string &name) {
     return it->second.get();
   }
   return nullptr;
+}
+
+// =============================================================================
+// HDR Audio API
+// =============================================================================
+
+void AudioManager::SetTargetLoudness(float lufs) {
+  pImpl->hdrMixer.SetTargetLoudness(lufs);
+}
+
+float AudioManager::GetTargetLoudness() const {
+  return pImpl->hdrMixer.GetTargetLoudness();
+}
+
+void AudioManager::SetHDREnabled(bool enabled) {
+  pImpl->hdrMixer.SetEnabled(enabled);
+}
+
+bool AudioManager::IsHDREnabled() const { return pImpl->hdrMixer.IsEnabled(); }
+
+float AudioManager::GetMomentaryLUFS() const {
+  return pImpl->hdrMixer.GetMomentaryLUFS();
+}
+
+float AudioManager::GetShortTermLUFS() const {
+  return pImpl->hdrMixer.GetShortTermLUFS();
+}
+
+float AudioManager::GetTruePeakDB() const {
+  return pImpl->hdrMixer.GetTruePeakDB();
 }
 
 } // namespace Orpheus
