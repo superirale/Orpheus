@@ -38,7 +38,8 @@ int main(int argc, char **argv) {
   // Register music event
   EventDescriptor musicEvent;
   musicEvent.name = "music";
-  musicEvent.path = "assets/raw/mellotrix_doodle.wav";
+  // musicEvent.path = "assets/raw/mellotrix_doodle.wav";
+  musicEvent.path = "assets/raw/never-exist-song-loop.ogg";
   musicEvent.bus = "Music";
   musicEvent.volumeMin = 0.7f;
   musicEvent.stream = true;

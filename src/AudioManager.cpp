@@ -1159,4 +1159,17 @@ void AudioManager::SetGeometryCallback(GeometryCallback callback) {
 
 AcousticRayTracer &AudioManager::GetRayTracer() { return pImpl->rayTracer; }
 
+// =============================================================================
+// Audio Codec API
+// =============================================================================
+
+std::unique_ptr<AudioDecoder>
+AudioManager::CreateDecoder(const std::string &path) {
+  return DecoderFactory::CreateDecoder(path);
+}
+
+AudioCodec AudioManager::DetectCodec(const std::string &path) {
+  return DecoderFactory::DetectCodec(path);
+}
+
 } // namespace Orpheus

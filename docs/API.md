@@ -372,6 +372,35 @@ PropagationEffect effect = PropagationEffect::FromResult(result);
 
 ---
 
+## Audio Codec
+
+Compressed audio support with Vorbis and Opus decoders.
+
+| Codec | Use Case | Sample Rate |
+|-------|----------|-------------|
+| Vorbis | Music, ambience | 44.1/48kHz |
+| Opus | Dialogue, SFX | 48kHz |
+
+| Method | Description |
+|--------|-------------|
+| `CreateDecoder(path)` | Create decoder for .ogg/.opus file |
+| `DetectCodec(path)` | Auto-detect codec from extension |
+
+```cpp
+// Create decoder
+auto decoder = audio.CreateDecoder("music.ogg");
+
+// Decode samples
+std::vector<float> buffer(4096 * 2);
+size_t frames = decoder->Decode(buffer.data(), 4096);
+
+// Streaming with buffer
+StreamingBuffer stream(4096);
+stream.Fill(*decoder);
+```
+
+---
+
 ## Snapshots
 
 Save and restore bus mix states with smooth fade transitions.

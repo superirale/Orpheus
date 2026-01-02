@@ -14,6 +14,7 @@
 #include <string>
 #include <vector>
 
+#include "AudioCodec.h"
 #include "AudioZone.h"
 #include "Compressor.h"
 #include "ConvolutionReverb.h"
@@ -537,6 +538,24 @@ public:
    * @brief Get the ray tracer instance.
    */
   [[nodiscard]] AcousticRayTracer &GetRayTracer();
+
+  /// @}
+
+  /// @name Audio Codec
+  /// @{
+
+  /**
+   * @brief Create a decoder for a compressed audio file.
+   * @param path Path to audio file (.ogg, .opus).
+   * @return Decoder instance or nullptr on failure.
+   */
+  [[nodiscard]] std::unique_ptr<AudioDecoder>
+  CreateDecoder(const std::string &path);
+
+  /**
+   * @brief Detect codec type from file extension.
+   */
+  [[nodiscard]] static AudioCodec DetectCodec(const std::string &path);
 
   /// @}
 
