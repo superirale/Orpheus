@@ -22,7 +22,7 @@
 - [x] Compressor/Limiter - Dynamic range control on buses
 
 ## Low Priority
-- [ ] Convolution Reverb - Impulse response based (realistic spaces)
+- [x] Convolution Reverb - Impulse response based (realistic spaces)
 - [ ] HDR Audio - Loudness normalization
 - [ ] Surround/LFE - 5.1/7.1 speaker layouts
 - [ ] Ray-traced Acoustics - Advanced propagation simulation

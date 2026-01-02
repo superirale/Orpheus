@@ -63,6 +63,10 @@ public:
   // Zone crossfading
   bool zoneCrossfadeEnabled = true;
 
+  // Convolution reverbs
+  std::unordered_map<std::string, std::unique_ptr<ConvolutionReverb>>
+      convolutionReverbs;
+
   Impl() : event(engine, bank) {
     musicManager = std::make_unique<MusicManager>(engine, bank);
   }
@@ -1014,6 +1018,43 @@ void AudioManager::SetBusLimiter(const std::string &busName,
     busResult.Value()->SetCompressor(settings);
     busResult.Value()->SetCompressorEnabled(true);
   }
+}
+
+// =============================================================================
+// Convolution Reverb API
+// =============================================================================
+
+bool AudioManager::CreateConvolutionReverb(const std::string &name,
+                                           const std::string &irPath) {
+  auto reverb = std::make_unique<ConvolutionReverb>(44100.0f);
+  if (!reverb->LoadImpulseResponse(irPath)) {
+    return false;
+  }
+  pImpl->convolutionReverbs[name] = std::move(reverb);
+  return true;
+}
+
+void AudioManager::SetConvolutionReverbWet(const std::string &name, float wet) {
+  auto it = pImpl->convolutionReverbs.find(name);
+  if (it != pImpl->convolutionReverbs.end()) {
+    it->second->SetWet(wet);
+  }
+}
+
+void AudioManager::SetConvolutionReverbEnabled(const std::string &name,
+                                               bool enabled) {
+  auto it = pImpl->convolutionReverbs.find(name);
+  if (it != pImpl->convolutionReverbs.end()) {
+    it->second->SetEnabled(enabled);
+  }
+}
+
+ConvolutionReverb *AudioManager::GetConvolutionReverb(const std::string &name) {
+  auto it = pImpl->convolutionReverbs.find(name);
+  if (it != pImpl->convolutionReverbs.end()) {
+    return it->second.get();
+  }
+  return nullptr;
 }
 
 } // namespace Orpheus

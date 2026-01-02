@@ -332,6 +332,24 @@ Reverb buses provide environment-based spatial coloration without duplicating ef
 | `void RemoveReverbZone(name)` | Remove a reverb zone. |
 | `void SetSnapshotReverbParams(snapshot, reverbBus, wet, roomSize, damp, width)` | Control reverb via snapshots. |
 
+### Convolution Reverb
+
+Impulse response (IR) based reverb for realistic acoustic spaces:
+
+| Method | Description |
+|--------|--------------| 
+| `bool CreateConvolutionReverb(name, irPath)` | Create reverb from IR WAV file. |
+| `void SetConvolutionReverbWet(name, wet)` | Set wet/dry mix (0.0-1.0). |
+| `void SetConvolutionReverbEnabled(name, enabled)` | Enable/disable the reverb. |
+| `ConvolutionReverb* GetConvolutionReverb(name)` | Get reverb by name. |
+
+```cpp
+// Load cathedral impulse response
+audio.CreateConvolutionReverb("Cathedral", "assets/ir/cathedral.wav");
+audio.SetConvolutionReverbWet("Cathedral", 0.5f);
+audio.SetConvolutionReverbEnabled("Cathedral", true);
+```
+
 ### Reverb Presets
 
 | Preset | Description |

@@ -16,6 +16,7 @@
 
 #include "AudioZone.h"
 #include "Compressor.h"
+#include "ConvolutionReverb.h"
 #include "Error.h"
 #include "Listener.h"
 #include "MusicManager.h"
@@ -391,6 +392,42 @@ public:
    * @param thresholdDb Limiting threshold in dB.
    */
   void SetBusLimiter(const std::string &busName, float thresholdDb);
+
+  /// @}
+
+  /// @name Convolution Reverb
+  /// @{
+
+  /**
+   * @brief Create a convolution reverb with an impulse response.
+   * @param name Unique name for this reverb.
+   * @param irPath Path to the impulse response WAV file.
+   * @return true if created successfully.
+   */
+  bool CreateConvolutionReverb(const std::string &name,
+                               const std::string &irPath);
+
+  /**
+   * @brief Set the wet/dry mix for a convolution reverb.
+   * @param name Reverb name.
+   * @param wet Wet level (0.0-1.0).
+   */
+  void SetConvolutionReverbWet(const std::string &name, float wet);
+
+  /**
+   * @brief Enable/disable a convolution reverb.
+   * @param name Reverb name.
+   * @param enabled true to enable.
+   */
+  void SetConvolutionReverbEnabled(const std::string &name, bool enabled);
+
+  /**
+   * @brief Get a convolution reverb by name.
+   * @param name Reverb name.
+   * @return Pointer to the reverb, or nullptr if not found.
+   */
+  [[nodiscard]] ConvolutionReverb *
+  GetConvolutionReverb(const std::string &name);
 
   /// @}
 
