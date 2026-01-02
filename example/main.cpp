@@ -25,6 +25,11 @@ int main(int argc, char **argv) {
   audio.SetMaxVoices(8);
   audio.SetStealBehavior(StealBehavior::Quietest);
 
+  // Enable HDR Audio (loudness normalization)
+  audio.SetTargetLoudness(-14.0f); // Spotify/YouTube standard
+  audio.SetHDREnabled(true);
+  std::cout << "HDR Audio enabled at -14 LUFS (streaming standard)\n";
+
   // Register music event
   EventDescriptor musicEvent;
   musicEvent.name = "music";
@@ -177,7 +182,8 @@ int main(int argc, char **argv) {
                 << " - Zone: "
                 << (audio.GetActiveMixZone().empty() ? "[none]"
                                                      : audio.GetActiveMixZone())
-                << "\n";
+                << " - LUFS: " << std::setprecision(1)
+                << audio.GetShortTermLUFS() << "\n";
     }
   }
 

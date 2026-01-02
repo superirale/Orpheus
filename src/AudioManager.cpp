@@ -69,9 +69,11 @@ public:
 
   // HDR Audio
   HDRMixer hdrMixer;
+  std::unique_ptr<HDRFilter> hdrFilter;
 
   Impl() : event(engine, bank) {
     musicManager = std::make_unique<MusicManager>(engine, bank);
+    hdrFilter = std::make_unique<HDRFilter>(&hdrMixer);
   }
 };
 
@@ -105,6 +107,9 @@ Status AudioManager::Init() {
       pImpl->buses[busName]->AddHandle(pImpl->engine, h);
     }
   });
+
+  // Attach HDR filter to engine for loudness metering
+  pImpl->engine.setGlobalFilter(0, pImpl->hdrFilter.get());
 
   ORPHEUS_INFO("Orpheus audio engine initialized");
   return Ok();

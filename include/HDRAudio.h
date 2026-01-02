@@ -10,9 +10,44 @@
 #include <algorithm>
 #include <cmath>
 #include <deque>
-#include <vector>
+
+#include <soloud.h>
+#include <soloud_filter.h>
 
 namespace Orpheus {
+
+// Forward declarations
+class HDRMixer;
+
+/**
+ * @brief SoLoud filter instance that wraps HDRMixer for real audio processing.
+ */
+class HDRFilterInstance : public SoLoud::FilterInstance {
+public:
+  explicit HDRFilterInstance(HDRMixer *mixer) : m_Mixer(mixer) {}
+
+  void filterChannel(float *aBuffer, unsigned int aSamples, float aSamplerate,
+                     SoLoud::time aTime, unsigned int aChannel,
+                     unsigned int aChannels) override;
+
+private:
+  HDRMixer *m_Mixer;
+};
+
+/**
+ * @brief SoLoud filter that provides HDR audio processing.
+ */
+class HDRFilter : public SoLoud::Filter {
+public:
+  explicit HDRFilter(HDRMixer *mixer) : m_Mixer(mixer) {}
+
+  SoLoud::FilterInstance *createInstance() override {
+    return new HDRFilterInstance(m_Mixer);
+  }
+
+private:
+  HDRMixer *m_Mixer;
+};
 
 /**
  * @brief K-weighting filter for LUFS measurement.
@@ -304,5 +339,16 @@ private:
   float m_CurrentGainDB = 0.0f;
   bool m_Enabled = false;
 };
+
+// HDRFilterInstance implementation
+inline void HDRFilterInstance::filterChannel(
+    float *aBuffer, unsigned int aSamples, float /*aSamplerate*/,
+    SoLoud::time /*aTime*/, unsigned int aChannel, unsigned int /*aChannels*/) {
+  // Only process left channel (channel 0) to avoid double processing
+  // HDRMixer handles mono processing for LUFS measurement
+  if (aChannel == 0 && m_Mixer) {
+    m_Mixer->Process(aBuffer, aSamples);
+  }
+}
 
 } // namespace Orpheus
