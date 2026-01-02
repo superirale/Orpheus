@@ -196,8 +196,8 @@ private:
     float leftRight = std::clamp((x + 1.0f) * 0.5f, 0.0f, 1.0f);
 
     // Split rear between surround (side) and back channels
-    float sideWeight = std::max(0.0f, 1.0f - std::abs(y));
-    float backWeight = std::max(0.0f, frontBack - 0.5f) * 2.0f;
+    float sideWeight = (std::max)(0.0f, 1.0f - std::abs(y));
+    float backWeight = (std::max)(0.0f, frontBack - 0.5f) * 2.0f;
 
     float left = 1.0f - leftRight;
     float right = leftRight;
@@ -306,7 +306,7 @@ public:
                       kSurround * gains51.gains[5] + kLFE * gains51.gains[3];
 
     // Normalize to prevent clipping
-    float maxGain = std::max(stereo.gains[0], stereo.gains[1]);
+    float maxGain = (std::max)(stereo.gains[0], stereo.gains[1]);
     if (maxGain > 1.0f) {
       stereo.gains[0] /= maxGain;
       stereo.gains[1] /= maxGain;

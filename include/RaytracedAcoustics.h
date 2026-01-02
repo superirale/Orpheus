@@ -175,7 +175,7 @@ struct PropagationResult {
         break;
       }
     }
-    return std::min(total, 1.0f);
+    return (std::min)(total, 1.0f);
   }
 };
 
@@ -204,7 +204,7 @@ public:
    * @brief Set maximum trace distance.
    */
   void SetMaxDistance(float distance) {
-    m_MaxDistance = std::max(1.0f, distance);
+    m_MaxDistance = (std::max)(1.0f, distance);
   }
 
   /**
@@ -354,7 +354,7 @@ private:
 
     for (const auto &path : result.paths) {
       if (!path.isDirect && path.reflections > 0) {
-        minReflectionDelay = std::min(minReflectionDelay, path.delay);
+        minReflectionDelay = (std::min)(minReflectionDelay, path.delay);
         totalReflectionGain +=
             (path.gainLow + path.gainMid + path.gainHigh) / 3.0f;
       }
@@ -362,7 +362,7 @@ private:
 
     if (minReflectionDelay < 1000.0f) {
       result.earlyReflectionDelay = minReflectionDelay;
-      result.earlyReflectionGain = std::min(totalReflectionGain, 1.0f);
+      result.earlyReflectionGain = (std::min)(totalReflectionGain, 1.0f);
     }
 
     // Estimate late reverb time based on average absorption
@@ -416,7 +416,7 @@ struct PropagationEffect {
       }
     }
 
-    effect.volume = std::min(totalGain, 1.0f);
+    effect.volume = (std::min)(totalGain, 1.0f);
 
     // Low-pass based on high frequency loss
     if (!result.paths.empty()) {
