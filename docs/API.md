@@ -263,6 +263,25 @@ Audio routing channels with volume control.
 | `float GetTargetVolume() const` | Get target volume. |
 | `void AddFilter(std::shared_ptr<SoLoud::Filter> f)` | Attach a DSP filter. |
 
+**Compressor/Limiter:**
+| Method | Description |
+|--------|--------------| 
+| `void SetBusCompressor(busName, settings)` | Set compressor settings on a bus. |
+| `void SetBusCompressorEnabled(busName, enabled)` | Enable/disable the compressor. |
+| `void SetBusLimiter(busName, thresholdDb)` | Quick limiter setup at threshold. |
+
+**CompressorSettings:**
+```cpp
+struct CompressorSettings {
+  float threshold = -10.0f;  // dB
+  float ratio = 4.0f;        // 4:1
+  float attackMs = 10.0f;    // ms
+  float releaseMs = 100.0f;  // ms
+  float makeupGain = 0.0f;   // dB
+  bool limiterMode = false;  // true = hard limiter
+};
+```
+
 **Default buses:** `Master`, `SFX`, `Music`
 
 ---
