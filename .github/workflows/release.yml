@@ -1,0 +1,104 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+
+jobs:
+  build-release:
+    name: Build (${{ matrix.name }})
+    runs-on: ${{ matrix.os }}
+
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: Linux x64
+            os: ubuntu-latest
+            artifact: orpheus-linux-x64
+            lib_ext: .a
+          - name: macOS x64
+            os: macos-latest
+            artifact: orpheus-macos-x64
+            lib_ext: .a
+          - name: Windows x64
+            os: windows-latest
+            artifact: orpheus-windows-x64
+            lib_ext: .lib
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install dependencies (Linux)
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libasound2-dev libpulse-dev
+
+      - name: Configure CMake
+        run: cmake -B build -DCMAKE_BUILD_TYPE=Release
+
+      - name: Build
+        run: cmake --build build --config Release --parallel
+
+      - name: Package (Unix)
+        if: runner.os != 'Windows'
+        run: |
+          mkdir -p dist/include dist/lib
+          cp -r include/* dist/include/
+          cp build/*${{ matrix.lib_ext }} dist/lib/ 2>/dev/null || true
+          cp README.md dist/
+          cp CHANGELOG.md dist/
+          cp LICENSE dist/ 2>/dev/null || echo "MIT" > dist/LICENSE
+          cd dist && zip -r ../${{ matrix.artifact }}.zip .
+
+      - name: Package (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force -Path dist/include, dist/lib
+          Copy-Item -Recurse include/* dist/include/
+          Copy-Item build/Release/*${{ matrix.lib_ext }} dist/lib/ -ErrorAction SilentlyContinue
+          Copy-Item README.md dist/
+          Copy-Item CHANGELOG.md dist/
+          if (Test-Path LICENSE) { Copy-Item LICENSE dist/ } else { "MIT" | Out-File dist/LICENSE }
+          Compress-Archive -Path dist/* -DestinationPath ${{ matrix.artifact }}.zip
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.artifact }}
+          path: ${{ matrix.artifact }}.zip
+
+  create-release:
+    name: Create GitHub Release
+    needs: build-release
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+
+      - name: Display artifacts
+        run: ls -la artifacts/*/
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v2
+        with:
+          generate_release_notes: true
+          files: |
+            artifacts/orpheus-linux-x64/*.zip
+            artifacts/orpheus-macos-x64/*.zip
+            artifacts/orpheus-windows-x64/*.zip
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

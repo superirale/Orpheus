@@ -237,7 +237,7 @@ private:
     }
 
     // Find minimum distance to any edge
-    float minDist = std::numeric_limits<float>::max();
+    float minDist = (std::numeric_limits<float>::max)();
     size_t n = m_Points.size();
     for (size_t i = 0; i < n; ++i) {
       size_t j = (i + 1) % n;

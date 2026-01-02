@@ -264,6 +264,9 @@ if(ORPHEUS_BUILD_EXAMPLES)
     add_executable(orpheus_example example/main.cpp)
     target_include_directories(orpheus_example PRIVATE ${JSON_INCLUDE_DIR})
     target_link_libraries(orpheus_example PRIVATE orpheus)
+    if(WIN32)
+        target_compile_definitions(orpheus_example PRIVATE NOMINMAX)
+    endif()
     
     # Copy assets for examples
     add_custom_command(TARGET orpheus_example POST_BUILD
@@ -354,6 +357,9 @@ if(ORPHEUS_BUILD_TESTS)
         ${CMAKE_CURRENT_SOURCE_DIR}
         ${JSON_INCLUDE_DIR}
     )
+    if(WIN32)
+        target_compile_definitions(orpheus_tests PRIVATE NOMINMAX)
+    endif()
 
     # Enable CTest
     include(CTest)
