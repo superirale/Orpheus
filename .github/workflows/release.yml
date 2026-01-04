@@ -70,18 +70,30 @@ jobs:
       - name: Build
         run: cmake --build build --config Release --parallel
 
-      - name: Package (Unix)
-        if: runner.os != 'Windows' && !matrix.android
+      - name: Package (Linux)
+        if: runner.os == 'Linux' && !matrix.android
         run: |
           mkdir -p dist/include dist/lib
           cp -r include/* dist/include/
-          # Merge SoLoud into Orpheus for a single fat static library
+          # Merge SoLoud into Orpheus for a single fat static library (GNU ar)
           echo "CREATE dist/lib/liborpheus.a" > merge.mri
           echo "ADDLIB build/liborpheus.a" >> merge.mri
           echo "ADDLIB build/libsoloud_fetched.a" >> merge.mri
           echo "SAVE" >> merge.mri
           echo "END" >> merge.mri
           ar -M < merge.mri
+          cp README.md dist/
+          cp CHANGELOG.md dist/
+          cp LICENSE dist/ 2>/dev/null || echo "MIT" > dist/LICENSE
+          cd dist && zip -r ../${{ matrix.artifact }}.zip .
+
+      - name: Package (macOS)
+        if: runner.os == 'macOS'
+        run: |
+          mkdir -p dist/include dist/lib
+          cp -r include/* dist/include/
+          # Merge SoLoud into Orpheus using libtool (BSD)
+          libtool -static -o dist/lib/liborpheus.a build/liborpheus.a build/libsoloud_fetched.a
           cp README.md dist/
           cp CHANGELOG.md dist/
           cp LICENSE dist/ 2>/dev/null || echo "MIT" > dist/LICENSE
