@@ -70,6 +70,47 @@ jobs:
             fi
           fi
 
+  build-android:
+    name: Build (Android ${{ matrix.abi }})
+    runs-on: ubuntu-latest
+    
+    strategy:
+      fail-fast: false
+      matrix:
+        abi: [arm64-v8a, armeabi-v7a, x86_64]
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Android NDK
+        uses: android-actions/setup-android@v3
+        with:
+          packages: 'ndk;27.0.11718014'
+
+      - name: Configure CMake for Android
+        run: |
+          cmake -B build \
+            -DCMAKE_TOOLCHAIN_FILE=$ANDROID_NDK_ROOT/build/cmake/android.toolchain.cmake \
+            -DANDROID_ABI=${{ matrix.abi }} \
+            -DANDROID_PLATFORM=android-24 \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DORPHEUS_BUILD_TESTS=OFF \
+            -DORPHEUS_BUILD_EXAMPLES=OFF
+
+      - name: Build
+        run: cmake --build build --parallel --config Release
+
+      - name: Verify library built
+        run: |
+          if [ -f "build/liborpheus.a" ]; then
+            echo "Android library built successfully for ${{ matrix.abi }}"
+            ls -la build/*.a
+          else
+            echo "Error: Android library not found"
+            exit 1
+          fi
+
   static-analysis:
     name: Static Analysis
     runs-on: ubuntu-latest
