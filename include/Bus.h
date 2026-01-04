@@ -9,14 +9,15 @@
 
 #include <memory>
 #include <string>
-#include <vector>
-
-#include <soloud.h>
-#include <soloud_bus.h>
 
 #include "Compressor.h"
+#include "OpaqueHandles.h"
+#include "Types.h"
 
 namespace Orpheus {
+
+// Forward declaration for PIMPL
+struct BusImpl;
 
 /**
  * @brief Audio bus for grouping and processing sounds.
@@ -45,17 +46,22 @@ public:
   Bus(const std::string &name);
 
   /**
-   * @brief Add a filter to this bus's processing chain.
-   * @param f Shared pointer to the filter.
+   * @brief Destructor.
    */
-  void AddFilter(std::shared_ptr<SoLoud::Filter> f);
+  ~Bus();
+
+  // Non-copyable, movable
+  Bus(const Bus &) = delete;
+  Bus &operator=(const Bus &) = delete;
+  Bus(Bus &&) noexcept;
+  Bus &operator=(Bus &&) noexcept;
 
   /**
    * @brief Route an audio handle through this bus.
-   * @param engine Reference to the SoLoud engine.
+   * @param engine Native engine handle.
    * @param h Audio handle to route.
    */
-  void AddHandle(SoLoud::Soloud &engine, SoLoud::handle h);
+  void AddHandle(NativeEngineHandle engine, AudioHandle h);
 
   /**
    * @brief Update bus state (volume fading).
@@ -95,10 +101,11 @@ public:
   [[nodiscard]] const std::string &GetName() const;
 
   /**
-   * @brief Get raw SoLoud bus pointer for advanced usage.
-   * @return Pointer to the underlying SoLoud::Bus.
+   * @brief Get native bus handle for advanced usage.
+   * @return Opaque handle to the underlying native bus.
+   * @see OpaqueHandles.h for casting instructions.
    */
-  [[nodiscard]] SoLoud::Bus *Raw();
+  [[nodiscard]] NativeBusHandle Raw();
 
   /**
    * @brief Set compressor settings for this bus.
@@ -128,15 +135,8 @@ public:
   [[nodiscard]] float GetCompressorGainReduction() const;
 
 private:
-  std::unique_ptr<SoLoud::Bus> m_Bus;
+  std::unique_ptr<BusImpl> m_Impl;
   std::string m_Name;
-  float m_Volume = 1.0f;
-  float m_TargetVolume = 1.0f;
-  float m_StartVolume = 1.0f;
-  float m_FadeTime = 0.0f;
-  std::vector<std::shared_ptr<SoLoud::Filter>> m_Filters;
-  std::vector<SoLoud::handle> m_Handles;
-  SoLoud::Soloud *m_Engine = nullptr;
   Compressor m_Compressor;
 };
 

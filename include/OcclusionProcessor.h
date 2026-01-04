@@ -12,11 +12,9 @@
 #include <string>
 #include <unordered_map>
 
-#include <soloud.h>
-#include <soloud_biquadresonantfilter.h>
-
 #include "OcclusionMaterial.h"
 #include "OcclusionQuery.h"
+#include "OpaqueHandles.h"
 #include "Voice.h"
 
 namespace Orpheus {
@@ -121,10 +119,10 @@ public:
    * @brief Apply DSP effects to a playing voice.
    *
    * Sets filter and volume based on calculated occlusion.
-   * @param engine Reference to the SoLoud engine.
+   * @param engine Native engine handle.
    * @param voice The voice to apply effects to.
    */
-  void ApplyDSP(SoLoud::Soloud &engine, Voice &voice);
+  void ApplyDSP(NativeEngineHandle engine, Voice &voice);
 
   /// @name State Queries
   /// @{

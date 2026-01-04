@@ -11,6 +11,7 @@
 #include "../include/ReverbZone.h"
 #include "../include/Snapshot.h"
 #include "../include/VoicePool.h"
+#include "HDRFilter_Internal.h"
 
 #include <algorithm>
 #include <mutex>
@@ -74,8 +75,16 @@ public:
   // Ray-traced Acoustics
   AcousticRayTracer rayTracer;
 
-  Impl() : event(engine, bank) {
-    musicManager = std::make_unique<MusicManager>(engine, bank);
+  NativeEngineHandle GetEngineHandle() { return NativeEngineHandle{&engine}; }
+
+  Impl() : event(NativeEngineHandle{nullptr}, bank) {
+    // Note: event is re-initialized in Init() with valid engine handle
+  }
+
+  void InitSubsystems() {
+    NativeEngineHandle engineHandle{&engine};
+    event = AudioEvent(engineHandle, bank);
+    musicManager = std::make_unique<MusicManager>(engineHandle, bank);
     hdrFilter = std::make_unique<HDRFilter>(&hdrMixer);
   }
 };
@@ -99,6 +108,10 @@ Status AudioManager::Init() {
     return Error(ErrorCode::EngineInitFailed,
                  "SoLoud init failed with code: " + std::to_string(r));
   }
+
+  // Initialize subsystems with valid engine handle
+  pImpl->InitSubsystems();
+
   // Create default buses
   CreateBus("Master");
   CreateBus("SFX");
@@ -107,7 +120,7 @@ Status AudioManager::Init() {
   // Set up bus router for AudioEvent
   pImpl->event.SetBusRouter([this](AudioHandle h, const std::string &busName) {
     if (pImpl->buses.count(busName)) {
-      pImpl->buses[busName]->AddHandle(pImpl->engine, h);
+      pImpl->buses[busName]->AddHandle(pImpl->GetEngineHandle(), h);
     }
   });
 
@@ -198,7 +211,7 @@ void AudioManager::Update(float dt) {
     // Update occlusion for real voices
     if (voice->IsReal() && voice->handle != 0) {
       pImpl->occlusionProcessor.Update(*voice, listenerPos, dt);
-      pImpl->occlusionProcessor.ApplyDSP(pImpl->engine, *voice);
+      pImpl->occlusionProcessor.ApplyDSP(pImpl->GetEngineHandle(), *voice);
 
       // Calculate and apply Doppler effect
       if (pImpl->dopplerEnabled) {
@@ -583,7 +596,9 @@ const std::string &AudioManager::GetActiveMixZone() const {
   return pImpl->activeMixZone;
 }
 
-SoLoud::Soloud &AudioManager::Engine() { return pImpl->engine; }
+NativeEngineHandle AudioManager::GetNativeEngine() {
+  return pImpl->GetEngineHandle();
+}
 
 Status AudioManager::CreateReverbBus(const std::string &name, float roomSize,
                                      float damp, float wet, float width) {
@@ -595,7 +610,7 @@ Status AudioManager::CreateReverbBus(const std::string &name, float roomSize,
   auto reverbBus = std::make_shared<ReverbBus>(name);
   reverbBus->SetParams(wet, roomSize, damp, width);
 
-  if (!reverbBus->Init(pImpl->engine)) {
+  if (!reverbBus->Init(pImpl->GetEngineHandle())) {
     return Error(ErrorCode::ReverbBusInitFailed,
                  "Failed to initialize reverb bus: " + name);
   }
@@ -614,7 +629,7 @@ Status AudioManager::CreateReverbBus(const std::string &name,
   auto reverbBus = std::make_shared<ReverbBus>(name);
   reverbBus->ApplyPreset(preset);
 
-  if (!reverbBus->Init(pImpl->engine)) {
+  if (!reverbBus->Init(pImpl->GetEngineHandle())) {
     return Error(ErrorCode::ReverbBusInitFailed,
                  "Failed to initialize reverb bus: " + name);
   }

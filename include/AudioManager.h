@@ -963,10 +963,10 @@ public:
   /// @{
 
   /**
-   * @brief Get direct access to the SoLoud engine.
-   * @return Reference to the SoLoud::Soloud instance.
+   * @brief Get opaque handle to the native audio engine.
+   * @return Opaque handle to the engine for advanced usage.
    */
-  [[nodiscard]] SoLoud::Soloud &Engine();
+  [[nodiscard]] NativeEngineHandle GetNativeEngine();
 
   /// @}
 

@@ -1,5 +1,8 @@
 #include "../include/OcclusionProcessor.h"
 
+#include <soloud.h>
+#include <soloud_biquadresonantfilter.h>
+
 namespace Orpheus {
 
 OcclusionProcessor::OcclusionProcessor() { RegisterDefaultMaterials(); }
@@ -87,16 +90,18 @@ void OcclusionProcessor::Update(Voice &voice, const Vector3 &listenerPos,
   SmoothValues(voice, dt);
 }
 
-void OcclusionProcessor::ApplyDSP(SoLoud::Soloud &engine, Voice &voice) {
-  if (!m_Enabled || voice.handle == 0)
+void OcclusionProcessor::ApplyDSP(NativeEngineHandle engine, Voice &voice) {
+  auto *soloudEngine = static_cast<SoLoud::Soloud *>(engine.ptr);
+  if (!m_Enabled || voice.handle == 0 || !soloudEngine) {
     return;
+  }
 
   float occludedVolume = voice.volume * voice.occlusionVolume;
-  engine.setVolume(voice.handle, occludedVolume);
+  soloudEngine->setVolume(voice.handle, occludedVolume);
 
-  engine.setFilterParameter(voice.handle, 0,
-                            SoLoud::BiquadResonantFilter::FREQUENCY,
-                            voice.currentLowPassFreq);
+  soloudEngine->setFilterParameter(voice.handle, 0,
+                                   SoLoud::BiquadResonantFilter::FREQUENCY,
+                                   voice.currentLowPassFreq);
 }
 
 bool OcclusionProcessor::IsEnabled() const { return m_Enabled; }

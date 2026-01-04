@@ -7,16 +7,16 @@
  */
 #pragma once
 
-#include <algorithm>
+#include <memory>
 #include <string>
 
-#include <soloud.h>
-#include <soloud_bus.h>
-#include <soloud_freeverbfilter.h>
-
+#include "OpaqueHandles.h"
 #include "Types.h"
 
 namespace Orpheus {
+
+// Forward declaration for PIMPL
+struct ReverbBusImpl;
 
 /**
  * @brief Preset reverb configurations.
@@ -32,7 +32,7 @@ enum class ReverbPreset {
 /**
  * @brief Audio bus with integrated reverb effect.
  *
- * ReverbBus combines a SoLoud bus with a Freeverb filter to simulate
+ * ReverbBus combines an audio bus with a reverb filter to simulate
  * acoustic environments. Sounds are routed to the reverb bus via send
  * levels, allowing multiple sounds to share reverb processing efficiently.
  *
@@ -54,11 +54,22 @@ public:
   ReverbBus(const std::string &name);
 
   /**
+   * @brief Destructor.
+   */
+  ~ReverbBus();
+
+  // Non-copyable, movable
+  ReverbBus(const ReverbBus &) = delete;
+  ReverbBus &operator=(const ReverbBus &) = delete;
+  ReverbBus(ReverbBus &&) noexcept;
+  ReverbBus &operator=(ReverbBus &&) noexcept;
+
+  /**
    * @brief Initialize the reverb bus with the audio engine.
-   * @param engine Reference to the SoLoud engine.
+   * @param engine Native engine handle.
    * @return true if initialization succeeded.
    */
-  [[nodiscard]] bool Init(SoLoud::Soloud &engine);
+  [[nodiscard]] bool Init(NativeEngineHandle engine);
 
   /**
    * @brief Apply a reverb preset.
@@ -121,40 +132,28 @@ public:
   /// @}
 
   /**
-   * @brief Get the underlying SoLoud bus.
-   * @return Reference to the bus.
+   * @brief Get native bus handle for advanced usage.
+   * @return Opaque handle to the underlying native bus.
    */
-  [[nodiscard]] SoLoud::Bus &GetBus();
+  [[nodiscard]] NativeBusHandle GetBus();
 
   /**
    * @brief Get the bus handle.
-   * @return SoLoud handle for the bus.
+   * @return Audio handle for the bus.
    */
-  [[nodiscard]] SoLoud::handle GetBusHandle() const;
+  [[nodiscard]] AudioHandle GetBusHandle() const;
 
   /**
    * @brief Send audio to this reverb bus.
-   * @param engine Reference to the SoLoud engine.
+   * @param engine Native engine handle.
    * @param audioHandle Handle of the audio to send.
    * @param sendLevel Send level (0.0-1.0).
    */
-  void SendToReverb(SoLoud::Soloud &engine, SoLoud::handle audioHandle,
+  void SendToReverb(NativeEngineHandle engine, AudioHandle audioHandle,
                     float sendLevel);
 
 private:
-  std::string m_Name;
-  SoLoud::Bus m_Bus;
-  SoLoud::FreeverbFilter m_Reverb;
-  SoLoud::Soloud *m_Engine = nullptr;
-  SoLoud::handle m_BusHandle = 0;
-
-  float m_Wet = 0.5f;
-  float m_RoomSize = 0.5f;
-  float m_Damp = 0.5f;
-  float m_Width = 1.0f;
-  bool m_Freeze = false;
-
-  bool m_Active = false;
+  std::unique_ptr<ReverbBusImpl> m_Impl;
 };
 
 } // namespace Orpheus

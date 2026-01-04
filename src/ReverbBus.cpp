@@ -1,22 +1,58 @@
 #include "../include/ReverbBus.h"
 
+#include <algorithm>
+
+#include <soloud.h>
+#include <soloud_bus.h>
+#include <soloud_freeverbfilter.h>
+
 namespace Orpheus {
 
-ReverbBus::ReverbBus(const std::string &name) : m_Name(name) {}
+// PIMPL implementation struct
+struct ReverbBusImpl {
+  std::string name;
+  SoLoud::Bus bus;
+  SoLoud::FreeverbFilter reverb;
+  SoLoud::Soloud *engine = nullptr;
+  SoLoud::handle busHandle = 0;
 
-bool ReverbBus::Init(SoLoud::Soloud &engine) {
-  m_Reverb.setParams(m_Freeze ? 1.0f : 0.0f, m_RoomSize, m_Damp, m_Width);
-  m_Bus.setFilter(0, &m_Reverb);
+  float wet = 0.5f;
+  float roomSize = 0.5f;
+  float damp = 0.5f;
+  float width = 1.0f;
+  bool freeze = false;
+  bool active = false;
+};
 
-  m_BusHandle = engine.play(m_Bus);
-  if (m_BusHandle == 0) {
+ReverbBus::ReverbBus(const std::string &name)
+    : m_Impl(std::make_unique<ReverbBusImpl>()) {
+  m_Impl->name = name;
+}
+
+ReverbBus::~ReverbBus() = default;
+
+ReverbBus::ReverbBus(ReverbBus &&) noexcept = default;
+ReverbBus &ReverbBus::operator=(ReverbBus &&) noexcept = default;
+
+bool ReverbBus::Init(NativeEngineHandle engine) {
+  auto *soloudEngine = static_cast<SoLoud::Soloud *>(engine.ptr);
+  if (!soloudEngine)
+    return false;
+
+  m_Impl->reverb.setParams(m_Impl->freeze ? 1.0f : 0.0f, m_Impl->roomSize,
+                           m_Impl->damp, m_Impl->width);
+  m_Impl->bus.setFilter(0, &m_Impl->reverb);
+
+  m_Impl->busHandle = soloudEngine->play(m_Impl->bus);
+  if (m_Impl->busHandle == 0) {
     return false;
   }
 
-  engine.setFilterParameter(m_BusHandle, 0, SoLoud::FreeverbFilter::WET, m_Wet);
+  soloudEngine->setFilterParameter(m_Impl->busHandle, 0,
+                                   SoLoud::FreeverbFilter::WET, m_Impl->wet);
 
-  m_Engine = &engine;
-  m_Active = true;
+  m_Impl->engine = soloudEngine;
+  m_Impl->active = true;
   return true;
 }
 
@@ -41,100 +77,109 @@ void ReverbBus::ApplyPreset(ReverbPreset preset) {
 }
 
 void ReverbBus::SetParams(float wet, float roomSize, float damp, float width) {
-  m_Wet = std::clamp(wet, 0.0f, 1.0f);
-  m_RoomSize = std::clamp(roomSize, 0.0f, 1.0f);
-  m_Damp = std::clamp(damp, 0.0f, 1.0f);
-  m_Width = std::clamp(width, 0.0f, 1.0f);
+  m_Impl->wet = std::clamp(wet, 0.0f, 1.0f);
+  m_Impl->roomSize = std::clamp(roomSize, 0.0f, 1.0f);
+  m_Impl->damp = std::clamp(damp, 0.0f, 1.0f);
+  m_Impl->width = std::clamp(width, 0.0f, 1.0f);
 
-  m_Reverb.setParams(m_Freeze ? 1.0f : 0.0f, m_RoomSize, m_Damp, m_Width);
+  m_Impl->reverb.setParams(m_Impl->freeze ? 1.0f : 0.0f, m_Impl->roomSize,
+                           m_Impl->damp, m_Impl->width);
 
-  if (m_Engine && m_BusHandle != 0) {
-    m_Engine->setFilterParameter(m_BusHandle, 0, SoLoud::FreeverbFilter::WET,
-                                 m_Wet);
-    m_Engine->setFilterParameter(m_BusHandle, 0,
-                                 SoLoud::FreeverbFilter::ROOMSIZE, m_RoomSize);
-    m_Engine->setFilterParameter(m_BusHandle, 0, SoLoud::FreeverbFilter::DAMP,
-                                 m_Damp);
-    m_Engine->setFilterParameter(m_BusHandle, 0, SoLoud::FreeverbFilter::WIDTH,
-                                 m_Width);
+  if (m_Impl->engine && m_Impl->busHandle != 0) {
+    m_Impl->engine->setFilterParameter(
+        m_Impl->busHandle, 0, SoLoud::FreeverbFilter::WET, m_Impl->wet);
+    m_Impl->engine->setFilterParameter(m_Impl->busHandle, 0,
+                                       SoLoud::FreeverbFilter::ROOMSIZE,
+                                       m_Impl->roomSize);
+    m_Impl->engine->setFilterParameter(
+        m_Impl->busHandle, 0, SoLoud::FreeverbFilter::DAMP, m_Impl->damp);
+    m_Impl->engine->setFilterParameter(
+        m_Impl->busHandle, 0, SoLoud::FreeverbFilter::WIDTH, m_Impl->width);
   }
 }
 
 void ReverbBus::SetWet(float wet, float fadeTime) {
-  m_Wet = std::clamp(wet, 0.0f, 1.0f);
-  if (m_Engine && m_BusHandle != 0) {
+  m_Impl->wet = std::clamp(wet, 0.0f, 1.0f);
+  if (m_Impl->engine && m_Impl->busHandle != 0) {
     if (fadeTime > 0.0f) {
-      m_Engine->fadeFilterParameter(m_BusHandle, 0, SoLoud::FreeverbFilter::WET,
-                                    m_Wet, fadeTime);
+      m_Impl->engine->fadeFilterParameter(m_Impl->busHandle, 0,
+                                          SoLoud::FreeverbFilter::WET,
+                                          m_Impl->wet, fadeTime);
     } else {
-      m_Engine->setFilterParameter(m_BusHandle, 0, SoLoud::FreeverbFilter::WET,
-                                   m_Wet);
+      m_Impl->engine->setFilterParameter(
+          m_Impl->busHandle, 0, SoLoud::FreeverbFilter::WET, m_Impl->wet);
     }
   }
 }
 
 void ReverbBus::SetRoomSize(float roomSize, float fadeTime) {
-  m_RoomSize = std::clamp(roomSize, 0.0f, 1.0f);
-  if (m_Engine && m_BusHandle != 0) {
+  m_Impl->roomSize = std::clamp(roomSize, 0.0f, 1.0f);
+  if (m_Impl->engine && m_Impl->busHandle != 0) {
     if (fadeTime > 0.0f) {
-      m_Engine->fadeFilterParameter(m_BusHandle, 0,
-                                    SoLoud::FreeverbFilter::ROOMSIZE,
-                                    m_RoomSize, fadeTime);
+      m_Impl->engine->fadeFilterParameter(m_Impl->busHandle, 0,
+                                          SoLoud::FreeverbFilter::ROOMSIZE,
+                                          m_Impl->roomSize, fadeTime);
     } else {
-      m_Engine->setFilterParameter(
-          m_BusHandle, 0, SoLoud::FreeverbFilter::ROOMSIZE, m_RoomSize);
+      m_Impl->engine->setFilterParameter(m_Impl->busHandle, 0,
+                                         SoLoud::FreeverbFilter::ROOMSIZE,
+                                         m_Impl->roomSize);
     }
   }
 }
 
 void ReverbBus::SetDamp(float damp, float fadeTime) {
-  m_Damp = std::clamp(damp, 0.0f, 1.0f);
-  if (m_Engine && m_BusHandle != 0) {
+  m_Impl->damp = std::clamp(damp, 0.0f, 1.0f);
+  if (m_Impl->engine && m_Impl->busHandle != 0) {
     if (fadeTime > 0.0f) {
-      m_Engine->fadeFilterParameter(
-          m_BusHandle, 0, SoLoud::FreeverbFilter::DAMP, m_Damp, fadeTime);
+      m_Impl->engine->fadeFilterParameter(m_Impl->busHandle, 0,
+                                          SoLoud::FreeverbFilter::DAMP,
+                                          m_Impl->damp, fadeTime);
     } else {
-      m_Engine->setFilterParameter(m_BusHandle, 0, SoLoud::FreeverbFilter::DAMP,
-                                   m_Damp);
+      m_Impl->engine->setFilterParameter(
+          m_Impl->busHandle, 0, SoLoud::FreeverbFilter::DAMP, m_Impl->damp);
     }
   }
 }
 
 void ReverbBus::SetWidth(float width, float fadeTime) {
-  m_Width = std::clamp(width, 0.0f, 1.0f);
-  if (m_Engine && m_BusHandle != 0) {
+  m_Impl->width = std::clamp(width, 0.0f, 1.0f);
+  if (m_Impl->engine && m_Impl->busHandle != 0) {
     if (fadeTime > 0.0f) {
-      m_Engine->fadeFilterParameter(
-          m_BusHandle, 0, SoLoud::FreeverbFilter::WIDTH, m_Width, fadeTime);
+      m_Impl->engine->fadeFilterParameter(m_Impl->busHandle, 0,
+                                          SoLoud::FreeverbFilter::WIDTH,
+                                          m_Impl->width, fadeTime);
     } else {
-      m_Engine->setFilterParameter(m_BusHandle, 0,
-                                   SoLoud::FreeverbFilter::WIDTH, m_Width);
+      m_Impl->engine->setFilterParameter(
+          m_Impl->busHandle, 0, SoLoud::FreeverbFilter::WIDTH, m_Impl->width);
     }
   }
 }
 
 void ReverbBus::SetFreeze(bool freeze) {
-  m_Freeze = freeze;
-  if (m_Engine && m_BusHandle != 0) {
-    m_Engine->setFilterParameter(m_BusHandle, 0, SoLoud::FreeverbFilter::FREEZE,
-                                 freeze ? 1.0f : 0.0f);
+  m_Impl->freeze = freeze;
+  if (m_Impl->engine && m_Impl->busHandle != 0) {
+    m_Impl->engine->setFilterParameter(m_Impl->busHandle, 0,
+                                       SoLoud::FreeverbFilter::FREEZE,
+                                       freeze ? 1.0f : 0.0f);
   }
 }
 
-float ReverbBus::GetWet() const { return m_Wet; }
-float ReverbBus::GetRoomSize() const { return m_RoomSize; }
-float ReverbBus::GetDamp() const { return m_Damp; }
-float ReverbBus::GetWidth() const { return m_Width; }
-bool ReverbBus::IsFreeze() const { return m_Freeze; }
-bool ReverbBus::IsActive() const { return m_Active; }
-const std::string &ReverbBus::GetName() const { return m_Name; }
+float ReverbBus::GetWet() const { return m_Impl->wet; }
+float ReverbBus::GetRoomSize() const { return m_Impl->roomSize; }
+float ReverbBus::GetDamp() const { return m_Impl->damp; }
+float ReverbBus::GetWidth() const { return m_Impl->width; }
+bool ReverbBus::IsFreeze() const { return m_Impl->freeze; }
+bool ReverbBus::IsActive() const { return m_Impl->active; }
+const std::string &ReverbBus::GetName() const { return m_Impl->name; }
 
-SoLoud::Bus &ReverbBus::GetBus() { return m_Bus; }
-SoLoud::handle ReverbBus::GetBusHandle() const { return m_BusHandle; }
+NativeBusHandle ReverbBus::GetBus() { return NativeBusHandle{&m_Impl->bus}; }
+AudioHandle ReverbBus::GetBusHandle() const {
+  return static_cast<AudioHandle>(m_Impl->busHandle);
+}
 
-void ReverbBus::SendToReverb(SoLoud::Soloud &engine, SoLoud::handle audioHandle,
+void ReverbBus::SendToReverb(NativeEngineHandle engine, AudioHandle audioHandle,
                              float sendLevel) {
-  if (!m_Active || m_BusHandle == 0)
+  if (!m_Impl->active || m_Impl->busHandle == 0)
     return;
   (void)engine;
   (void)audioHandle;

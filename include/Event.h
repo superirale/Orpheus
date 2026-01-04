@@ -8,20 +8,17 @@
 #pragma once
 
 #include <functional>
-#include <iostream>
 #include <memory>
 #include <string>
-#include <vector>
 
-#include <soloud.h>
-#include <soloud_biquadresonantfilter.h>
-#include <soloud_wav.h>
-#include <soloud_wavstream.h>
-
+#include "OpaqueHandles.h"
 #include "SoundBank.h"
 #include "Types.h"
 
 namespace Orpheus {
+
+// Forward declaration for PIMPL
+struct AudioEventImpl;
 
 /**
  * @brief Callback type for routing audio handles to buses.
@@ -41,18 +38,27 @@ class AudioEvent {
 public:
   /**
    * @brief Construct an AudioEvent handler.
-   * @param engine Reference to the SoLoud engine.
+   * @param engine Native engine handle.
    * @param bank Reference to the sound bank for event lookups.
    */
-  AudioEvent(SoLoud::Soloud &engine, SoundBank &bank);
+  AudioEvent(NativeEngineHandle engine, SoundBank &bank);
+
+  /**
+   * @brief Destructor.
+   */
+  ~AudioEvent();
+
+  // Non-copyable, movable
+  AudioEvent(const AudioEvent &) = delete;
+  AudioEvent &operator=(const AudioEvent &) = delete;
+  AudioEvent(AudioEvent &&) noexcept;
+  AudioEvent &operator=(AudioEvent &&) noexcept;
 
   /**
    * @brief Set the callback used to route audio handles to buses.
    * @param router Callback function for bus routing.
    */
-  void SetBusRouter(BusRouterCallback router) {
-    m_BusRouter = std::move(router);
-  }
+  void SetBusRouter(BusRouterCallback router);
 
   /**
    * @brief Play an audio event.
@@ -64,19 +70,13 @@ public:
                                  const std::string &busName = "Master");
 
   /**
-   * @brief Get the occlusion filter for external configuration.
-   * @return Reference to the biquad filter used for occlusion.
+   * @brief Get native occlusion filter handle for advanced usage.
+   * @return Opaque handle to the underlying filter.
    */
-  [[nodiscard]] SoLoud::BiquadResonantFilter &GetOcclusionFilter();
+  [[nodiscard]] NativeFilterHandle GetOcclusionFilter();
 
 private:
-  void RouteHandleToBus(AudioHandle h, const std::string &busName);
-
-  SoLoud::Soloud &m_Engine;
-  SoundBank &m_Bank;
-  std::vector<std::shared_ptr<SoLoud::AudioSource>> m_ActiveSounds;
-  SoLoud::BiquadResonantFilter m_OcclusionFilter;
-  BusRouterCallback m_BusRouter;
+  std::unique_ptr<AudioEventImpl> m_Impl;
 };
 
 } // namespace Orpheus

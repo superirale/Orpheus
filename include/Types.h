@@ -7,17 +7,15 @@
  */
 #pragma once
 
-#include <soloud.h>
-
 namespace Orpheus {
 
 /**
  * @brief Handle type for audio playback instances.
  *
- * This is an alias for SoLoud's handle type, used to reference
- * and control playing audio instances.
+ * Used to reference and control playing audio instances.
+ * This is compatible with the underlying audio backend's handle type.
  */
-typedef SoLoud::handle AudioHandle;
+using AudioHandle = unsigned int;
 
 /**
  * @brief 3D vector for spatial audio positioning.

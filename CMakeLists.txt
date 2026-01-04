@@ -248,12 +248,12 @@ target_include_directories(orpheus
 target_include_directories(orpheus PRIVATE ${JSON_INCLUDE_DIR})
 
 if(soloud_FOUND)
-    target_link_libraries(orpheus PUBLIC soloud::soloud)
+    target_link_libraries(orpheus PRIVATE soloud::soloud)
 elseif(SOLOUD_FETCHED)
-    target_link_libraries(orpheus PUBLIC soloud_fetched)
+    target_link_libraries(orpheus PRIVATE soloud_fetched)
 else()
-    target_include_directories(orpheus PUBLIC ${SOLOUD_INCLUDE_DIRS})
-    target_link_libraries(orpheus PUBLIC ${SOLOUD_LIBRARIES})
+    target_include_directories(orpheus PRIVATE ${SOLOUD_INCLUDE_DIRS})
+    target_link_libraries(orpheus PRIVATE ${SOLOUD_LIBRARIES})
 endif()
 
 # Precompiled headers

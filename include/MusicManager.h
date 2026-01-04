@@ -7,18 +7,19 @@
 #pragma once
 
 #include <functional>
+#include <memory>
 #include <queue>
 #include <string>
 
+#include "OpaqueHandles.h"
 #include "Types.h"
-
-namespace SoLoud {
-class Soloud;
-}
 
 namespace Orpheus {
 
 class SoundBank;
+
+// Forward declaration for PIMPL
+struct MusicManagerImpl;
 
 /**
  * @brief Transition sync point for queued segments.
@@ -47,11 +48,21 @@ class MusicManager {
 public:
   /**
    * @brief Construct MusicManager.
-   * @param engine Reference to SoLoud engine.
+   * @param engine Native engine handle.
    * @param bank Reference to sound bank.
    */
-  MusicManager(SoLoud::Soloud &engine, SoundBank &bank);
+  MusicManager(NativeEngineHandle engine, SoundBank &bank);
+
+  /**
+   * @brief Destructor.
+   */
   ~MusicManager();
+
+  // Non-copyable, movable
+  MusicManager(const MusicManager &) = delete;
+  MusicManager &operator=(const MusicManager &) = delete;
+  MusicManager(MusicManager &&) noexcept;
+  MusicManager &operator=(MusicManager &&) noexcept;
 
   /**
    * @brief Set beats per minute for synchronization.
@@ -62,13 +73,13 @@ public:
   /**
    * @brief Get current BPM.
    */
-  [[nodiscard]] float GetBPM() const { return m_BPM; }
+  [[nodiscard]] float GetBPM() const;
 
   /**
    * @brief Set beats per bar for bar-sync transitions.
    * @param beats Beats per bar (default: 4).
    */
-  void SetBeatsPerBar(int beats) { m_BeatsPerBar = beats; }
+  void SetBeatsPerBar(int beats);
 
   /**
    * @brief Play a music segment immediately.
@@ -109,55 +120,25 @@ public:
   /**
    * @brief Get current beat position (0-based).
    */
-  [[nodiscard]] float GetBeatPosition() const { return m_BeatPosition; }
+  [[nodiscard]] float GetBeatPosition() const;
 
   /**
    * @brief Get current bar position (0-based).
    */
-  [[nodiscard]] int GetBarPosition() const {
-    return static_cast<int>(m_BeatPosition) / m_BeatsPerBar;
-  }
+  [[nodiscard]] int GetBarPosition() const;
 
   /**
    * @brief Check if music is currently playing.
    */
-  [[nodiscard]] bool IsPlaying() const { return m_CurrentHandle != 0; }
+  [[nodiscard]] bool IsPlaying() const;
 
   /**
    * @brief Set callback for beat events.
    */
-  void SetBeatCallback(std::function<void(int beat)> callback) {
-    m_BeatCallback = std::move(callback);
-  }
+  void SetBeatCallback(std::function<void(int beat)> callback);
 
 private:
-  void StartCrossfade(const std::string &newSegment, float fadeTime);
-  void ProcessQueue();
-
-  SoLoud::Soloud &m_Engine;
-  SoundBank &m_Bank;
-
-  // Timing
-  float m_BPM = 120.0f;
-  int m_BeatsPerBar = 4;
-  float m_BeatPosition = 0.0f;
-  int m_LastBeat = -1;
-
-  // Current playback
-  AudioHandle m_CurrentHandle = 0;
-  std::string m_CurrentSegment;
-
-  // Crossfade
-  AudioHandle m_FadingOutHandle = 0;
-  float m_FadeProgress = 0.0f;
-  float m_FadeDuration = 0.0f;
-  float m_CurrentVolume = 1.0f;
-
-  // Queue
-  std::queue<QueuedSegment> m_Queue;
-
-  // Callbacks
-  std::function<void(int)> m_BeatCallback;
+  std::unique_ptr<MusicManagerImpl> m_Impl;
 };
 
 } // namespace Orpheus
