@@ -75,7 +75,13 @@ jobs:
         run: |
           mkdir -p dist/include dist/lib
           cp -r include/* dist/include/
-          cp build/*${{ matrix.lib_ext }} dist/lib/ 2>/dev/null || true
+          # Merge SoLoud into Orpheus for a single fat static library
+          echo "CREATE dist/lib/liborpheus.a" > merge.mri
+          echo "ADDLIB build/liborpheus.a" >> merge.mri
+          echo "ADDLIB build/libsoloud_fetched.a" >> merge.mri
+          echo "SAVE" >> merge.mri
+          echo "END" >> merge.mri
+          ar -M < merge.mri
           cp README.md dist/
           cp CHANGELOG.md dist/
           cp LICENSE dist/ 2>/dev/null || echo "MIT" > dist/LICENSE
@@ -86,7 +92,13 @@ jobs:
         run: |
           mkdir -p dist/include dist/lib/${{ matrix.abi }}
           cp -r include/* dist/include/
-          cp build/liborpheus.a dist/lib/${{ matrix.abi }}/
+          # Merge SoLoud into Orpheus for a single fat static library
+          echo "CREATE dist/lib/${{ matrix.abi }}/liborpheus.a" > merge.mri
+          echo "ADDLIB build/liborpheus.a" >> merge.mri
+          echo "ADDLIB build/libsoloud_fetched.a" >> merge.mri
+          echo "SAVE" >> merge.mri
+          echo "END" >> merge.mri
+          ar -M < merge.mri
           cp README.md dist/
           cp CHANGELOG.md dist/
           cp LICENSE dist/ 2>/dev/null || echo "MIT" > dist/LICENSE
@@ -98,7 +110,8 @@ jobs:
         run: |
           New-Item -ItemType Directory -Force -Path dist/include, dist/lib
           Copy-Item -Recurse include/* dist/include/
-          Copy-Item build/Release/*${{ matrix.lib_ext }} dist/lib/ -ErrorAction SilentlyContinue
+          # Merge SoLoud into Orpheus using lib.exe
+          lib /OUT:dist/lib/orpheus.lib build/Release/orpheus.lib build/Release/soloud_fetched.lib
           Copy-Item README.md dist/
           Copy-Item CHANGELOG.md dist/
           if (Test-Path LICENSE) { Copy-Item LICENSE dist/ } else { "MIT" | Out-File dist/LICENSE }
