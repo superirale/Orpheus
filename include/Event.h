@@ -70,6 +70,15 @@ public:
                                  const std::string &busName = "Master");
 
   /**
+   * @brief Play a specific sound file using settings from an event descriptor.
+   * @param path Path to the sound file.
+   * @param ed The event descriptor for settings (volume, pitch, etc.).
+   * @return Handle to the playing audio, or 0 on failure.
+   */
+  [[nodiscard]] AudioHandle PlayFromEvent(const std::string &path,
+                                          const EventDescriptor &ed);
+
+  /**
    * @brief Get native occlusion filter handle for advanced usage.
    * @return Opaque handle to the underlying filter.
    */

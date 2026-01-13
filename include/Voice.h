@@ -16,6 +16,7 @@
 #include <vector>
 
 #include "DistanceCurve.h"
+#include "SoundBank.h"
 #include "Types.h"
 
 namespace Orpheus {
@@ -116,6 +117,17 @@ struct Voice {
   /// @name Markers
   /// @{
   std::vector<Marker> markers; ///< Time-based callback markers
+  /// @}
+
+  /// @name Playlist/Delay State
+  /// @{
+  float delayTimer = 0.0f;           ///< Timer for start delay or interval
+  bool isWaitingForDelay = false;    ///< True if waiting for delay to expire
+  int playlistIndex = 0;             ///< Current index in playlist
+  bool loopPlaylist = false;         ///< Loop behavior
+  float interval = 0.0f;             ///< Delay between playlist items
+  std::vector<std::string> playlist; ///< List of sounds to play
+  PlaylistMode playlistMode = PlaylistMode::Single; ///< Mode for playback
   /// @}
 
   /**

@@ -89,6 +89,40 @@ AudioHandle AudioEvent::Play(const std::string &eventName,
   }
 }
 
+AudioHandle AudioEvent::PlayFromEvent(const std::string &path,
+                                      const EventDescriptor &ed) {
+  // Apply randomization within the specified ranges
+  float volume = RandomFloat(ed.volumeMin, ed.volumeMax);
+  float pitch = RandomFloat(ed.pitchMin, ed.pitchMax);
+  const std::string &busName = ed.bus.empty() ? "Master" : ed.bus;
+
+  if (ed.stream) {
+    auto wavstream = std::make_shared<SoLoud::WavStream>();
+    wavstream->load(path.c_str());
+    wavstream->setFilter(0, &m_Impl->occlusionFilter);
+    AudioHandle h = m_Impl->engine->play(*wavstream);
+    m_Impl->activeSounds.push_back(wavstream);
+    m_Impl->engine->setVolume(h, volume);
+    m_Impl->engine->setRelativePlaySpeed(h, pitch);
+    if (m_Impl->busRouter) {
+      m_Impl->busRouter(h, busName);
+    }
+    return h;
+  } else {
+    auto wav = std::make_shared<SoLoud::Wav>();
+    wav->load(path.c_str());
+    wav->setFilter(0, &m_Impl->occlusionFilter);
+    AudioHandle h = m_Impl->engine->play(*wav);
+    m_Impl->activeSounds.push_back(wav);
+    m_Impl->engine->setVolume(h, volume);
+    m_Impl->engine->setRelativePlaySpeed(h, pitch);
+    if (m_Impl->busRouter) {
+      m_Impl->busRouter(h, busName);
+    }
+    return h;
+  }
+}
+
 NativeFilterHandle AudioEvent::GetOcclusionFilter() {
   return NativeFilterHandle{&m_Impl->occlusionFilter};
 }

@@ -15,9 +15,13 @@
 
 #include <algorithm>
 #include <mutex>
+#include <random>
 #include <unordered_map>
 
 namespace Orpheus {
+
+// Thread-local random engine for randomization
+static thread_local std::mt19937 s_RandomEngine{std::random_device{}()};
 
 // =============================================================================
 // AudioManager::Impl - Private Implementation
@@ -198,14 +202,107 @@ void AudioManager::Update(float dt) {
     if (!voice || voice->IsStopped())
       continue;
 
+    // Handle delay timer
+    if (voice->isWaitingForDelay) {
+      voice->delayTimer -= dt;
+      if (voice->delayTimer <= 0.0f) {
+        voice->isWaitingForDelay = false;
+      } else {
+        continue; // Still waiting
+      }
+    }
+
     // Handle voices that need to start playing
     if (voice->IsReal() && voice->handle == 0) {
-      voice->handle = pImpl->event.Play(voice->eventName);
+      // Logic to pick sound was done in PlayEvent, but if we looped/next-item,
+      // we need to pick it here if we just cleared the handle.
+
+      // Determine what to play
+      std::string soundToPlay = voice->eventName; // Default
+
+      // If playlist is active, pick safe sound
+      if (!voice->playlist.empty()) {
+        if (voice->playlistIndex < voice->playlist.size()) {
+          soundToPlay = voice->playlist[voice->playlistIndex];
+        }
+      }
+
+      // Find the event descriptor again to pass settings
+      auto eventResult =
+          pImpl->bank.FindEvent(voice->eventName); // Original event name
+      if (eventResult) {
+        const auto &ed = eventResult.Value();
+        if (!voice->playlist.empty()) {
+          voice->handle = pImpl->event.PlayFromEvent(soundToPlay, ed);
+        } else {
+          voice->handle = pImpl->event.Play(voice->eventName);
+        }
+      } else {
+        // Fallback if event somehow gone, shouldn't happen
+        voice->handle = pImpl->event.Play(voice->eventName);
+      }
     }
     // Handle voices that became virtual
     else if (voice->IsVirtual() && voice->handle != 0) {
       pImpl->engine.stop(voice->handle);
       voice->handle = 0;
+    }
+    // Handle finished voices (Real, handle was valid, now invalid)
+    else if (voice->IsReal() && voice->handle != 0 &&
+             !pImpl->engine.isValidVoiceHandle(voice->handle)) {
+
+      // Voice finished playing. Check playlist logic.
+      bool shouldPlayNext = false;
+
+      if (!voice->playlist.empty()) {
+        if (voice->playlistMode == PlaylistMode::Sequential ||
+            voice->playlistMode == PlaylistMode::Shuffle) {
+
+          voice->playlistIndex++;
+          if (voice->playlistIndex >=
+              static_cast<int>(voice->playlist.size())) {
+            // Loop or Stop
+            if (voice->loopPlaylist) {
+              voice->playlistIndex = 0;
+              shouldPlayNext = true;
+            }
+          } else {
+            shouldPlayNext = true;
+          }
+        } else if (voice->playlistMode == PlaylistMode::Random) {
+          // Random mode usually plays once.
+          // But if loopPlaylist is true, we play another random sound.
+          if (voice->loopPlaylist) {
+            std::uniform_int_distribution<size_t> dist(
+                0, voice->playlist.size() - 1);
+            voice->playlistIndex = dist(s_RandomEngine);
+            shouldPlayNext = true;
+          }
+        }
+      } else {
+        // Single Event
+        // Assuming SoundBank handles basic looping via SoLoud?
+        // If not, and we want to "loop" a single event via this system:
+        if (voice->loopPlaylist) {
+          shouldPlayNext = true;
+        }
+      }
+
+      if (shouldPlayNext) {
+        voice->handle = 0; // Reset handle
+        if (voice->interval > 0.0f) {
+          voice->delayTimer = voice->interval;
+          voice->isWaitingForDelay = true;
+        }
+        // If no interval, it will be picked up in next frame (or we could loop
+        // goto, but simpler to wait frame) Actually, if we don't set
+        // isWaitingForDelay, we fall through? No, because we are in an `else
+        // if`. Next frame `voice->handle == 0` will trigger play.
+      } else {
+        // Really finished.
+        voice->handle = 0;
+        voice->state = VoiceState::Stopped; // Mark as free/stopped
+      }
     }
 
     // Update occlusion for real voices
@@ -319,10 +416,110 @@ Result<VoiceID> AudioManager::PlayEvent(const std::string &name,
   }
 
   voice->volume = ed.volumeMin;
+  voice->interval = ed.interval;
+  voice->loopPlaylist = ed.loopPlaylist;
+  voice->playlist = ed.sounds;
+  voice->playlistMode = ed.playlistMode;
 
-  // Try to make it real (may steal another voice)
-  if (pImpl->voicePool.MakeReal(voice)) {
-    voice->handle = pImpl->event.Play(name);
+  if (!ed.sounds.empty()) {
+    // If playlist mode, ensure we have the list
+    // Shuffle if needed
+    if (ed.playlistMode == PlaylistMode::Shuffle) {
+      std::shuffle(voice->playlist.begin(), voice->playlist.end(),
+                   s_RandomEngine);
+    }
+  }
+
+  // Handle Initial Delay
+  if (ed.startDelay > 0.0f) {
+    voice->isWaitingForDelay = true;
+    voice->delayTimer = ed.startDelay;
+    // Do NOT play yet. The Update loop will handle it.
+  } else {
+    // Immediate playback
+    // Decide which sound to play
+    std::string soundToPlay = name;
+
+    if (!voice->playlist.empty()) {
+      if (voice->playlistMode == PlaylistMode::Random) {
+        std::uniform_int_distribution<size_t> dist(0,
+                                                   voice->playlist.size() - 1);
+        voice->playlistIndex = dist(s_RandomEngine);
+        soundToPlay = voice->playlist[voice->playlistIndex];
+      } else {
+        // Sequential / Shuffle (already shuffled)
+        voice->playlistIndex = 0;
+        soundToPlay = voice->playlist[0];
+      }
+    }
+
+    // Update event name to actual sound
+    // file/event for Play() if needed?
+    // Actually Play expects an Event Name, not a file path.
+    // Wait, the EventDescriptor has a 'path' but also 'sounds'.
+    // If 'sounds' is used, are they file paths or other Event names?
+    // Looking at SoundBank.h: "std::vector<std::string> sounds; ///< Multiple
+    // sound paths for playlists" So they are paths! But pImpl->event.Play()
+    // takes an eventName and looks it up in SoundBank. This implies we need a
+    // way to play a raw file or we need temporary event descriptors for
+    // playlist items.
+
+    // Correction: AudioEvent::Play logic takes an eventName logic to look up
+    // the struct. If we want to support playlists of *files* inside a single
+    // Event, we need AudioEvent to support playing a file directly OR
+    // AudioEvent::Play should take a path if we change it.
+
+    // Let's look at AudioEvent::Play again.
+    // It calls m_Impl->bank->FindEvent(eventName).
+
+    // Problem: The current system relies on looking up the EventDescriptor by
+    // name. Use Case: Event "Footsteps" has sounds ["step1.wav", "step2.wav"].
+    // When we play "Footsteps", we want to pick one wav.
+
+    // If we change voice->eventName to "step1.wav", FindEvent("step1.wav") will
+    // fail.
+
+    // Solution: We need a way to tell AudioEvent "Play this specific file using
+    // the settings of THIS event descriptor". Or we modify AudioEvent::Play to
+    // optionally take an override path.
+
+    // Let's modify AudioEvent::Play or add a new InternalPlay.
+    // Or, since we are inside AudioManager, maybe we can access the engine
+    // directly? pImpl->event is a wrapper.
+
+    // Actually, looking at AudioEvent.cpp, it does:
+    // auto eventResult = m_Impl->bank->FindEvent(eventName);
+    // ...
+    // wav->load(ed.path.c_str());
+
+    // If we simply put the chosen sound path into the Voice struct, we can pass
+    // it to a modified Play function.
+
+    // Let's assume for now we will refactor Play to support this, or add a
+    // helper. For this step, I will stick to the plan of setting up the Voice
+    // state. However, I need to resolve how to play a specific file from the
+    // playlist.
+
+    // Refined Plan for Play:
+    // If using playlist, we need to bypass the standard "FindEvent" lookup in
+    // AudioEvent OR we need to update how we call it.
+
+    // NOTE: For this specific tool call, I will write the logic to set up the
+    // Voice. I will use a placeholder comment for the actual playing of the
+    // playlist item and then address the `AudioEvent` API limitation in the
+    // next steps.
+
+    if (pImpl->voicePool.MakeReal(voice)) {
+      // If playlist, we need to play the specific file.
+      // If not playlist, play the event name.
+      if (!voice->playlist.empty()) {
+        // We need a new way to play a file with the context of the event
+        // pImpl->event.PlaySoundFile(soundToPlay, ed); // Hypothetical
+        voice->handle = pImpl->event.PlayFromEvent(soundToPlay, ed);
+      } else {
+        voice->handle = pImpl->event.Play(name);
+      }
+    }
   }
 
   return voice->id;

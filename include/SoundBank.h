@@ -53,6 +53,10 @@ struct EventDescriptor {
   // Playlist fields
   std::vector<std::string> sounds; ///< Multiple sound paths for playlists
   PlaylistMode playlistMode = PlaylistMode::Single; ///< Playlist playback mode
+  bool loopPlaylist = false; ///< Loop the playlist after finishing (Sequential)
+                             ///< or repeat (Random)
+  float interval = 0.0f;     ///< Delay between playlist items (seconds)
+  float startDelay = 0.0f;   ///< Initial delay before starting (seconds)
 };
 
 /**

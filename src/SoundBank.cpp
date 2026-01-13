@@ -55,6 +55,25 @@ Status SoundBank::RegisterEventFromJson(const std::string &jsonString) {
     ed.stream = j.value("stream", false);
     ed.priority = static_cast<uint8_t>(j.value("priority", 128));
     ed.maxDistance = j.value("maxDistance", 100.0f);
+    ed.startDelay = j.value("startDelay", 0.0f);
+    ed.interval = j.value("interval", 0.0f);
+    ed.loopPlaylist = j.value("loopPlaylist", false);
+
+    if (j.contains("sounds") && j["sounds"].is_array()) {
+      for (const auto &sound : j["sounds"]) {
+        ed.sounds.push_back(sound.get<std::string>());
+      }
+    }
+
+    std::string modeStr = j.value("playlistMode", "Single");
+    if (modeStr == "Sequential")
+      ed.playlistMode = PlaylistMode::Sequential;
+    else if (modeStr == "Shuffle")
+      ed.playlistMode = PlaylistMode::Shuffle;
+    else if (modeStr == "Random")
+      ed.playlistMode = PlaylistMode::Random;
+    else
+      ed.playlistMode = PlaylistMode::Single;
 
     if (j.contains("parameters") && j["parameters"].is_object()) {
       for (auto &[key, value] : j["parameters"].items()) {
