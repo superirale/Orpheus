@@ -38,6 +38,13 @@ struct EventDescriptor {
   bool stream = false;       // Use WavStream for long files
   uint8_t priority = 128;    // 0-255, higher = never stolen by lower
   float maxDistance = 100.0f; // 3D attenuation distance
+
+  // Playlist / Delays
+  float startDelay = 0.0f;        // Initial delay before start
+  std::vector<std::string> sounds; // Playlist items
+  PlaylistMode playlistMode;       // Single, Sequential, Shuffle, Random
+  bool loopPlaylist = false;       // Loop entire playlist?
+  float interval = 0.0f;           // Delay between playlist items
 };
 ```
 
@@ -52,7 +59,12 @@ struct EventDescriptor {
   "stream": false,
   "priority": 200,
   "maxDistance": 50.0,
-  "parameters": { "distance": "attenuation" }
+  "parameters": { "distance": "attenuation" },
+  "startDelay": 0.5,
+  "playlistMode": "Random",
+  "loopPlaylist": true,
+  "interval": 2.0,
+  "sounds": [ "audio/step1.wav", "audio/step2.wav" ]
 }
 ```
 

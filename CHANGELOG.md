@@ -5,6 +5,14 @@ All notable changes to Orpheus will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.0.6] - 2026-01-13
+
+### Added
+- **Core Audio**: Added `startDelay` to events for delayed playback.
+- **Playlists**: Added `interval` (delay between tracks) and `loopPlaylist` (repeat behavior).
+- **Playlists**: Complete support for `Sequential`, `Random`, and `Shuffle` modes with intervals.
+- **Example**: `example_2.cpp` demonstrating delays and looping.
+
 ## [0.0.1] - 2026-01-02
 
 ### Added
