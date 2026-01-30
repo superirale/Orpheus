@@ -27,9 +27,9 @@ jobs:
             lib_ext: .a
             cross_compile: true
             arch: aarch64
-          - name: macOS x64
+          - name: macOS arm64
             os: macos-latest
-            artifact: orpheus-macos-x64
+            artifact: orpheus-macos-arm64
             lib_ext: .a
           - name: Windows x64
             os: windows-latest
@@ -195,7 +195,7 @@ jobs:
           files: |
             artifacts/orpheus-linux-x64/*.zip
             artifacts/orpheus-linux-arm64/*.zip
-            artifacts/orpheus-macos-x64/*.zip
+            artifacts/orpheus-macos-arm64/*.zip
             artifacts/orpheus-windows-x64/*.zip
             artifacts/orpheus-android-arm64/*.zip
         env:
