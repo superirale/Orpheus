@@ -78,11 +78,15 @@ jobs:
             which aarch64-linux-gnu-gcc && which aarch64-linux-gnu-g++ || (echo "ERROR: Cross-compilers not found in PATH!" && exit 1)
             
             # Use toolchain file for cross-compilation
+            # Disable ALSA backend (requires arm64 system libraries we don't have)
+            # Use MINIAUDIO backend instead (no system dependencies)
             cmake -B build \
               -DCMAKE_TOOLCHAIN_FILE=${{ github.workspace }}/.github/aarch64-toolchain.cmake \
               -DCMAKE_BUILD_TYPE=Release \
               -DORPHEUS_BUILD_TESTS=OFF \
-              -DORPHEUS_BUILD_EXAMPLES=OFF
+              -DORPHEUS_BUILD_EXAMPLES=OFF \
+              -DSOLOUD_BACKEND_ALSA=OFF \
+              -DSOLOUD_BACKEND_MINIAUDIO=ON
           else
             cmake -B build -DCMAKE_BUILD_TYPE=Release
           fi
