@@ -21,6 +21,12 @@ jobs:
             os: ubuntu-latest
             artifact: orpheus-linux-x64
             lib_ext: .a
+          - name: Linux arm64
+            os: ubuntu-latest
+            artifact: orpheus-linux-arm64
+            lib_ext: .a
+            cross_compile: true
+            arch: aarch64
           - name: macOS x64
             os: macos-latest
             artifact: orpheus-macos-x64
@@ -44,7 +50,11 @@ jobs:
         if: runner.os == 'Linux' && !matrix.android
         run: |
           sudo apt-get update
-          sudo apt-get install -y libasound2-dev libpulse-dev
+          if [ "${{ matrix.cross_compile }}" = "true" ]; then
+            sudo apt-get install -y gcc-aarch64-linux-gnu g++-aarch64-linux-gnu libasound2-dev:arm64 || true
+          else
+            sudo apt-get install -y libasound2-dev libpulse-dev
+          fi
 
       - name: Setup Android NDK
         if: matrix.android
@@ -54,7 +64,19 @@ jobs:
 
       - name: Configure CMake
         if: "!matrix.android"
-        run: cmake -B build -DCMAKE_BUILD_TYPE=Release
+        run: |
+          if [ "${{ matrix.cross_compile }}" = "true" ]; then
+            cmake -B build \
+              -DCMAKE_BUILD_TYPE=Release \
+              -DCMAKE_SYSTEM_NAME=Linux \
+              -DCMAKE_SYSTEM_PROCESSOR=aarch64 \
+              -DCMAKE_C_COMPILER=aarch64-linux-gnu-gcc \
+              -DCMAKE_CXX_COMPILER=aarch64-linux-gnu-g++ \
+              -DORPHEUS_BUILD_TESTS=OFF \
+              -DORPHEUS_BUILD_EXAMPLES=OFF
+          else
+            cmake -B build -DCMAKE_BUILD_TYPE=Release
+          fi
 
       - name: Configure CMake (Android)
         if: matrix.android
@@ -159,6 +181,7 @@ jobs:
           body_path: CHANGELOG.md
           files: |
             artifacts/orpheus-linux-x64/*.zip
+            artifacts/orpheus-linux-arm64/*.zip
             artifacts/orpheus-macos-x64/*.zip
             artifacts/orpheus-windows-x64/*.zip
             artifacts/orpheus-android-arm64/*.zip
