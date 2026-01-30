@@ -73,12 +73,14 @@ jobs:
         shell: bash
         run: |
           if [ "${{ matrix.cross_compile }}" = "true" ]; then
+            # Verify compilers are available
+            echo "Checking for cross-compilation tools..."
+            which aarch64-linux-gnu-gcc && which aarch64-linux-gnu-g++ || (echo "ERROR: Cross-compilers not found in PATH!" && exit 1)
+            
+            # Use toolchain file for cross-compilation
             cmake -B build \
+              -DCMAKE_TOOLCHAIN_FILE=${{ github.workspace }}/.github/aarch64-toolchain.cmake \
               -DCMAKE_BUILD_TYPE=Release \
-              -DCMAKE_SYSTEM_NAME=Linux \
-              -DCMAKE_SYSTEM_PROCESSOR=aarch64 \
-              -DCMAKE_C_COMPILER=aarch64-linux-gnu-gcc \
-              -DCMAKE_CXX_COMPILER=aarch64-linux-gnu-g++ \
               -DORPHEUS_BUILD_TESTS=OFF \
               -DORPHEUS_BUILD_EXAMPLES=OFF
           else
